@@ -121,13 +121,28 @@ function setupAuthModalListeners() {
   signupForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('signup-username').value;
+    const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
+    const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      const errorEl = document.getElementById('auth-error');
+      if (errorEl) {
+        errorEl.textContent = 'Passwords do not match';
+        errorEl.style.display = 'block';
+      }
+      return;
+    }
 
     try {
+      const body = { username, password };
+      if (email) body.email = email;
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify(body)
       });
 
       const data = await response.json();
