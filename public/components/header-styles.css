@@ -30,16 +30,9 @@
   flex-shrink: 0;
 }
 
-.logo-icon {
-  width: 32px;
+.logo-img {
   height: 32px;
-  background: var(--accent);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 18px;
+  width: auto;
 }
 
 .search-container {

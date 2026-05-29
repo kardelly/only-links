@@ -1,0 +1,79 @@
+<div id="auth-modal" class="modal">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content">
+    <button class="modal-close" id="auth-modal-close">✕</button>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Login</button>
+      <button class="auth-tab" data-tab="register">Sign up</button>
+    </div>
+
+    <div id="auth-error" class="alert alert-error" style="display: none;"></div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form" class="auth-form active">
+      <div class="form-group">
+        <label for="login-username">Username</label>
+        <input type="text" id="login-username" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        Login
+      </button>
+
+      <div class="form-footer">
+        <button type="button" class="link-btn" id="forgot-password-link">Forgot password?</button>
+      </div>
+    </form>
+
+    <!-- SIGNUP FORM -->
+    <form id="signup-form" class="auth-form">
+      <div class="form-group">
+        <label for="signup-username">Username</label>
+        <input type="text" id="signup-username" required pattern="[a-zA-Z0-9_-]{3,20}">
+        <small>3-20 characters: letters, numbers, underscore, hyphen</small>
+      </div>
+
+      <div class="form-group">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" required>
+        <div id="password-strength" class="password-strength" style="display: none;">
+          <ul class="password-requirements">
+            <li id="req-length">At least 8 characters</li>
+            <li id="req-uppercase">One uppercase letter</li>
+            <li id="req-lowercase">One lowercase letter</li>
+            <li id="req-number">One number</li>
+            <li id="req-special">One special character (!@#$%^&*)</li>
+          </ul>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        Sign up
+      </button>
+    </form>
+
+    <!-- PASSWORD RESET FORM -->
+    <form id="reset-form" class="auth-form" style="display: none;">
+      <p class="reset-description">Enter your username to receive a password reset link.</p>
+
+      <div class="form-group">
+        <label for="reset-username">Username</label>
+        <input type="text" id="reset-username" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        Send reset link
+      </button>
+
+      <div class="form-footer">
+        <button type="button" class="link-btn" id="back-to-login">Back to login</button>
+      </div>
+    </form>
+  </div>
+</div>
