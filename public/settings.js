@@ -37,6 +37,10 @@ async function checkSession() {
     if (profileHeaderLink) {
       profileHeaderLink.href = `/user/${data.user.username}`;
     }
+    const profileLink = document.getElementById('profile-link');
+    if (profileLink) {
+      profileLink.href = `/user/${data.user.username}`;
+    }
 
     // Update avatar initial and preview
     const profileAvatarInitial = document.getElementById('profile-avatar-initial');

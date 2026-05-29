@@ -72,6 +72,10 @@ function updateHeaderUI() {
     if (profileHeaderLink) {
       profileHeaderLink.href = `/user/${headerState.currentUser.username}`;
     }
+    const profileLink = document.getElementById('profile-link');
+    if (profileLink) {
+      profileLink.href = `/user/${headerState.currentUser.username}`;
+    }
 
     // Set avatar initial or image
     if (profileAvatarInitial && profileAvatarBtn) {
