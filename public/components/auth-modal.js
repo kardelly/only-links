@@ -5,18 +5,35 @@
 
 // Load auth modal HTML and initialize
 async function initAuthModal() {
+  console.log('[auth-modal.js] Initializing auth modal...');
   const placeholder = document.getElementById('auth-modal-placeholder');
-  if (!placeholder) return;
+
+  if (!placeholder) {
+    console.error('[auth-modal.js] Placeholder not found!');
+    return;
+  }
+
+  console.log('[auth-modal.js] Placeholder found, fetching HTML...');
 
   try {
     const response = await fetch('/components/auth-modal.html');
+    console.log('[auth-modal.js] Fetch response:', response.status);
+
     if (!response.ok) throw new Error('Failed to load auth modal');
+
     const html = await response.text();
+    console.log('[auth-modal.js] HTML loaded, length:', html.length);
+
     placeholder.innerHTML = html;
+    console.log('[auth-modal.js] HTML injected into placeholder');
 
     setupAuthModalListeners();
+    console.log('[auth-modal.js] Listeners set up, modal ready!');
+
+    // Dispatch event so other scripts know modal is ready
+    window.dispatchEvent(new CustomEvent('authModalReady'));
   } catch (err) {
-    console.error('Error loading auth modal:', err);
+    console.error('[auth-modal.js] Error loading auth modal:', err);
   }
 }
 

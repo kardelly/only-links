@@ -772,40 +772,63 @@
   <script src="/components/auth-modal.js"></script>
   <script>
     // Landing page - use shared auth modal component
+    console.log('[index.html] Script loaded');
+
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('[index.html] DOM loaded');
+
       const loginBtn = document.getElementById('login-btn');
       const registerBtn = document.getElementById('register-btn');
       const heroCTABtn = document.getElementById('hero-cta-btn');
       const finalCTABtn = document.getElementById('final-cta-btn');
 
+      console.log('[index.html] Buttons found:', {
+        loginBtn: !!loginBtn,
+        registerBtn: !!registerBtn,
+        heroCTABtn: !!heroCTABtn,
+        finalCTABtn: !!finalCTABtn
+      });
+
       // Wait for auth modal component to load
-      window.addEventListener('headerReady', () => {
+      window.addEventListener('authModalReady', () => {
+        console.log('[index.html] Auth modal ready, setting up listeners');
         const authModal = document.getElementById('auth-modal');
-        
+
+        if (!authModal) {
+          console.error('[index.html] Auth modal not found after ready event!');
+          return;
+        }
+
+        console.log('[index.html] Auth modal found, attaching listeners');
+
         if (loginBtn) {
           loginBtn.addEventListener('click', () => {
-            authModal?.classList.add('active');
+            console.log('[index.html] Login button clicked');
+            authModal.classList.add('active');
             if (typeof switchAuthTab === 'function') switchAuthTab('login');
           });
         }
-        
+
         if (registerBtn) {
           registerBtn.addEventListener('click', () => {
-            authModal?.classList.add('active');
+            console.log('[index.html] Register button clicked');
+            authModal.classList.add('active');
             if (typeof switchAuthTab === 'function') switchAuthTab('register');
           });
         }
-        
+
         if (heroCTABtn) {
           heroCTABtn.addEventListener('click', () => {
-            authModal?.classList.add('active');
+            console.log('[index.html] Hero CTA clicked');
+            authModal.classList.add('active');
             if (typeof switchAuthTab === 'function') switchAuthTab('register');
           });
         }
-        
+
         if (finalCTABtn) {
           finalCTABtn.addEventListener('click', () => {
-            authModal?.classList.add('active');
+            console.log('[index.html] Final CTA clicked');
+            authModal.classList.add('active');
             if (typeof switchAuthTab === 'function') switchAuthTab('register');
           });
         }
