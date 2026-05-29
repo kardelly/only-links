@@ -137,6 +137,16 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// ==========================================
+// PWA ROUTES (Must be BEFORE static middleware)
+// ==========================================
+
+// Serve manifest with correct MIME type
+app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/manifest+json');
+  res.sendFile(path.join(__dirname, 'public/manifest.json'));
+});
+
 // Serve Static Frontend Assets
 app.use(express.static(path.join(__dirname, 'public')));
 
