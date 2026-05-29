@@ -14,27 +14,27 @@
   --border: #E5E5E5;
   --error: #DC2626;
   --success: #16A34A;
-
+  
   /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
-
+  
   /* Typography */
   --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-size-sm: 14px;
   --font-size-base: 16px;
   --font-size-lg: 18px;
   --font-size-xl: 24px;
-
+  
   /* Z-index layers */
   --z-bottom-nav: 100;
   --z-bottom-sheet: 1000;
   --z-backdrop: 999;
   --z-toast: 2000;
-
+  
   /* Dimensions */
   --bottom-nav-height: 64px;
   --top-bar-height: 56px;
@@ -723,3 +723,18 @@ body {
     box-shadow: 0 0 0 1px var(--border);
   }
 }
+```
+
+- [ ] **Step 2: Verify CSS has no syntax errors**
+
+Open the file and visually inspect for any obvious errors.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add public/mobile/mobile-styles.css
+git commit -m "feat: add mobile PWA styles
+
+- Mobile-first responsive design
+- Bottom navigation styling
+- Bottom sheet modal animations
