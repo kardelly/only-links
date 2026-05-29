@@ -1,351 +1,230 @@
-// Mobile App Controller
+import { BottomNav } from './components/bottom-nav.js';
+import { FeedView } from './components/feed-view.js';
+import { SearchView } from './components/search-view.js';
+import { AddBookmarkView } from './components/add-bookmark-view.js';
+import { TagsView } from './components/tags-view.js';
+import { ProfileView } from './components/profile-view.js';
+import { InstallPrompt } from './components/install-prompt.js';
+import { fetchWithError, showToast } from './components/utils.js';
+
+/**
+ * Main Mobile App Controller
+ * Handles initialization, auth, routing, and view management
+ */
 class MobileApp {
   constructor() {
-    this.currentView = 'home';
+    this.currentView = null;
+    this.user = null;
+    this.bottomNav = null;
     this.views = {};
-    this.deferredPrompt = null;
-    this.isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                       window.navigator.standalone === true;
+    this.installPrompt = null;
   }
 
+  /**
+   * Initialize mobile app
+   */
   async init() {
-    // Check authentication
-    if (!this.checkAuth()) {
-      window.location.href = '/login?redirect=/mobile';
+    console.log('[MobileApp] Initializing...');
+
+    // 1. Check authentication
+    const authenticated = await this.checkAuth();
+    if (!authenticated) {
       return;
     }
 
-    // Register service worker
-    await this.registerServiceWorker();
-
-    // Handle share target
-    this.handleShareTarget();
-
-    // Setup install prompt
+    // 2. Setup PWA features
+    this.setupServiceWorker();
+    this.setupShareTarget();
     this.setupInstallPrompt();
 
-    // Initialize views
+    // 3. Initialize views
     this.initializeViews();
 
-    // Initialize bottom navigation
-    this.initializeNavigation();
-
-    // Setup top bar interactions
+    // 4. Setup top bar
     this.setupTopBar();
 
-    // Show initial view
-    const initialView = this.getInitialView();
-    this.showView(initialView);
+    // 5. Show default view
+    this.showView('feed');
 
-    // Track initial screen view
-    this.trackScreenView(initialView);
+    console.log('[MobileApp] Initialized successfully');
   }
 
-  checkAuth() {
-    // Check if user is authenticated
-    const token = localStorage.getItem('authToken') ||
-                 sessionStorage.getItem('authToken') ||
-                 this.getCookie('authToken');
-    return !!token;
-  }
+  /**
+   * Check authentication
+   */
+  async checkAuth() {
+    try {
+      const data = await fetchWithError('/api/auth/me');
 
-  getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return null;
-  }
-
-  async registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.register('/mobile/sw.js', {
-          scope: '/mobile/'
-        });
-        console.log('Service Worker registered:', registration.scope);
-
-        // Check for updates
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              this.showUpdateNotification();
-            }
-          });
-        });
-      } catch (error) {
-        console.error('Service Worker registration failed:', error);
+      if (!data || !data.user) {
+        console.log('[MobileApp] Not authenticated, redirecting to login');
+        window.location.href = '/';
+        return false;
       }
+
+      this.user = data.user;
+      console.log('[MobileApp] Authenticated as', this.user.username);
+      return true;
+    } catch (err) {
+      console.error('[MobileApp] Auth check failed:', err);
+      window.location.href = '/';
+      return false;
     }
   }
 
-  handleShareTarget() {
-    // Check if app was launched via share target
-    const params = new URLSearchParams(window.location.search);
-    const sharedTitle = params.get('title');
-    const sharedText = params.get('text');
-    const sharedUrl = params.get('url');
+  /**
+   * Setup service worker
+   */
+  setupServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => {
+          console.log('[SW] Registered:', reg.scope);
 
-    if (sharedUrl || sharedText || sharedTitle) {
-      // Navigate to add view with shared content
-      setTimeout(() => {
-        this.showView('add');
-        if (this.views.add && this.views.add.prefill) {
-          this.views.add.prefill({
-            url: sharedUrl,
-            title: sharedTitle,
-            notes: sharedText
+          // Check for updates
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showToast('New version available! Refresh to update.');
+              }
+            });
           });
+        })
+        .catch(err => console.error('[SW] Registration failed:', err));
+    }
+  }
+
+  /**
+   * Setup share target (handle shared URLs)
+   */
+  setupShareTarget() {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has('url')) {
+      const sharedData = {
+        url: params.get('url'),
+        title: params.get('title') || '',
+        text: params.get('text') || ''
+      };
+
+      console.log('[ShareTarget] Received:', sharedData);
+
+      // Track analytics
+      if (window.gtag) {
+        gtag('event', 'share_target_opened', {
+          shared_url: sharedData.url
+        });
+      }
+
+      // Wait for views to load, then open modal
+      setTimeout(() => {
+        if (this.views.add) {
+          this.views.add.openWithData(sharedData);
         }
-      }, 100);
-
-      // Clean up URL
-      window.history.replaceState({}, document.title, '/mobile');
+      }, 500);
     }
   }
 
+  /**
+   * Setup install prompt
+   */
   setupInstallPrompt() {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      this.deferredPrompt = e;
-      this.showInstallButton();
-    });
-
-    window.addEventListener('appinstalled', () => {
-      console.log('PWA installed');
-      this.deferredPrompt = null;
-      this.hideInstallButton();
-      this.trackEvent('pwa_installed');
-    });
+    this.installPrompt = new InstallPrompt();
+    this.installPrompt.init();
   }
 
-  showInstallButton() {
-    const installBtn = document.querySelector('[data-action="install"]');
-    if (installBtn && !this.isStandalone) {
-      installBtn.style.display = 'block';
-      installBtn.addEventListener('click', () => this.promptInstall());
-    }
-  }
-
-  hideInstallButton() {
-    const installBtn = document.querySelector('[data-action="install"]');
-    if (installBtn) {
-      installBtn.style.display = 'none';
-    }
-  }
-
-  async promptInstall() {
-    if (!this.deferredPrompt) return;
-
-    this.deferredPrompt.prompt();
-    const { outcome } = await this.deferredPrompt.userChoice;
-
-    this.trackEvent('pwa_install_prompt', { outcome });
-
-    if (outcome === 'accepted') {
-      console.log('User accepted install');
-    }
-
-    this.deferredPrompt = null;
-  }
-
+  /**
+   * Initialize all views
+   */
   initializeViews() {
-    // Initialize Home View
-    const homeView = document.getElementById('home-view');
-    if (homeView && typeof HomeView !== 'undefined') {
-      this.views.home = new HomeView(homeView);
-    }
+    // Create view instances
+    this.views = {
+      feed: new FeedView(),
+      search: new SearchView(),
+      add: new AddBookmarkView(),
+      tags: new TagsView(),
+      profile: new ProfileView()
+    };
 
-    // Initialize Collections View
-    const collectionsView = document.getElementById('collections-view');
-    if (collectionsView && typeof CollectionsView !== 'undefined') {
-      this.views.collections = new CollectionsView(collectionsView);
-    }
-
-    // Initialize Add View
-    const addView = document.getElementById('add-view');
-    if (addView && typeof AddView !== 'undefined') {
-      this.views.add = new AddView(addView);
-    }
-
-    // Initialize Search View
-    const searchView = document.getElementById('search-view');
-    if (searchView && typeof SearchView !== 'undefined') {
-      this.views.search = new SearchView(searchView);
-    }
-
-    // Initialize Profile View
-    const profileView = document.getElementById('profile-view');
-    if (profileView && typeof ProfileView !== 'undefined') {
-      this.views.profile = new ProfileView(profileView);
-    }
-  }
-
-  initializeNavigation() {
-    const navButtons = document.querySelectorAll('[data-view]');
-    navButtons.forEach(button => {
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        const view = button.dataset.view;
-        this.showView(view);
-        this.trackEvent('navigation_tap', { view });
-      });
+    // Initialize each view
+    Object.values(this.views).forEach(view => {
+      if (view.init) view.init();
     });
+
+    // Create bottom navigation
+    this.bottomNav = new BottomNav((tab) => {
+      if (tab === 'add') {
+        // Add button opens modal, doesn't change view
+        this.views.add.open();
+      } else {
+        // Navigate to view
+        this.showView(tab);
+      }
+    });
+
+    this.bottomNav.init();
   }
 
+  /**
+   * Setup top bar interactions
+   */
   setupTopBar() {
-    // Back button
-    const backButton = document.querySelector('[data-action="back"]');
-    if (backButton) {
-      backButton.addEventListener('click', () => {
-        this.handleBack();
+    // Logo button - go to feed
+    const logoBtn = document.getElementById('logo-btn');
+    if (logoBtn) {
+      logoBtn.addEventListener('click', () => {
+        this.showView('feed');
       });
     }
 
-    // Search button
-    const searchButton = document.querySelector('[data-action="search"]');
-    if (searchButton) {
-      searchButton.addEventListener('click', () => {
+    // Search button - go to search
+    const searchBtn = document.getElementById('search-btn');
+    if (searchBtn) {
+      searchBtn.addEventListener('click', () => {
         this.showView('search');
       });
     }
-
-    // Menu button
-    const menuButton = document.querySelector('[data-action="menu"]');
-    if (menuButton) {
-      menuButton.addEventListener('click', () => {
-        this.showMenu();
-      });
-    }
   }
 
-  getInitialView() {
-    // Check URL hash
-    const hash = window.location.hash.slice(1);
-    if (hash && this.views[hash]) {
-      return hash;
+  /**
+   * Show a view
+   */
+  async showView(viewName) {
+    // Hide current view
+    if (this.currentView && this.views[this.currentView]) {
+      this.views[this.currentView].hide();
     }
-    return 'home';
-  }
 
-  showView(viewName) {
-    // Hide all views
-    Object.keys(this.views).forEach(name => {
-      const view = this.views[name];
-      if (view && view.container) {
-        view.container.style.display = 'none';
-        view.container.classList.remove('active');
-      }
-    });
-
-    // Show requested view
+    // Show new view
+    this.currentView = viewName;
     const view = this.views[viewName];
-    if (view && view.container) {
-      view.container.style.display = 'block';
-      view.container.classList.add('active');
 
-      // Call view's onShow method if it exists
-      if (typeof view.onShow === 'function') {
-        view.onShow();
+    if (view) {
+      await view.show();
+
+      // Update bottom nav
+      if (this.bottomNav) {
+        this.bottomNav.setActive(viewName);
       }
 
-      // Update navigation state
-      this.updateNavigation(viewName);
-
-      // Update current view
-      this.currentView = viewName;
-
-      // Update URL hash
-      window.location.hash = viewName;
-
-      // Track screen view
-      this.trackScreenView(viewName);
-    }
-  }
-
-  updateNavigation(viewName) {
-    const navButtons = document.querySelectorAll('[data-view]');
-    navButtons.forEach(button => {
-      if (button.dataset.view === viewName) {
-        button.classList.add('active');
-        button.setAttribute('aria-current', 'page');
-      } else {
-        button.classList.remove('active');
-        button.removeAttribute('aria-current');
+      // Track analytics
+      if (window.gtag) {
+        gtag('event', 'screen_view', {
+          screen_name: viewName
+        });
       }
-    });
-  }
-
-  handleBack() {
-    if (this.currentView !== 'home') {
-      this.showView('home');
-    } else if (window.history.length > 1) {
-      window.history.back();
-    }
-  }
-
-  showMenu() {
-    // Show menu overlay or drawer
-    const menu = document.querySelector('.mobile-menu');
-    if (menu) {
-      menu.classList.add('open');
-      this.trackEvent('menu_opened');
-    }
-  }
-
-  showUpdateNotification() {
-    // Show notification that app has been updated
-    const notification = document.createElement('div');
-    notification.className = 'update-notification';
-    notification.innerHTML = `
-      <div class="update-content">
-        <span>New version available</span>
-        <button class="update-btn">Reload</button>
-      </div>
-    `;
-    document.body.appendChild(notification);
-
-    notification.querySelector('.update-btn').addEventListener('click', () => {
-      window.location.reload();
-    });
-
-    setTimeout(() => {
-      notification.classList.add('show');
-    }, 100);
-  }
-
-  trackScreenView(viewName) {
-    this.trackEvent('screen_view', {
-      screen_name: viewName,
-      app_name: 'Delicious Orphans Mobile'
-    });
-  }
-
-  trackEvent(eventName, params = {}) {
-    // Analytics tracking
-    if (typeof gtag !== 'undefined') {
-      gtag('event', eventName, params);
-    }
-
-    // Custom analytics
-    if (typeof analytics !== 'undefined' && typeof analytics.track === 'function') {
-      analytics.track(eventName, params);
-    }
-
-    // Console log in development
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      console.log('Event:', eventName, params);
     }
   }
 }
 
-// Initialize app when DOM is ready
+// Initialize app on DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    window.mobileApp = new MobileApp();
-    window.mobileApp.init();
+    window.app = new MobileApp();
+    window.app.init();
   });
 } else {
-  window.mobileApp = new MobileApp();
-  window.mobileApp.init();
+  window.app = new MobileApp();
+  window.app.init();
 }
