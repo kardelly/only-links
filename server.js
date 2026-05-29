@@ -147,6 +147,14 @@ app.get('/manifest.json', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/manifest.json'));
 });
 
+// Serve Service Worker with correct headers
+app.get('/sw.js', (req, res) => {
+  res.set('Service-Worker-Allowed', '/');
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.type('application/javascript');
+  res.sendFile(path.join(__dirname, 'public/sw.js'));
+});
+
 // Serve Static Frontend Assets
 app.use(express.static(path.join(__dirname, 'public')));
 
