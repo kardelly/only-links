@@ -155,6 +155,17 @@ app.get('/sw.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/sw.js'));
 });
 
+// Serve mobile app
+app.get('/mobile/app', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/mobile/mobile-app.html'));
+});
+
+// Share target handler
+app.get('/share-target', (req, res) => {
+  // Just serve the app, JavaScript will handle params
+  res.sendFile(path.join(__dirname, 'public/mobile/mobile-app.html'));
+});
+
 // Serve Static Frontend Assets
 app.use(express.static(path.join(__dirname, 'public')));
 
