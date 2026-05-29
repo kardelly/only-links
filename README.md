@@ -242,4 +242,4 @@ MIT License - See [LICENSE](./LICENSE)
 
 ---
 
-**Made with 🔖 by Anderson**
+**Made with 🔖 by Anderson Cardelli Façanha**
