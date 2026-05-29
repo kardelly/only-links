@@ -163,8 +163,16 @@ body {
   border-radius: 50%;
   width: 56px;
   height: 56px;
+  min-width: 56px;
+  min-height: 56px;
   margin-top: -20px;
   box-shadow: 0 4px 12px rgba(79, 111, 232, 0.3);
+  flex-direction: row;
+  padding: 0;
+}
+
+.nav-item.nav-add span {
+  display: none;
 }
 
 .nav-item.nav-add:active {
