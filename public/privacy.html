@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — only.link</title>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZHDLY53QX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-4ZHDLY53QX');
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg:      oklch(98% 0.008 60);
+      --surface: oklch(99.5% 0.004 60);
+      --fg:      oklch(18% 0.012 60);
+      --muted:   oklch(52% 0.008 60);
+      --border:  oklch(92% 0.006 60);
+      --accent:  oklch(56% 0.18 250);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--fg);
+      padding: 40px 20px;
+      line-height: 1.65;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .last-updated {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 48px 0 20px 0;
+      letter-spacing: -0.01em;
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 32px 0 16px 0;
+    }
+
+    p {
+      margin-bottom: 16px;
+      font-size: 15px;
+    }
+
+    ul, ol {
+      margin: 16px 0 16px 28px;
+    }
+
+    li {
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 48px;
+      font-size: 15px;
+    }
+
+    strong {
+      font-weight: 600;
+    }
+
+    code {
+      background: oklch(95% 0.004 60);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <p class="last-updated">Last updated: May 29, 2026</p>
+
+    <p>
+      At only.link ("we", "us", or "our"), we respect your privacy and are committed to protecting your personal data.
+      This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.
+    </p>
+
+    <h2>1. Information We Collect</h2>
+
+    <h3>1.1 Account Information</h3>
+    <p>When you create an account, we collect:</p>
+    <ul>
+      <li><strong>Username:</strong> Your chosen username for your profile</li>
+      <li><strong>Email address:</strong> Optional, for account recovery and notifications</li>
+      <li><strong>Password:</strong> Stored as a bcrypt hash (10 rounds) — we never store plain-text passwords</li>
+      <li><strong>Avatar:</strong> Optional profile image (JPEG, PNG, or WebP, max 2MB)</li>
+    </ul>
+
+    <h3>1.2 Bookmark Data</h3>
+    <p>When you save bookmarks, we collect:</p>
+    <ul>
+      <li><strong>URL:</strong> The web address you're bookmarking</li>
+      <li><strong>Title:</strong> The title you give to the bookmark</li>
+      <li><strong>Description:</strong> Optional text description</li>
+      <li><strong>Tags:</strong> Keywords you associate with the bookmark</li>
+      <li><strong>Privacy setting:</strong> Whether the bookmark is public or private</li>
+      <li><strong>OpenGraph images:</strong> Thumbnail images automatically fetched from the bookmarked URL</li>
+      <li><strong>Timestamps:</strong> When the bookmark was created</li>
+    </ul>
+
+    <h3>1.3 Social Graph Data</h3>
+    <p>When you interact with other users:</p>
+    <ul>
+      <li><strong>Follows:</strong> Records of which users you follow and who follows you</li>
+      <li><strong>Public interactions:</strong> Visible only when viewing public profiles</li>
+    </ul>
+
+    <h3>1.4 Usage Data</h3>
+    <p>We automatically collect:</p>
+    <ul>
+      <li><strong>Session cookies:</strong> JWT tokens (7-day expiration) for authentication</li>
+      <li><strong>IP address:</strong> For security and rate limiting (5 login attempts per 15 minutes)</li>
+      <li><strong>Analytics data:</strong> Via Google Analytics (page views, browser type, general location)</li>
+    </ul>
+
+    <h2>2. How We Use Your Information</h2>
+
+    <h3>2.1 Core Functionality</h3>
+    <ul>
+      <li>Provide bookmark management services</li>
+      <li>Display your profile and public bookmarks</li>
+      <li>Enable social features (following users, discovering bookmarks)</li>
+      <li>Authenticate your account securely</li>
+    </ul>
+
+    <h3>2.2 Service Improvement</h3>
+    <ul>
+      <li>Analyze usage patterns to improve features</li>
+      <li>Monitor performance and fix bugs</li>
+      <li>Understand which features are most valuable</li>
+    </ul>
+
+    <h3>2.3 Security</h3>
+    <ul>
+      <li>Prevent unauthorized access and abuse</li>
+      <li>Rate limit requests to prevent spam</li>
+      <li>Enforce security policies (HTTPS, secure cookies)</li>
+    </ul>
+
+    <h3>2.4 Communication</h3>
+    <ul>
+      <li>Send password reset tokens (if email provided)</li>
+      <li>Notify you of important service updates (rarely)</li>
+    </ul>
+
+    <h2>3. Data Storage and Security</h2>
+
+    <h3>3.1 Security Measures</h3>
+    <ul>
+      <li><strong>Password hashing:</strong> bcrypt with 10 rounds (industry standard)</li>
+      <li><strong>HTTPS:</strong> All data transmitted over encrypted connections</li>
+      <li><strong>Secure cookies:</strong> HttpOnly cookies prevent XSS attacks</li>
+      <li><strong>Rate limiting:</strong> Protection against brute-force attacks</li>
+      <li><strong>Input validation:</strong> All user inputs are sanitized</li>
+      <li><strong>Helmet.js:</strong> Security headers (CSP, HSTS, X-Frame-Options)</li>
+    </ul>
+
+    <h3>3.2 Data Storage</h3>
+    <ul>
+      <li><strong>Database:</strong> SQLite with foreign key constraints and cascade deletes</li>
+      <li><strong>Avatars:</strong> Stored locally in <code>/uploads/avatars/</code></li>
+      <li><strong>Backups:</strong> Regular database backups (if configured)</li>
+      <li><strong>Location:</strong> Hosted on Hostinger VPS (data center location based on server choice)</li>
+    </ul>
+
+    <h2>4. Data Sharing and Disclosure</h2>
+
+    <h3>4.1 Public vs. Private Data</h3>
+    <ul>
+      <li><strong>Public bookmarks:</strong> Visible to anyone, appear on your profile and in public feeds</li>
+      <li><strong>Private bookmarks:</strong> Visible only to you when logged in</li>
+      <li><strong>Profile information:</strong> Username and avatar are always public</li>
+      <li><strong>Email address:</strong> Never shared publicly</li>
+    </ul>
+
+    <h3>4.2 Third-Party Services</h3>
+    <ul>
+      <li><strong>Google Analytics:</strong> Anonymous usage statistics (IP anonymized)</li>
+      <li><strong>OpenGraph fetching:</strong> We fetch thumbnails from bookmarked URLs</li>
+    </ul>
+
+    <h3>4.3 We DO NOT</h3>
+    <ul>
+      <li>❌ Sell your personal data</li>
+      <li>❌ Share your data with advertisers</li>
+      <li>❌ Track you across other websites</li>
+      <li>❌ Send marketing emails (unless you opt-in)</li>
+    </ul>
+
+    <h2>5. Your Rights and Choices</h2>
+
+    <h3>5.1 Access and Control</h3>
+    <p>You can:</p>
+    <ul>
+      <li><strong>View your data:</strong> All your bookmarks and profile info are accessible in your account</li>
+      <li><strong>Edit your data:</strong> Update username, email, avatar, and bookmarks anytime</li>
+      <li><strong>Export your data:</strong> Contact us for a JSON export of all your bookmarks</li>
+      <li><strong>Delete your account:</strong> Via Settings → Account → Delete Account (permanent and irreversible)</li>
+    </ul>
+
+    <h3>5.2 Privacy Controls</h3>
+    <ul>
+      <li><strong>Bookmark visibility:</strong> Choose public or private for each bookmark</li>
+      <li><strong>Default visibility:</strong> Set your preferred default in Settings</li>
+      <li><strong>Profile visibility:</strong> Your profile is public, but you control what bookmarks appear on it</li>
+    </ul>
+
+    <h2>6. Data Retention</h2>
+
+    <ul>
+      <li><strong>Active accounts:</strong> Data retained as long as your account exists</li>
+      <li><strong>Deleted accounts:</strong> All data (bookmarks, follows, avatar) permanently deleted within 30 days</li>
+      <li><strong>Password reset tokens:</strong> Expire after 1 hour and are cleaned up regularly</li>
+      <li><strong>Session cookies:</strong> Expire after 7 days of inactivity</li>
+      <li><strong>Backups:</strong> May contain deleted data for up to 30 days</li>
+    </ul>
+
+    <h2>7. Cookies and Tracking</h2>
+
+    <h3>7.1 Essential Cookies</h3>
+    <ul>
+      <li><strong>Authentication token:</strong> JWT cookie for keeping you logged in (7 days)</li>
+      <li><strong>Purpose:</strong> Required for the service to function</li>
+      <li><strong>Can be disabled:</strong> No, but you can log out to clear</li>
+    </ul>
+
+    <h3>7.2 Analytics Cookies</h3>
+    <ul>
+      <li><strong>Google Analytics:</strong> Tracks page views and usage patterns</li>
+      <li><strong>Purpose:</strong> Help us understand how the service is used</li>
+      <li><strong>Can be disabled:</strong> Yes, via browser extensions or Do Not Track</li>
+    </ul>
+
+    <h2>8. Children's Privacy</h2>
+
+    <p>
+      only.link is not intended for users under 13 years old. We do not knowingly collect data from children.
+      If you believe a child has created an account, please contact us and we will delete it.
+    </p>
+
+    <h2>9. International Data Transfers</h2>
+
+    <p>
+      Your data is stored on servers that may be located outside your country. By using only.link,
+      you consent to the transfer of your data to our hosting provider's data centers.
+    </p>
+
+    <h2>10. Changes to This Policy</h2>
+
+    <p>
+      We may update this Privacy Policy from time to time. We will notify you of significant changes by
+      updating the "Last updated" date at the top of this page. Continued use of the service after changes
+      constitutes acceptance of the updated policy.
+    </p>
+
+    <h2>11. Your Legal Rights (GDPR/CCPA)</h2>
+
+    <p>Depending on your location, you may have the right to:</p>
+    <ul>
+      <li><strong>Access:</strong> Request a copy of your personal data</li>
+      <li><strong>Rectification:</strong> Correct inaccurate data</li>
+      <li><strong>Erasure:</strong> Request deletion of your data ("right to be forgotten")</li>
+      <li><strong>Portability:</strong> Receive your data in a machine-readable format</li>
+      <li><strong>Objection:</strong> Object to processing of your data</li>
+      <li><strong>Restriction:</strong> Request limitation of data processing</li>
+    </ul>
+
+    <p>To exercise these rights, contact us at the address below.</p>
+
+    <h2>12. Contact Us</h2>
+
+    <p>If you have questions about this Privacy Policy or your data, contact:</p>
+
+    <p>
+      <strong>Anderson Cardelli Façanha</strong><br>
+      Email: <a href="mailto:kardelly@gmail.com">kardelly@gmail.com</a><br>
+      Website: <a href="https://onlylinks.id">https://onlylinks.id</a>
+    </p>
+
+    <h2>13. Data Processing Summary</h2>
+
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--border);">
+          <th style="text-align: left; padding: 12px 8px;">Data Type</th>
+          <th style="text-align: left; padding: 12px 8px;">Purpose</th>
+          <th style="text-align: left; padding: 12px 8px;">Retention</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 12px 8px;">Username, Password</td>
+          <td style="padding: 12px 8px;">Authentication</td>
+          <td style="padding: 12px 8px;">Until account deletion</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 12px 8px;">Email (optional)</td>
+          <td style="padding: 12px 8px;">Recovery, notifications</td>
+          <td style="padding: 12px 8px;">Until account deletion</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 12px 8px;">Bookmarks, Tags</td>
+          <td style="padding: 12px 8px;">Core service</td>
+          <td style="padding: 12px 8px;">Until deleted by user</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 12px 8px;">Follow relationships</td>
+          <td style="padding: 12px 8px;">Social features</td>
+          <td style="padding: 12px 8px;">Until account deletion</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 12px 8px;">Session cookies</td>
+          <td style="padding: 12px 8px;">Keep you logged in</td>
+          <td style="padding: 12px 8px;">7 days or logout</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 8px;">Analytics data</td>
+          <td style="padding: 12px 8px;">Service improvement</td>
+          <td style="padding: 12px 8px;">26 months (Google)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <a href="/" class="back-link">← Back to only.link</a>
+  </div>
+</body>
+</html>
