@@ -16,18 +16,40 @@
   <!-- Mobile Redirect -->
   <script>
     // Redirect mobile devices to mobile PWA
-    (function() {
+    (async function() {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html';
       const redirectFlag = sessionStorage.getItem('mobile_redirect_attempted');
 
-      // Only redirect if mobile, on homepage, and not coming back from failed auth
-      if (isMobile && isHomePage && redirectFlag !== 'skip') {
-        sessionStorage.setItem('mobile_redirect_attempted', 'true');
-        window.location.replace('/mobile/app');
-      } else if (redirectFlag === 'skip') {
-        // Clear the skip flag so next session can redirect again
-        sessionStorage.removeItem('mobile_redirect_attempted');
+      if (!isMobile || !isHomePage) return;
+
+      // Check if user is authenticated
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+
+        if (data && data.user) {
+          // User is authenticated - always redirect to mobile
+          sessionStorage.removeItem('mobile_redirect_attempted');
+          window.location.replace('/mobile/app');
+        } else {
+          // User is NOT authenticated - only redirect if not flagged
+          if (redirectFlag !== 'skip') {
+            sessionStorage.setItem('mobile_redirect_attempted', 'true');
+            window.location.replace('/mobile/app');
+          } else {
+            // Clear the skip flag so next session can redirect again
+            sessionStorage.removeItem('mobile_redirect_attempted');
+          }
+        }
+      } catch (err) {
+        // On error, use old logic (redirect unless flagged)
+        if (redirectFlag !== 'skip') {
+          sessionStorage.setItem('mobile_redirect_attempted', 'true');
+          window.location.replace('/mobile/app');
+        } else {
+          sessionStorage.removeItem('mobile_redirect_attempted');
+        }
       }
     })();
   </script>
