@@ -80,6 +80,9 @@ const __dirname = path.dirname(__filename);
 // SECURITY MIDDLEWARES
 // ==========================================
 
+// Trust proxy - needed when behind nginx/reverse proxy
+app.set('trust proxy', 1);
+
 // Helmet - Security Headers
 app.use(helmet({
   contentSecurityPolicy: {
