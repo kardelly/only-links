@@ -58,11 +58,21 @@ export const dbPromise = open({
       FOREIGN KEY(following_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id);
     CREATE INDEX IF NOT EXISTS idx_bookmark_tags_tag_id ON bookmark_tags(tag_id);
     CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
     CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
     CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
+    CREATE INDEX IF NOT EXISTS idx_password_reset_token ON password_reset_tokens(token);
   `);
   
   // Migration: Add is_public and og_image columns if they don't exist
@@ -549,4 +559,45 @@ export async function getFollowersCount(userId) {
     [userId]
   );
   return result.count;
+}
+
+// ==========================================
+// PASSWORD RESET FUNCTIONS
+// ==========================================
+
+// Create password reset token
+export async function createPasswordResetToken(userId, token, expiresInMinutes = 60) {
+  const db = await dbPromise;
+  const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000).toISOString();
+
+  // Delete any existing tokens for this user
+  await db.run('DELETE FROM password_reset_tokens WHERE user_id = ?', [userId]);
+
+  // Create new token
+  await db.run(
+    'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+    [userId, token, expiresAt]
+  );
+}
+
+// Get user ID by reset token
+export async function getUserByResetToken(token) {
+  const db = await dbPromise;
+  const result = await db.get(
+    'SELECT user_id FROM password_reset_tokens WHERE token = ? AND expires_at > datetime("now")',
+    [token]
+  );
+  return result ? result.user_id : null;
+}
+
+// Delete reset token
+export async function deletePasswordResetToken(token) {
+  const db = await dbPromise;
+  await db.run('DELETE FROM password_reset_tokens WHERE token = ?', [token]);
+}
+
+// Clean up expired tokens (can be run periodically)
+export async function cleanupExpiredResetTokens() {
+  const db = await dbPromise;
+  await db.run('DELETE FROM password_reset_tokens WHERE expires_at < datetime("now")');
 }

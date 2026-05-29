@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Save to only.link</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg:      oklch(98% 0.008 60);
+      --surface: oklch(99.5% 0.004 60);
+      --fg:      oklch(18% 0.012 60);
+      --muted:   oklch(52% 0.008 60);
+      --border:  oklch(92% 0.006 60);
+      --accent:  oklch(56% 0.18 250);
+      --accent-hover: oklch(51% 0.18 250);
+      --success: oklch(58% 0.16 145);
+      --error: oklch(58% 0.18 25);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--fg);
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 100%;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--fg);
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 15px;
+      font-family: var(--font-sans);
+      background: var(--surface);
+      color: var(--fg);
+      transition: border-color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-helper {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: var(--font-sans);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-primary:disabled {
+      background: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: oklch(96% 0.004 60);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .alert-error {
+      background: oklch(95% 0.04 25);
+      color: var(--error);
+      border: 1px solid oklch(90% 0.08 25);
+    }
+
+    .alert-success {
+      background: oklch(95% 0.04 145);
+      color: var(--success);
+      border: 1px solid oklch(90% 0.08 145);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid white;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 600ms linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .login-prompt {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .login-prompt h2 {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+
+    .login-prompt p {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="login-prompt" class="login-prompt hidden">
+      <h2>Sign in required</h2>
+      <p>You need to be logged in to save bookmarks.</p>
+      <a href="/app" class="btn btn-primary" target="_blank">Sign in to only.link</a>
+    </div>
+
+    <div id="save-form-container">
+      <h1>Save to only.link</h1>
+
+      <div id="error-alert" class="alert alert-error hidden"></div>
+      <div id="success-alert" class="alert alert-success hidden"></div>
+
+      <form id="save-form">
+        <div class="form-group">
+          <label class="form-label" for="url">URL</label>
+          <input type="url" class="form-input" id="url" required readonly>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="title">Title</label>
+          <input type="text" class="form-input" id="title" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Description (optional)</label>
+          <textarea class="form-textarea" id="description"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="tags">Tags</label>
+          <input type="text" class="form-input" id="tags" placeholder="comma, separated, tags">
+          <p class="form-helper">Separate tags with commas</p>
+        </div>
+
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="is-public" checked style="width: 16px; height: 16px;">
+            <span class="form-label" style="margin: 0;">Public bookmark</span>
+          </label>
+        </div>
+
+        <div class="button-group">
+          <button type="button" class="btn btn-secondary" onclick="window.close()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="save-btn">
+            Save bookmark
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Get URL parameters
+    const params = new URLSearchParams(window.location.search);
+    const url = params.get('url') || '';
+    const title = params.get('title') || '';
+    const description = params.get('description') || '';
+
+    // Populate form
+    document.getElementById('url').value = url;
+    document.getElementById('title').value = title;
+    document.getElementById('description').value = description;
+
+    // Check authentication
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          // Not logged in
+          document.getElementById('save-form-container').classList.add('hidden');
+          document.getElementById('login-prompt').classList.remove('hidden');
+          return false;
+        }
+
+        return true;
+      } catch (err) {
+        console.error('Auth check failed:', err);
+        return false;
+      }
+    }
+
+    // Save bookmark
+    document.getElementById('save-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const saveBtn = document.getElementById('save-btn');
+      const errorAlert = document.getElementById('error-alert');
+      const successAlert = document.getElementById('success-alert');
+
+      // Hide alerts
+      errorAlert.classList.add('hidden');
+      successAlert.classList.add('hidden');
+
+      // Disable button
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = 'Saving<span class="loading"></span>';
+
+      const bookmarkData = {
+        url: document.getElementById('url').value,
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value || '',
+        tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean),
+        is_public: document.getElementById('is-public').checked
+      };
+
+      try {
+        const response = await fetch('/api/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(bookmarkData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save bookmark');
+        }
+
+        // Success
+        successAlert.textContent = '✓ Bookmark saved successfully!';
+        successAlert.classList.remove('hidden');
+
+        // Close popup after 1.5 seconds
+        setTimeout(() => {
+          window.close();
+        }, 1500);
+      } catch (err) {
+        console.error('Save error:', err);
+        errorAlert.textContent = err.message;
+        errorAlert.classList.remove('hidden');
+
+        // Re-enable button
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save bookmark';
+      }
+    });
+
+    // Check auth on load
+    checkAuth();
+  </script>
+</body>
+</html>
