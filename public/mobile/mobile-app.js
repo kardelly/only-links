@@ -4,6 +4,7 @@ import { SearchView } from './components/search-view.js';
 import { AddBookmarkView } from './components/add-bookmark-view.js';
 import { TagsView } from './components/tags-view.js';
 import { ProfileView } from './components/profile-view.js';
+import { SettingsView } from './components/settings-view.js';
 import { InstallPrompt } from './components/install-prompt.js';
 import { fetchWithError, showToast } from './components/utils.js';
 
@@ -161,7 +162,8 @@ class MobileApp {
       search: new SearchView(),
       add: new AddBookmarkView(),
       tags: new TagsView(),
-      profile: new ProfileView()
+      profile: new ProfileView(),
+      settings: new SettingsView()
     };
 
     // Initialize each view
@@ -181,6 +183,9 @@ class MobileApp {
     });
 
     this.bottomNav.init();
+
+    // Store app reference globally for views to use
+    window.mobileApp = this;
   }
 
   /**

@@ -31,7 +31,7 @@ export class ProfileView extends BaseView {
       // Get user's bookmarks
       const bookmarksData = await fetchWithError(`/api/bookmarks?user=${this.user.username}`);
       if (bookmarksData) {
-        this.bookmarks = bookmarksData.bookmarks || [];
+        this.bookmarks = bookmarksData.items || [];
       }
 
       this.render();
@@ -69,6 +69,7 @@ export class ProfileView extends BaseView {
         </div>
       </div>
       <div class="profile-actions">
+        <button class="btn btn-secondary" id="settings-btn">Settings</button>
         <button class="btn btn-secondary" id="logout-btn">Logout</button>
       </div>
     `;
@@ -94,6 +95,16 @@ export class ProfileView extends BaseView {
 
       bookmarksSection.appendChild(grid);
       this.container.appendChild(bookmarksSection);
+    }
+
+    // Attach settings handler
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        if (window.mobileApp) {
+          window.mobileApp.showView('settings');
+        }
+      });
     }
 
     // Attach logout handler

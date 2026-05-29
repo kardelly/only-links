@@ -80,8 +80,8 @@ export class SearchView extends BaseView {
     try {
       const data = await fetchWithError(`/api/bookmarks?q=${encodeURIComponent(this.query)}`);
 
-      if (data && data.bookmarks) {
-        this.results = data.bookmarks;
+      if (data && data.items) {
+        this.results = data.items;
         this.renderResults();
       }
     } catch (err) {

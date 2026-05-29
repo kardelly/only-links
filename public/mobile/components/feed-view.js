@@ -20,13 +20,14 @@ export class FeedView extends BaseView {
    */
   async load() {
     this.showLoading();
-    
+
     try {
       const data = await fetchWithError(`/api/bookmarks?page=${this.page}&limit=${this.limit}`);
-      
+
       if (data) {
-        this.bookmarks = data.bookmarks || [];
-        this.hasMore = data.hasMore || false;
+        // API returns { items: [], pagination: {} }
+        this.bookmarks = data.items || [];
+        this.hasMore = data.pagination && data.pagination.page < data.pagination.totalPages;
         this.render();
       }
     } catch (err) {
@@ -149,10 +150,10 @@ export class FeedView extends BaseView {
       
       try {
         const data = await fetchWithError(`/api/bookmarks?page=${this.page}&limit=${this.limit}`);
-        
-        if (data && data.bookmarks) {
-          this.bookmarks.push(...data.bookmarks);
-          this.hasMore = data.hasMore || false;
+
+        if (data && data.items) {
+          this.bookmarks.push(...data.items);
+          this.hasMore = data.pagination && data.pagination.page < data.pagination.totalPages;
           this.render();
         }
       } catch (err) {
