@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>only.link — Social bookmarking, reimagined</title>
+  <meta name="description" content="Save, organize, and discover links. Fast, beautiful, focused.">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZHDLY53QX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-4ZHDLY53QX');
+  </script>
+
+  <style>
+    /* ===== RESET & BASE ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Neutrals — warm tint (hue 60 amber) */
+      --bg:      oklch(98% 0.008 60);
+      --surface: oklch(99.5% 0.004 60);
+      --fg:      oklch(18% 0.012 60);
+      --muted:   oklch(52% 0.008 60);
+      --border:  oklch(92% 0.006 60);
+
+      /* Accent — cobalt blue */
+      --accent:  oklch(56% 0.18 250);
+      --accent-hover: oklch(51% 0.18 250);
+
+      /* Typography */
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+      --font-serif: "SF Pro Display", "New York", Georgia, serif;
+
+      /* Spacing (4px base) */
+      --space-1:  4px;
+      --space-2:  8px;
+      --space-3:  12px;
+      --space-4:  16px;
+      --space-6:  24px;
+      --space-8:  32px;
+      --space-12: 48px;
+      --space-16: 64px;
+      --space-20: 80px;
+      --space-24: 96px;
+
+      /* Text scale (1.25 ratio) */
+      --text-xs:   13px;
+      --text-sm:   14px;
+      --text-base: 17px;
+      --text-lg:   21px;
+      --text-xl:   26px;
+      --text-2xl:  32px;
+      --text-3xl:  40px;
+      --text-4xl:  50px;
+
+      /* Motion */
+      --transition: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-fast: 200ms;
+      --duration-base: 300ms;
+
+      /* Elevation */
+      --shadow-sm: 0 1px 3px oklch(18% 0.012 60 / 0.08);
+      --shadow-md: 0 4px 12px oklch(18% 0.012 60 / 0.1);
+      --shadow-lg: 0 8px 24px oklch(18% 0.012 60 / 0.12);
+    }
+
+    html {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      line-height: 1.6;
+      color: var(--fg);
+      background: var(--bg);
+    }
+
+    /* ===== HERO SECTION ===== */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .hero-container {
+      position: relative;
+      z-index: 1;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: var(--space-16) var(--space-8);
+      text-align: center;
+    }
+
+    .hero-title {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-size: 64px;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+      color: var(--fg);
+      margin-bottom: var(--space-8);
+      opacity: 0;
+      animation: fadeInUp 1000ms cubic-bezier(0.16, 1, 0.3, 1) 200ms forwards;
+    }
+
+    @media (min-width: 768px) {
+      .hero-title {
+        font-size: 80px;
+      }
+    }
+
+    .hero-subtitle {
+      font-size: 21px;
+      font-weight: 400;
+      line-height: 1.45;
+      color: var(--muted);
+      max-width: 540px;
+      margin: 0 auto var(--space-16);
+      opacity: 0;
+      animation: fadeInUp 1000ms cubic-bezier(0.16, 1, 0.3, 1) 400ms forwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: var(--space-4);
+      justify-content: center;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeInUp 1000ms cubic-bezier(0.16, 1, 0.3, 1) 600ms forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      height: 40px;
+      padding: 0 var(--space-6);
+      font-size: var(--text-base);
+      font-weight: 600;
+      border-radius: 980px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--duration-fast) var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 1px 3px oklch(from var(--accent) l c h / 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px oklch(from var(--accent) l c h / 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+      border-color: oklch(88% 0.008 60);
+    }
+
+    /* Larger buttons for hero and CTA sections */
+    .hero-cta .btn,
+    .final-cta .btn {
+      height: 52px;
+      padding: 0 var(--space-8);
+      font-size: 17px;
+    }
+
+    /* ===== FEATURES SECTION ===== */
+    .features {
+      padding: 120px var(--space-8) 160px;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-16);
+    }
+
+    @media (max-width: 768px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-12);
+      }
+    }
+
+    .feature-card {
+      text-align: left;
+      opacity: 0;
+      animation: fadeInUp 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .feature-card:nth-child(1) { animation-delay: 100ms; }
+    .feature-card:nth-child(2) { animation-delay: 250ms; }
+    .feature-card:nth-child(3) { animation-delay: 400ms; }
+
+    .feature-icon {
+      font-size: 40px;
+      margin-bottom: var(--space-4);
+      display: block;
+    }
+
+    .feature-title {
+      font-size: 19px;
+      font-weight: 600;
+      margin-bottom: var(--space-3);
+      letter-spacing: -0.01em;
+      color: var(--fg);
+    }
+
+    .feature-description {
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    /* ===== SCREENSHOT SECTION ===== */
+    .screenshot-section {
+      padding: 0 var(--space-8) 160px;
+      background: var(--bg);
+    }
+
+    .screenshot-container {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .screenshot-frame {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px oklch(18% 0.012 60 / 0.12);
+      background: var(--surface);
+      border: 0.5px solid oklch(from var(--border) l c h / 0.4);
+    }
+
+    .screenshot-header {
+      height: 40px;
+      background: oklch(97% 0.004 60);
+      border-bottom: 0.5px solid oklch(from var(--border) l c h / 0.3);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-4);
+      gap: 6px;
+    }
+
+    .screenshot-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: oklch(88% 0.004 60);
+    }
+
+    .screenshot-image {
+      width: 100%;
+      display: block;
+      background: var(--surface);
+      aspect-ratio: 16 / 9.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    /* ===== SOCIAL PROOF ===== */
+    .social-proof {
+      display: none;
+    }
+
+    /* ===== FINAL CTA ===== */
+    .final-cta {
+      padding: 120px var(--space-8) 160px;
+      text-align: center;
+      background: var(--bg);
+    }
+
+    .final-cta-title {
+      font-size: 40px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: var(--space-6);
+      color: var(--fg);
+    }
+
+    .final-cta-subtitle {
+      font-size: 19px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-bottom: var(--space-12);
+    }
+
+    /* ===== NAV BAR ===== */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: oklch(from var(--bg) l c h / 0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.5px solid oklch(from var(--border) l c h / 0.3);
+      transition: all var(--duration-fast) var(--transition);
+    }
+
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .nav-logo-img {
+      height: 32px;
+      width: auto;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: var(--space-6);
+      align-items: center;
+    }
+
+    .nav-link {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color var(--duration-fast) var(--transition);
+    }
+
+    .nav-link:hover {
+      color: var(--fg);
+    }
+
+    @media (max-width: 768px) {
+      .nav-links .nav-link:not(.btn) {
+        display: none;
+      }
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      padding: var(--space-12) var(--space-8);
+      border-top: 0.5px solid oklch(from var(--border) l c h / 0.3);
+      background: var(--bg);
+    }
+
+    .footer-container {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-8);
+    }
+
+    .footer-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: var(--space-6);
+    }
+
+    .footer-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .footer-link:hover {
+      color: var(--fg);
+    }
+
+    /* ===== MODALS ===== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 200;
+      background: oklch(18% 0.012 60 / 0.4);
+      backdrop-filter: blur(10px);
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+      animation: modalFadeIn var(--duration-slow) var(--transition);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      animation: modalSlideUp var(--duration-slow) var(--transition);
+    }
+
+    @keyframes modalSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+    }
+
+    .modal-body {
+      padding: var(--space-6);
+    }
+
+    .modal-footer {
+      padding: var(--space-6);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: var(--space-3);
+      justify-content: flex-end;
+    }
+
+    /* Password strength indicator */
+    .password-strength {
+      margin-top: var(--space-2);
+      font-size: var(--text-xs);
+    }
+
+    .password-requirements {
+      list-style: none;
+      padding: 0;
+      margin: var(--space-2) 0 0 0;
+      display: grid;
+      gap: var(--space-1);
+    }
+
+    .password-requirements li {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--muted);
+      transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .password-requirements li::before {
+      content: '○';
+      font-size: 12px;
+      transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .password-requirements li.met {
+      color: oklch(58% 0.16 145);
+    }
+
+    .password-requirements li.met::before {
+      content: '✓';
+      color: oklch(58% 0.16 145);
+      font-weight: 600;
+    }
+
+    .forgot-password {
+      font-size: var(--text-xs);
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: var(--space-2);
+      display: inline-block;
+    }
+
+    .forgot-password:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== FORMS ===== */
+    .form-group {
+      margin-bottom: var(--space-6);
+    }
+
+    .form-label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: var(--space-2);
+    }
+
+    .form-input {
+      width: 100%;
+      height: 44px;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: var(--text-base);
+      font-family: var(--font-sans);
+      color: var(--fg);
+      transition: all var(--duration-fast) var(--transition);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px oklch(from var(--accent) l c h / 0.1);
+    }
+
+    .form-input::placeholder {
+      color: var(--muted);
+    }
+
+    .form-input-with-icon {
+      position: relative;
+    }
+
+    .form-input-icon {
+      position: absolute;
+      right: var(--space-4);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    .form-input-with-icon .form-input {
+      padding-right: calc(var(--space-4) * 2 + 18px);
+    }
+
+    .form-helper {
+      font-size: var(--text-xs);
+      margin-top: var(--space-2);
+    }
+
+    .form-helper.success {
+      color: oklch(45% 0.12 140);
+    }
+
+    .form-helper.error {
+      color: var(--danger);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVIGATION -->
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="/" class="nav-logo">
+        <img src="/logo.png" alt="only.link" class="nav-logo-img">
+      </a>
+
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#" class="nav-link">Pricing</a>
+        <button class="btn btn-secondary" id="login-btn">Sign in</button>
+        <button class="btn btn-primary" id="register-btn">Get started</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-container">
+      <h1 class="hero-title">
+        Your links.<br>
+        Organized.
+      </h1>
+
+      <p class="hero-subtitle">
+        Save, tag, and find anything in seconds. A modern take on social bookmarking.
+      </p>
+
+      <div class="hero-cta">
+        <button class="btn btn-primary" id="hero-cta-btn">Get started</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">⚡️</span>
+        <h3 class="feature-title">Fast by design</h3>
+        <p class="feature-description">
+          Find any bookmark in milliseconds. Keyboard shortcuts for everything.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">🏷️</span>
+        <h3 class="feature-title">Tags, not folders</h3>
+        <p class="feature-description">
+          One link can live in multiple contexts. No artificial hierarchies.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <span class="feature-icon">🌐</span>
+        <h3 class="feature-title">Share by default</h3>
+        <p class="feature-description">
+          Public bookmarks create shared knowledge. Private when you need it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREENSHOT -->
+  <section class="screenshot-section">
+    <div class="screenshot-container">
+      <div class="screenshot-frame">
+        <div class="screenshot-header">
+          <div class="screenshot-dot"></div>
+          <div class="screenshot-dot"></div>
+          <div class="screenshot-dot"></div>
+        </div>
+        <div class="screenshot-image">
+          [Screenshot of app interface here]
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF -->
+  <section class="social-proof">
+    <h2 class="social-proof-title">Trusted by curators worldwide</h2>
+    <div class="social-proof-stats">
+      <div class="stat">
+        <span class="stat-number">12K+</span>
+        <span class="stat-label">Active users</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">2.4M</span>
+        <span class="stat-label">Links saved</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">450K</span>
+        <span class="stat-label">Tags created</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <h2 class="final-cta-title">Start organizing</h2>
+    <p class="final-cta-subtitle">Free to use. No credit card required.</p>
+    <button class="btn btn-primary" id="final-cta-btn">Get started</button>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      <p class="footer-text">© 2026 only.link. Built with care.</p>
+      <div class="footer-links">
+        <a href="/privacy" class="footer-link">Privacy</a>
+        <a href="/terms" class="footer-link">Terms</a>
+        <a href="/bookmarklet" class="footer-link">Bookmarklet</a>
+        <a href="https://github.com/kardelly/only-links" class="footer-link" target="_blank">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- AUTH MODAL -->
+  <div class="modal" id="auth-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="auth-modal-title">Sign in</h2>
+      </div>
+      <div class="modal-body">
+        <form id="auth-form">
+          <div class="form-group">
+            <label class="form-label" for="auth-username" id="auth-username-label">Username</label>
+            <div class="form-input-with-icon">
+              <input
+                type="text"
+                class="form-input"
+                id="auth-username"
+                placeholder="username or email"
+                required
+              >
+              <span class="form-input-icon" id="username-icon"></span>
+            </div>
+            <p class="form-helper" id="username-helper"></p>
+          </div>
+          <div class="form-group" id="email-group" style="display: none;">
+            <label class="form-label" for="auth-email">Email</label>
+            <input
+              type="email"
+              class="form-input"
+              id="auth-email"
+              placeholder="you@example.com"
+            >
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="auth-password">Password</label>
+            <input
+              type="password"
+              class="form-input"
+              id="auth-password"
+              placeholder="••••••••"
+              required
+            >
+            <a href="#" class="forgot-password" id="forgot-password-link" style="display: none;">Forgot password?</a>
+            <div id="password-strength" class="password-strength" style="display: none;">
+              <ul class="password-requirements">
+                <li id="req-length">At least 8 characters</li>
+                <li id="req-uppercase">One uppercase letter</li>
+                <li id="req-lowercase">One lowercase letter</li>
+                <li id="req-number">One number</li>
+                <li id="req-special">One special character (!@#$%...)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="form-group" id="confirm-password-group" style="display: none;">
+            <label class="form-label" for="auth-confirm-password">Confirm password</label>
+            <input
+              type="password"
+              class="form-input"
+              id="auth-confirm-password"
+              placeholder="••••••••"
+            >
+          </div>
+          <div id="auth-error-alert" class="visually-hidden" style="color: red; margin-bottom: var(--space-4);">
+            <span id="auth-error-message"></span>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="auth-modal-close">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="auth-submit">Sign in</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Reset Modal -->
+  <div class="modal" id="reset-password-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Reset password</h2>
+      </div>
+      <div class="modal-body">
+        <form id="reset-password-form">
+          <div id="reset-step-1">
+            <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
+              Enter your username or email to receive a password reset link.
+            </p>
+            <div class="form-group">
+              <label class="form-label" for="reset-username">Username or Email</label>
+              <input
+                type="text"
+                class="form-input"
+                id="reset-username"
+                placeholder="username or email"
+                required
+              >
+            </div>
+            <div id="reset-error-alert" class="visually-hidden" style="color: red; margin-bottom: var(--space-4);">
+              <span id="reset-error-message"></span>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="reset-modal-close">Cancel</button>
+              <button type="submit" class="btn btn-primary">Request reset</button>
+            </div>
+          </div>
+
+          <div id="reset-step-2" style="display: none;">
+            <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
+              Copy this reset token and enter your new password:
+            </p>
+            <div class="form-group">
+              <label class="form-label">Reset Token</label>
+              <input
+                type="text"
+                class="form-input"
+                id="reset-token-display"
+                readonly
+                style="font-family: monospace; font-size: 13px;"
+              >
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reset-new-password">New Password</label>
+              <input
+                type="password"
+                class="form-input"
+                id="reset-new-password"
+                placeholder="••••••••"
+                required
+              >
+              <div id="reset-password-strength" class="password-strength">
+                <ul class="password-requirements">
+                  <li id="reset-req-length">At least 8 characters</li>
+                  <li id="reset-req-uppercase">One uppercase letter</li>
+                  <li id="reset-req-lowercase">One lowercase letter</li>
+                  <li id="reset-req-number">One number</li>
+                  <li id="reset-req-special">One special character (!@#$%...)</li>
+                </ul>
+              </div>
+            </div>
+            <div id="reset-confirm-error" class="visually-hidden" style="color: red; margin-bottom: var(--space-4);">
+              <span id="reset-confirm-error-message"></span>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="reset-back-btn">Back</button>
+              <button type="button" class="btn btn-primary" id="reset-confirm-btn">Reset password</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    console.log('Landing page script loaded');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, initializing auth controls');
+
+      // Landing page auth modal controls
+      const authModal = document.getElementById('auth-modal');
+      const authModalTitle = document.getElementById('auth-modal-title');
+      const authSubmitBtn = document.getElementById('auth-submit');
+      const loginBtn = document.getElementById('login-btn');
+      const registerBtn = document.getElementById('register-btn');
+      const heroCTABtn = document.getElementById('hero-cta-btn');
+      const authModalClose = document.getElementById('auth-modal-close');
+
+      console.log('Elements found:', {
+        authModal: !!authModal,
+        loginBtn: !!loginBtn,
+        registerBtn: !!registerBtn,
+        heroCTABtn: !!heroCTABtn,
+        authForm: !!document.getElementById('auth-form')
+      });
+
+      let authMode = 'login'; // 'login' or 'register'
+
+      function openAuthModal(mode) {
+        console.log('Opening auth modal, mode:', mode);
+        authMode = mode;
+        authModalTitle.textContent = mode === 'login' ? 'Sign in' : 'Create account';
+        authSubmitBtn.textContent = mode === 'login' ? 'Sign in' : 'Create account';
+
+        // Update username field label and placeholder
+        const usernameLabel = document.getElementById('auth-username-label');
+        const usernameInput = document.getElementById('auth-username');
+        const usernameIcon = document.getElementById('username-icon');
+        const usernameHelper = document.getElementById('username-helper');
+
+        if (mode === 'login') {
+          usernameLabel.textContent = 'Username or Email';
+          usernameInput.placeholder = 'username or email';
+          // Clear validation indicators for login mode
+          usernameIcon.textContent = '';
+          usernameHelper.textContent = '';
+          usernameHelper.className = 'form-helper';
+        } else {
+          usernameLabel.textContent = 'Username';
+          usernameInput.placeholder = 'your-username';
+        }
+
+        // Show/hide registration-only fields
+        const emailGroup = document.getElementById('email-group');
+        const confirmPasswordGroup = document.getElementById('confirm-password-group');
+        const passwordHint = document.getElementById('password-hint');
+        const emailInput = document.getElementById('auth-email');
+        const confirmPasswordInput = document.getElementById('auth-confirm-password');
+
+        if (mode === 'register') {
+          emailGroup.style.display = 'block';
+          confirmPasswordGroup.style.display = 'block';
+          passwordHint.style.display = 'block';
+          emailInput.setAttribute('required', 'required');
+          confirmPasswordInput.setAttribute('required', 'required');
+        } else {
+          emailGroup.style.display = 'none';
+          confirmPasswordGroup.style.display = 'none';
+          passwordHint.style.display = 'none';
+          emailInput.removeAttribute('required');
+          confirmPasswordInput.removeAttribute('required');
+        }
+
+        authModal.classList.add('active');
+      }
+
+      function closeAuthModal() {
+        authModal.classList.remove('active');
+        document.getElementById('auth-form').reset();
+        const errorAlert = document.getElementById('auth-error-alert');
+        if (errorAlert) errorAlert.classList.add('visually-hidden');
+      }
+
+      if (loginBtn) {
+        loginBtn.addEventListener('click', () => openAuthModal('login'));
+        console.log('Login button listener attached');
+      }
+      if (registerBtn) {
+        registerBtn.addEventListener('click', () => openAuthModal('register'));
+        console.log('Register button listener attached');
+      }
+      if (heroCTABtn) {
+        heroCTABtn.addEventListener('click', () => openAuthModal('register'));
+        console.log('Hero CTA button listener attached');
+      }
+
+      const finalCTABtn = document.getElementById('final-cta-btn');
+      if (finalCTABtn) {
+        finalCTABtn.addEventListener('click', () => openAuthModal('register'));
+      }
+      if (authModalClose) authModalClose.addEventListener('click', closeAuthModal);
+
+      // Close modal on backdrop click
+      if (authModal) {
+        authModal.addEventListener('click', (e) => {
+          if (e.target === authModal) closeAuthModal();
+        });
+      }
+
+      // Username availability check (only for register mode)
+      const usernameInput = document.getElementById('auth-username');
+      const usernameIcon = document.getElementById('username-icon');
+      const usernameHelper = document.getElementById('username-helper');
+      let usernameCheckTimeout;
+
+      if (usernameInput) {
+        usernameInput.addEventListener('input', () => {
+          // Only check in register mode
+          if (authMode !== 'register') {
+            usernameIcon.textContent = '';
+            usernameHelper.textContent = '';
+            usernameHelper.className = 'form-helper';
+            return;
+          }
+
+          const username = usernameInput.value.trim();
+
+          // Clear previous timeout
+          clearTimeout(usernameCheckTimeout);
+
+          // Reset if empty
+          if (!username) {
+            usernameIcon.textContent = '';
+            usernameHelper.textContent = '';
+            usernameHelper.className = 'form-helper';
+            return;
+          }
+
+          // Show checking state
+          usernameIcon.textContent = '⏳';
+          usernameHelper.textContent = 'Checking availability...';
+          usernameHelper.className = 'form-helper';
+
+          // Debounce API call
+          usernameCheckTimeout = setTimeout(async () => {
+            try {
+              const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username)}`);
+              const data = await response.json();
+
+              if (data.available) {
+                usernameIcon.textContent = '✅';
+                usernameHelper.textContent = 'Username available';
+                usernameHelper.className = 'form-helper success';
+              } else {
+                usernameIcon.textContent = '❌';
+                usernameHelper.textContent = data.error || 'Username not available';
+                usernameHelper.className = 'form-helper error';
+              }
+            } catch (err) {
+              usernameIcon.textContent = '';
+              usernameHelper.textContent = '';
+              usernameHelper.className = 'form-helper';
+            }
+          }, 500); // 500ms debounce
+        });
+      }
+
+      // Handle form submission
+      const authForm = document.getElementById('auth-form');
+      if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          console.log('Form submitted, mode:', authMode);
+
+          const username = document.getElementById('auth-username').value;
+          const password = document.getElementById('auth-password').value;
+          const url = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+
+          const payload = { username, password };
+
+          // Add register-only fields
+          if (authMode === 'register') {
+            const email = document.getElementById('auth-email').value;
+            const confirmPassword = document.getElementById('auth-confirm-password').value;
+            payload.email = email;
+            payload.confirmPassword = confirmPassword;
+          }
+
+          console.log('Submitting to:', url, { username, email: payload.email });
+
+          try {
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            console.log('Response:', response.status, data);
+
+            if (!response.ok) {
+              throw new Error(data.error || 'Authentication failed');
+            }
+
+            // Success - redirect to app
+            console.log('Success! Redirecting to /app');
+            window.location.href = '/app';
+          } catch (err) {
+            console.error('Auth error:', err);
+            const errorAlert = document.getElementById('auth-error-alert');
+            const errorMessage = document.getElementById('auth-error-message');
+            if (errorMessage) errorMessage.textContent = err.message;
+            if (errorAlert) {
+              errorAlert.classList.remove('visually-hidden');
+              errorAlert.style.display = 'block';
+            }
+          }
+        });
+        console.log('Form submit listener attached');
+      }
+
+      // ==========================================
+      // PASSWORD STRENGTH INDICATOR
+      // ==========================================
+      const passwordInput = document.getElementById('auth-password');
+      const passwordStrength = document.getElementById('password-strength');
+      const forgotPasswordLink = document.getElementById('forgot-password-link');
+
+      function checkPasswordStrength(password) {
+        const requirements = {
+          length: password.length >= 8,
+          uppercase: /[A-Z]/.test(password),
+          lowercase: /[a-z]/.test(password),
+          number: /[0-9]/.test(password),
+          special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+        };
+
+        document.getElementById('req-length').classList.toggle('met', requirements.length);
+        document.getElementById('req-uppercase').classList.toggle('met', requirements.uppercase);
+        document.getElementById('req-lowercase').classList.toggle('met', requirements.lowercase);
+        document.getElementById('req-number').classList.toggle('met', requirements.number);
+        document.getElementById('req-special').classList.toggle('met', requirements.special);
+
+        return requirements;
+      }
+
+      if (passwordInput) {
+        passwordInput.addEventListener('input', () => {
+          if (authMode === 'register' && passwordInput.value) {
+            passwordStrength.style.display = 'block';
+            checkPasswordStrength(passwordInput.value);
+          } else {
+            passwordStrength.style.display = 'none';
+          }
+        });
+      }
+
+      // ==========================================
+      // PASSWORD RESET MODAL
+      // ==========================================
+      const resetModal = document.getElementById('reset-password-modal');
+      const resetModalClose = document.getElementById('reset-modal-close');
+      const resetForm = document.getElementById('reset-password-form');
+      const resetStep1 = document.getElementById('reset-step-1');
+      const resetStep2 = document.getElementById('reset-step-2');
+      const resetBackBtn = document.getElementById('reset-back-btn');
+      const resetConfirmBtn = document.getElementById('reset-confirm-btn');
+      const resetNewPassword = document.getElementById('reset-new-password');
+
+      let currentResetToken = null;
+
+      if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          closeAuthModal();
+          resetModal.classList.add('active');
+          resetStep1.style.display = 'block';
+          resetStep2.style.display = 'none';
+        });
+      }
+
+      if (resetModalClose) {
+        resetModalClose.addEventListener('click', () => {
+          resetModal.classList.remove('active');
+          resetForm.reset();
+        });
+      }
+
+      if (resetBackBtn) {
+        resetBackBtn.addEventListener('click', () => {
+          resetStep2.style.display = 'none';
+          resetStep1.style.display = 'block';
+        });
+      }
+
+      // Reset password strength indicator for reset modal
+      if (resetNewPassword) {
+        resetNewPassword.addEventListener('input', () => {
+          const password = resetNewPassword.value;
+          if (password) {
+            const requirements = {
+              length: password.length >= 8,
+              uppercase: /[A-Z]/.test(password),
+              lowercase: /[a-z]/.test(password),
+              number: /[0-9]/.test(password),
+              special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+            };
+
+            document.getElementById('reset-req-length').classList.toggle('met', requirements.length);
+            document.getElementById('reset-req-uppercase').classList.toggle('met', requirements.uppercase);
+            document.getElementById('reset-req-lowercase').classList.toggle('met', requirements.lowercase);
+            document.getElementById('reset-req-number').classList.toggle('met', requirements.number);
+            document.getElementById('reset-req-special').classList.toggle('met', requirements.special);
+          }
+        });
+      }
+
+      // Step 1: Request reset token
+      if (resetForm) {
+        resetForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const usernameOrEmail = document.getElementById('reset-username').value;
+          const errorAlert = document.getElementById('reset-error-alert');
+          const errorMessage = document.getElementById('reset-error-message');
+
+          try {
+            const response = await fetch('/api/auth/request-password-reset', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ usernameOrEmail })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              throw new Error(data.error || 'Failed to request reset');
+            }
+
+            if (data.resetToken) {
+              currentResetToken = data.resetToken;
+              document.getElementById('reset-token-display').value = data.resetToken;
+              resetStep1.style.display = 'none';
+              resetStep2.style.display = 'block';
+            }
+          } catch (err) {
+            if (errorMessage) errorMessage.textContent = err.message;
+            if (errorAlert) errorAlert.classList.remove('visually-hidden');
+          }
+        });
+      }
+
+      // Step 2: Confirm password reset
+      if (resetConfirmBtn) {
+        resetConfirmBtn.addEventListener('click', async () => {
+          const newPassword = resetNewPassword.value;
+          const errorAlert = document.getElementById('reset-confirm-error');
+          const errorMessage = document.getElementById('reset-confirm-error-message');
+
+          if (!newPassword) {
+            if (errorMessage) errorMessage.textContent = 'Please enter a new password';
+            if (errorAlert) errorAlert.classList.remove('visually-hidden');
+            return;
+          }
+
+          try {
+            const response = await fetch('/api/auth/reset-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: currentResetToken, newPassword })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              throw new Error(data.error || 'Failed to reset password');
+            }
+
+            alert('Password reset successfully! You can now log in with your new password.');
+            resetModal.classList.remove('active');
+            resetForm.reset();
+            openAuthModal('login');
+          } catch (err) {
+            if (errorMessage) errorMessage.textContent = err.message;
+            if (errorAlert) errorAlert.classList.remove('visually-hidden');
+          }
+        });
+      }
+
+      // Show forgot password link only in login mode
+      if (forgotPasswordLink) {
+        const observer = new MutationObserver(() => {
+          forgotPasswordLink.style.display = authMode === 'login' ? 'inline-block' : 'none';
+        });
+      }
+    });
+  </script>
+</body>
+</html>
