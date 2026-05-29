@@ -58,6 +58,8 @@ class MobileApp {
 
       if (!data || !data.user) {
         console.log('[MobileApp] Not authenticated, redirecting to login');
+        // Prevent redirect loop by setting flag before redirecting
+        sessionStorage.setItem('mobile_redirect_attempted', 'skip');
         window.location.href = '/';
         return false;
       }
@@ -67,6 +69,8 @@ class MobileApp {
       return true;
     } catch (err) {
       console.error('[MobileApp] Auth check failed:', err);
+      // Prevent redirect loop by setting flag before redirecting
+      sessionStorage.setItem('mobile_redirect_attempted', 'skip');
       window.location.href = '/';
       return false;
     }

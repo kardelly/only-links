@@ -19,9 +19,15 @@
     (function() {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html';
+      const redirectFlag = sessionStorage.getItem('mobile_redirect_attempted');
 
-      if (isMobile && isHomePage) {
-        window.location.href = '/mobile/app';
+      // Only redirect if mobile, on homepage, and not coming back from failed auth
+      if (isMobile && isHomePage && redirectFlag !== 'skip') {
+        sessionStorage.setItem('mobile_redirect_attempted', 'true');
+        window.location.replace('/mobile/app');
+      } else if (redirectFlag === 'skip') {
+        // Clear the skip flag so next session can redirect again
+        sessionStorage.removeItem('mobile_redirect_attempted');
       }
     })();
   </script>
