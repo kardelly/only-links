@@ -26,6 +26,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/components/header-styles.css">
+  <link rel="stylesheet" href="/components/auth-modal-styles.css">
   <link rel="stylesheet" href="/components/shared-styles.css">
 
   <style>
@@ -714,6 +715,9 @@
   <!-- HEADER -->
   <div id="header-placeholder"></div>
 
+  <!-- AUTH MODAL -->
+  <div id="auth-modal-placeholder"></div>
+
   <!-- MAIN CONTENT -->
   <main class="container">
     <!-- PROFILE HEADER -->
@@ -828,71 +832,8 @@
     </div>
   </div>
 
-  <!-- BOOKMARK MODAL -->
-  <div class="modal" id="bookmark-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">Add new link</h2>
-      </div>
-      <div class="modal-body">
-        <form id="bookmark-form">
-          <div class="form-group">
-            <label class="form-label" for="bookmark-url">URL</label>
-            <input
-              type="text"
-              class="form-input"
-              id="bookmark-url"
-              placeholder="example.com or https://example.com"
-              required
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="bookmark-title">Title</label>
-            <input
-              type="text"
-              class="form-input"
-              id="bookmark-title"
-              placeholder="A great article"
-              required
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="bookmark-description">Description</label>
-            <textarea
-              class="form-textarea"
-              id="bookmark-description"
-              placeholder="What's this about?"
-            ></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="bookmark-tags">Tags</label>
-            <input
-              type="text"
-              class="form-input"
-              id="bookmark-tags"
-              placeholder="design, frontend, inspiration (comma-separated)"
-            >
-          </div>
-          <div class="form-group">
-            <div class="toggle-container">
-              <div>
-                <div class="toggle-label">Public link</div>
-                <div class="toggle-description">Anyone can see this bookmark</div>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="bookmark-is-public" checked>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" id="bookmark-modal-close">Cancel</button>
-            <button type="submit" class="btn btn-primary" id="bookmark-submit">Save link</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+  <!-- BOOKMARK MODALS -->
+  <div id="bookmark-modals-placeholder"></div>
 
   <!-- FOLLOWERS/FOLLOWING MODAL -->
   <div class="modal" id="users-modal">
@@ -912,6 +853,8 @@
   </div>
 
   <script src="/components/header.js"></script>
+  <script src="/components/auth-modal.js"></script>
+  <script src="/components/bookmark-modals.js"></script>
   <script src="/components/sidebar-tags.js"></script>
   <script src="/profile.js"></script>
 </body>

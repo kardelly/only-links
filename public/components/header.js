@@ -148,10 +148,10 @@ function setupHeaderListeners() {
     });
   }
 
-  // Register button
-  const registerBtn = document.getElementById('register-btn');
-  if (registerBtn) {
-    registerBtn.addEventListener('click', () => {
+  // Signup button
+  const signupBtn = document.getElementById('signup-btn');
+  if (signupBtn) {
+    signupBtn.addEventListener('click', () => {
       // Trigger auth modal if available
       const authModal = document.getElementById('auth-modal');
       if (authModal) {

@@ -26,6 +26,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/components/header-styles.css">
+  <link rel="stylesheet" href="/components/auth-modal-styles.css">
   <link rel="stylesheet" href="/components/shared-styles.css">
 
   <style>
@@ -936,6 +937,9 @@
   <!-- HEADER -->
   <div id="header-placeholder"></div>
 
+  <!-- AUTH MODAL -->
+  <div id="auth-modal-placeholder"></div>
+
   <!-- MAIN CONTENT -->
   <main class="container">
     <div class="layout">
@@ -1038,91 +1042,12 @@
     </div>
   </div>
 
-  <!-- BOOKMARK MODAL -->
-  <div class="modal" id="bookmark-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">Add new bookmark</h2>
-      </div>
-      <div class="modal-body">
-        <form id="bookmark-form">
-          <div class="form-group">
-            <label class="form-label" for="bookmark-url">URL</label>
-            <input
-              type="text"
-              class="form-input"
-              id="bookmark-url"
-              placeholder="example.com or https://example.com"
-              required
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="bookmark-title">Title</label>
-            <input
-              type="text"
-              class="form-input"
-              id="bookmark-title"
-              placeholder="A great article"
-              required
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="bookmark-description">Description</label>
-            <textarea
-              class="form-textarea"
-              id="bookmark-description"
-              placeholder="What's this about?"
-            ></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="bookmark-tags">Tags</label>
-            <input
-              type="text"
-              class="form-input"
-              id="bookmark-tags"
-              placeholder="design, frontend, inspiration (comma-separated)"
-            >
-          </div>
-          <div class="form-group">
-            <div class="toggle-container">
-              <div>
-                <div class="toggle-label">Public link</div>
-                <div class="toggle-description">Anyone can see this bookmark</div>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="bookmark-is-public" checked>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" id="bookmark-modal-close">Cancel</button>
-            <button type="submit" class="btn btn-primary" id="bookmark-submit">Save bookmark</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- DELETE CONFIRMATION MODAL -->
-  <div class="modal" id="delete-confirmation-modal">
-    <div class="modal-content" style="max-width: 440px;">
-      <div class="modal-header">
-        <h2 class="modal-title">Delete bookmark?</h2>
-      </div>
-      <div class="modal-body">
-        <p style="font-size: var(--text-base); color: var(--fg); line-height: 1.6;">
-          This will permanently delete this bookmark. This action cannot be undone.
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="delete-cancel-btn">Cancel</button>
-        <button type="button" class="btn btn-danger" id="delete-confirm-btn">Delete</button>
-      </div>
-    </div>
-  </div>
+  <!-- BOOKMARK MODALS -->
+  <div id="bookmark-modals-placeholder"></div>
 
   <script src="/components/header.js"></script>
+  <script src="/components/auth-modal.js"></script>
+  <script src="/components/bookmark-modals.js"></script>
   <script src="/components/sidebar-tags.js"></script>
   <script src="/app.js"></script>
 </body>
