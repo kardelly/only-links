@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0066cc">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Delicious">
+    <title>Delicious Mobile</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/mobile/manifest.json">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/mobile/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/mobile/icons/icon-512.png">
+    <link rel="apple-touch-icon" href="/mobile/icons/icon-192.png">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/mobile/mobile-styles.css">
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="logo">Delicious</div>
+        <button class="search-button" aria-label="Search">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+        <!-- Feed View -->
+        <div id="feed-view" class="view active">
+            <div class="view-content">
+                <!-- Feed content will be injected here -->
+            </div>
+        </div>
+
+        <!-- Search View -->
+        <div id="search-view" class="view">
+            <div class="view-content">
+                <!-- Search content will be injected here -->
+            </div>
+        </div>
+
+        <!-- Tags View -->
+        <div id="tags-view" class="view">
+            <div class="view-content">
+                <!-- Tags content will be injected here -->
+            </div>
+        </div>
+
+        <!-- Profile View -->
+        <div id="profile-view" class="view">
+            <div class="view-content">
+                <!-- Profile content will be injected here -->
+            </div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="settings-view" class="view">
+            <div class="view-content">
+                <!-- Settings content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-view="feed-view" aria-label="Feed">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+            <span>Feed</span>
+        </button>
+        <button class="nav-item" data-view="search-view" aria-label="Search">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <span>Search</span>
+        </button>
+        <button class="nav-item" data-view="tags-view" aria-label="Tags">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+            </svg>
+            <span>Tags</span>
+        </button>
+        <button class="nav-item" data-view="profile-view" aria-label="Profile">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Profile</span>
+        </button>
+    </nav>
+
+    <!-- App Script -->
+    <script type="module" src="/mobile/mobile-app.js"></script>
+</body>
+</html>
