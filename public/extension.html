@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome Extension — only.link</title>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZHDLY53QX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-4ZHDLY53QX');
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg:      oklch(98% 0.008 60);
+      --surface: oklch(99.5% 0.004 60);
+      --fg:      oklch(18% 0.012 60);
+      --muted:   oklch(52% 0.008 60);
+      --border:  oklch(92% 0.006 60);
+      --accent:  oklch(56% 0.18 250);
+      --accent-hover: oklch(51% 0.18 250);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--fg);
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 17px;
+      color: var(--muted);
+      margin-bottom: 40px;
+    }
+
+    .download-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .download-btn {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 17px;
+      transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      margin: 12px 0;
+    }
+
+    .download-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .version {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 48px 0 20px 0;
+      letter-spacing: -0.01em;
+    }
+
+    ol {
+      margin-left: 24px;
+      margin-bottom: 24px;
+    }
+
+    li {
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+
+    code {
+      background: oklch(95% 0.004 60);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 14px;
+    }
+
+    .note {
+      background: oklch(96% 0.016 60);
+      border-left: 3px solid oklch(75% 0.12 60);
+      padding: 16px;
+      margin: 24px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .screenshot {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 40px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 15px;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin: 20px 0;
+    }
+
+    .feature-list li {
+      padding-left: 28px;
+      position: relative;
+    }
+
+    .feature-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: oklch(58% 0.16 145);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chrome Extension</h1>
+    <p class="subtitle">Save any webpage to only.link with a single click from your browser toolbar.</p>
+
+    <div class="download-box">
+      <h2 style="margin-top: 0;">📦 Download Extension</h2>
+      <p style="color: var(--muted); margin-bottom: 16px;">Coming soon to Chrome Web Store</p>
+      <a href="https://github.com/kardelly/only-links/tree/main/chrome-extension" class="download-btn" target="_blank">
+        Download from GitHub
+      </a>
+      <p class="version">Version 1.0.0 • For Chrome, Edge, Brave</p>
+    </div>
+
+    <h2>Features</h2>
+    <ul class="feature-list">
+      <li>One-click bookmark saving</li>
+      <li>Add tags directly from the extension</li>
+      <li>Public/private bookmarks</li>
+      <li>Automatically captures page title and URL</li>
+      <li>Captures selected text as description</li>
+      <li>Works offline (saves when you're back online)</li>
+    </ul>
+
+    <h2>Installation (Manual)</h2>
+    <ol>
+      <li>Download the extension from GitHub (link above)</li>
+      <li>Extract the ZIP file</li>
+      <li>Open Chrome and go to <code>chrome://extensions/</code></li>
+      <li>Enable <strong>"Developer mode"</strong> (toggle in top right)</li>
+      <li>Click <strong>"Load unpacked"</strong></li>
+      <li>Select the <code>chrome-extension</code> folder</li>
+      <li>Done! The extension is now installed</li>
+    </ol>
+
+    <div class="note">
+      <strong>💡 Works on:</strong> Chrome, Microsoft Edge, Brave, and any Chromium-based browser that supports Manifest V3.
+    </div>
+
+    <h2>How to use</h2>
+    <ol>
+      <li>Navigate to any webpage you want to save</li>
+      <li>Click the <strong>only.link</strong> icon in your browser toolbar</li>
+      <li>A popup will show the page details</li>
+      <li>Add tags, adjust title/description</li>
+      <li>Click "Save bookmark"</li>
+      <li>Done!</li>
+    </ol>
+
+    <div class="note">
+      <strong>💡 Pro tip:</strong> Select text on the page before clicking the extension icon - it will be used as the description!
+    </div>
+
+    <h2>Keyboard Shortcut (Optional)</h2>
+    <p>You can set up a keyboard shortcut for even faster saving:</p>
+    <ol>
+      <li>Go to <code>chrome://extensions/shortcuts</code></li>
+      <li>Find "only.link - Quick Save"</li>
+      <li>Set your preferred shortcut (e.g., <code>Ctrl+Shift+D</code>)</li>
+    </ol>
+
+    <h2>Alternative: Bookmarklet</h2>
+    <p>Don't want to install an extension? Try our bookmarklet instead - it works on any browser!</p>
+    <p style="margin-top: 12px;"><a href="/bookmarklet" style="color: var(--accent);">Get the Bookmarklet →</a></p>
+
+    <a href="/app" class="back-link">← Back to only.link</a>
+  </div>
+</body>
+</html>

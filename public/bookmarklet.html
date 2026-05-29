@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Save Bookmarklet — only.link</title>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZHDLY53QX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-4ZHDLY53QX');
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg:      oklch(98% 0.008 60);
+      --surface: oklch(99.5% 0.004 60);
+      --fg:      oklch(18% 0.012 60);
+      --muted:   oklch(52% 0.008 60);
+      --border:  oklch(92% 0.006 60);
+      --accent:  oklch(56% 0.18 250);
+      --accent-hover: oklch(51% 0.18 250);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--fg);
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 17px;
+      color: var(--muted);
+      margin-bottom: 40px;
+    }
+
+    .bookmarklet-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+
+    .bookmarklet-button {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 17px;
+      cursor: move;
+      transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .bookmarklet-button:hover {
+      background: var(--accent-hover);
+    }
+
+    .instruction {
+      margin-top: 20px;
+      padding: 16px;
+      background: oklch(96% 0.02 250);
+      border-radius: 8px;
+      font-size: 15px;
+      color: var(--fg);
+    }
+
+    .instruction strong {
+      color: var(--fg);
+      font-weight: 600;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 48px 0 20px 0;
+      letter-spacing: -0.01em;
+    }
+
+    ol, ul {
+      margin-left: 24px;
+      margin-bottom: 24px;
+    }
+
+    li {
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+
+    code {
+      background: oklch(95% 0.004 60);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 14px;
+    }
+
+    .note {
+      background: oklch(96% 0.016 60);
+      border-left: 3px solid oklch(75% 0.12 60);
+      padding: 16px;
+      margin: 24px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 40px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 15px;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Quick Save Bookmarklet</h1>
+    <p class="subtitle">Save any page to only.link with a single click from your bookmarks bar.</p>
+
+    <div class="bookmarklet-box">
+      <h2 style="margin-top: 0;">📌 Drag this button to your bookmarks bar:</h2>
+      <a href="javascript:(function(){var%20d=document,w=window,l=location,t=d.title,u=l.href,s=d.getSelection?d.getSelection().toString():d.selection?d.selection.createRange().text:'',api='https://onlylinks.id';if(!w.__onlyLinkSaving){w.__onlyLinkSaving=true;var%20popup=w.open(api+'/api/bookmarklet?url='+encodeURIComponent(u)+'&title='+encodeURIComponent(t)+'&description='+encodeURIComponent(s),'onlyLinkSave','width=600,height=700,scrollbars=yes');if(popup){var%20check=setInterval(function(){if(popup.closed){clearInterval(check);delete%20w.__onlyLinkSaving;}},500);}else{alert('Please allow popups for onlylinks.id');delete%20w.__onlyLinkSaving;}}else{alert('Already saving...');}})();" class="bookmarklet-button">+ only.link</a>
+
+      <div class="instruction">
+        <strong>👆 Drag the button above to your bookmarks bar</strong><br>
+        Then click it on any page you want to save!
+      </div>
+    </div>
+
+    <h2>How to install</h2>
+    <ol>
+      <li><strong>Show your bookmarks bar</strong> (if hidden):
+        <ul>
+          <li>Chrome/Edge: Press <code>Ctrl+Shift+B</code> (Windows) or <code>Cmd+Shift+B</code> (Mac)</li>
+          <li>Firefox: Press <code>Ctrl+Shift+B</code> (Windows) or <code>Cmd+Shift+B</code> (Mac)</li>
+          <li>Safari: View → Show Favorites Bar</li>
+        </ul>
+      </li>
+      <li><strong>Drag the "+ only.link" button</strong> above to your bookmarks bar</li>
+      <li>Done! Now visit any page and click the bookmarklet to save it</li>
+    </ol>
+
+    <h2>How to use</h2>
+    <ol>
+      <li>Navigate to any webpage you want to save</li>
+      <li>Click the <strong>+ only.link</strong> button in your bookmarks bar</li>
+      <li>A popup will open with the page details pre-filled</li>
+      <li>Add tags, adjust the title, and save!</li>
+    </ol>
+
+    <div class="note">
+      <strong>💡 Pro tip:</strong> Select text on the page before clicking the bookmarklet - it will be used as the description!
+    </div>
+
+    <h2>Alternative: Chrome Extension</h2>
+    <p>For a more integrated experience, you can install our Chrome extension.</p>
+    <p style="margin-top: 12px;"><a href="/extension" style="color: var(--accent);">Download Chrome Extension →</a></p>
+
+    <a href="/app" class="back-link">← Back to only.link</a>
+  </div>
+</body>
+</html>

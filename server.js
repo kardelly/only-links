@@ -35,7 +35,11 @@ import {
   unfollowUser,
   isFollowing,
   getFollowingCount,
-  getFollowersCount
+  getFollowersCount,
+  createPasswordResetToken,
+  getUserByResetToken,
+  deletePasswordResetToken,
+  cleanupExpiredResetTokens
 } from './database.js';
 
 // ==========================================
@@ -514,6 +518,88 @@ app.get('/api/auth/check-username', async (req, res) => {
   } catch (err) {
     console.error('Check Username Error:', err);
     res.status(500).json({ available: false, error: 'Error checking username' });
+  }
+});
+
+// POST /api/auth/request-password-reset - Request password reset
+app.post('/api/auth/request-password-reset', authLimiter, async (req, res) => {
+  const { usernameOrEmail } = req.body;
+
+  if (!usernameOrEmail) {
+    return res.status(400).json({ error: 'Please enter your username or email' });
+  }
+
+  try {
+    const identifier = usernameOrEmail.toLowerCase().trim();
+    let user = await getUserByUsername(identifier);
+
+    if (!user) {
+      user = await getUserByEmail(identifier);
+    }
+
+    // Always return success to prevent user enumeration
+    if (!user) {
+      return res.json({
+        message: 'If an account exists with that username/email, a password reset link has been generated.',
+        resetToken: null
+      });
+    }
+
+    // Generate reset token
+    const crypto = await import('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Store token in database (expires in 1 hour)
+    await createPasswordResetToken(user.id, resetToken, 60);
+
+    // In a real app, this would be emailed. For now, return it in response (development only)
+    res.json({
+      message: 'Password reset token generated successfully',
+      resetToken: resetToken,
+      username: user.username
+    });
+  } catch (err) {
+    console.error('Request Password Reset Error:', err);
+    res.status(500).json({ error: 'Failed to process password reset request' });
+  }
+});
+
+// POST /api/auth/reset-password - Reset password with token
+app.post('/api/auth/reset-password', authLimiter, async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: 'Token and new password are required' });
+  }
+
+  // Validate password
+  const passwordValidation = validatePassword(newPassword);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({ error: passwordValidation.error });
+  }
+
+  try {
+    // Verify token and get user ID
+    const userId = await getUserByResetToken(token);
+
+    if (!userId) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    await updateUserPassword(userId, hashedPassword);
+
+    // Delete used token
+    await deletePasswordResetToken(token);
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (err) {
+    console.error('Reset Password Error:', err);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 
@@ -1242,6 +1328,16 @@ app.get('/user/:username', (req, res) => {
 // Serve settings page
 app.get('/settings', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'settings.html'));
+});
+
+// Serve bookmarklet instructions
+app.get('/bookmarklet', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bookmarklet.html'));
+});
+
+// Serve bookmarklet save popup
+app.get('/api/bookmarklet', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'save-popup.html'));
 });
 
 // Fallback: serve index.html (landing page) for other routes

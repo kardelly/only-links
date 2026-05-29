@@ -6,6 +6,15 @@
   <title>only.link — Social bookmarking, reimagined</title>
   <meta name="description" content="Save, organize, and discover links. Fast, beautiful, focused.">
 
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZHDLY53QX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-4ZHDLY53QX');
+  </script>
+
   <style>
     /* ===== RESET & BASE ===== */
     * {
@@ -506,6 +515,57 @@
       justify-content: flex-end;
     }
 
+    /* Password strength indicator */
+    .password-strength {
+      margin-top: var(--space-2);
+      font-size: var(--text-xs);
+    }
+
+    .password-requirements {
+      list-style: none;
+      padding: 0;
+      margin: var(--space-2) 0 0 0;
+      display: grid;
+      gap: var(--space-1);
+    }
+
+    .password-requirements li {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--muted);
+      transition: color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .password-requirements li::before {
+      content: '○';
+      font-size: 12px;
+      transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .password-requirements li.met {
+      color: oklch(58% 0.16 145);
+    }
+
+    .password-requirements li.met::before {
+      content: '✓';
+      color: oklch(58% 0.16 145);
+      font-weight: 600;
+    }
+
+    .forgot-password {
+      font-size: var(--text-xs);
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: var(--space-2);
+      display: inline-block;
+    }
+
+    .forgot-password:hover {
+      text-decoration: underline;
+    }
+
     /* ===== FORMS ===== */
     .form-group {
       margin-bottom: var(--space-6);
@@ -746,9 +806,16 @@
               placeholder="••••••••"
               required
             >
-            <p id="password-hint" style="display: none; font-size: var(--text-xs); color: var(--muted); margin-top: var(--space-2);">
-              Min. 8 characters with letters, numbers, and special characters (!@#$%...)
-            </p>
+            <a href="#" class="forgot-password" id="forgot-password-link" style="display: none;">Forgot password?</a>
+            <div id="password-strength" class="password-strength" style="display: none;">
+              <ul class="password-requirements">
+                <li id="req-length">At least 8 characters</li>
+                <li id="req-uppercase">One uppercase letter</li>
+                <li id="req-lowercase">One lowercase letter</li>
+                <li id="req-number">One number</li>
+                <li id="req-special">One special character (!@#$%...)</li>
+              </ul>
+            </div>
           </div>
           <div class="form-group" id="confirm-password-group" style="display: none;">
             <label class="form-label" for="auth-confirm-password">Confirm password</label>
@@ -765,6 +832,83 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" id="auth-modal-close">Cancel</button>
             <button type="submit" class="btn btn-primary" id="auth-submit">Sign in</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Reset Modal -->
+  <div class="modal" id="reset-password-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Reset password</h2>
+      </div>
+      <div class="modal-body">
+        <form id="reset-password-form">
+          <div id="reset-step-1">
+            <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
+              Enter your username or email to receive a password reset link.
+            </p>
+            <div class="form-group">
+              <label class="form-label" for="reset-username">Username or Email</label>
+              <input
+                type="text"
+                class="form-input"
+                id="reset-username"
+                placeholder="username or email"
+                required
+              >
+            </div>
+            <div id="reset-error-alert" class="visually-hidden" style="color: red; margin-bottom: var(--space-4);">
+              <span id="reset-error-message"></span>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="reset-modal-close">Cancel</button>
+              <button type="submit" class="btn btn-primary">Request reset</button>
+            </div>
+          </div>
+
+          <div id="reset-step-2" style="display: none;">
+            <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
+              Copy this reset token and enter your new password:
+            </p>
+            <div class="form-group">
+              <label class="form-label">Reset Token</label>
+              <input
+                type="text"
+                class="form-input"
+                id="reset-token-display"
+                readonly
+                style="font-family: monospace; font-size: 13px;"
+              >
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reset-new-password">New Password</label>
+              <input
+                type="password"
+                class="form-input"
+                id="reset-new-password"
+                placeholder="••••••••"
+                required
+              >
+              <div id="reset-password-strength" class="password-strength">
+                <ul class="password-requirements">
+                  <li id="reset-req-length">At least 8 characters</li>
+                  <li id="reset-req-uppercase">One uppercase letter</li>
+                  <li id="reset-req-lowercase">One lowercase letter</li>
+                  <li id="reset-req-number">One number</li>
+                  <li id="reset-req-special">One special character (!@#$%...)</li>
+                </ul>
+              </div>
+            </div>
+            <div id="reset-confirm-error" class="visually-hidden" style="color: red; margin-bottom: var(--space-4);">
+              <span id="reset-confirm-error-message"></span>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" id="reset-back-btn">Back</button>
+              <button type="button" class="btn btn-primary" id="reset-confirm-btn">Reset password</button>
+            </div>
           </div>
         </form>
       </div>
@@ -987,6 +1131,181 @@
           }
         });
         console.log('Form submit listener attached');
+      }
+
+      // ==========================================
+      // PASSWORD STRENGTH INDICATOR
+      // ==========================================
+      const passwordInput = document.getElementById('auth-password');
+      const passwordStrength = document.getElementById('password-strength');
+      const forgotPasswordLink = document.getElementById('forgot-password-link');
+
+      function checkPasswordStrength(password) {
+        const requirements = {
+          length: password.length >= 8,
+          uppercase: /[A-Z]/.test(password),
+          lowercase: /[a-z]/.test(password),
+          number: /[0-9]/.test(password),
+          special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+        };
+
+        document.getElementById('req-length').classList.toggle('met', requirements.length);
+        document.getElementById('req-uppercase').classList.toggle('met', requirements.uppercase);
+        document.getElementById('req-lowercase').classList.toggle('met', requirements.lowercase);
+        document.getElementById('req-number').classList.toggle('met', requirements.number);
+        document.getElementById('req-special').classList.toggle('met', requirements.special);
+
+        return requirements;
+      }
+
+      if (passwordInput) {
+        passwordInput.addEventListener('input', () => {
+          if (authMode === 'register' && passwordInput.value) {
+            passwordStrength.style.display = 'block';
+            checkPasswordStrength(passwordInput.value);
+          } else {
+            passwordStrength.style.display = 'none';
+          }
+        });
+      }
+
+      // ==========================================
+      // PASSWORD RESET MODAL
+      // ==========================================
+      const resetModal = document.getElementById('reset-password-modal');
+      const resetModalClose = document.getElementById('reset-modal-close');
+      const resetForm = document.getElementById('reset-password-form');
+      const resetStep1 = document.getElementById('reset-step-1');
+      const resetStep2 = document.getElementById('reset-step-2');
+      const resetBackBtn = document.getElementById('reset-back-btn');
+      const resetConfirmBtn = document.getElementById('reset-confirm-btn');
+      const resetNewPassword = document.getElementById('reset-new-password');
+
+      let currentResetToken = null;
+
+      if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          closeAuthModal();
+          resetModal.classList.add('active');
+          resetStep1.style.display = 'block';
+          resetStep2.style.display = 'none';
+        });
+      }
+
+      if (resetModalClose) {
+        resetModalClose.addEventListener('click', () => {
+          resetModal.classList.remove('active');
+          resetForm.reset();
+        });
+      }
+
+      if (resetBackBtn) {
+        resetBackBtn.addEventListener('click', () => {
+          resetStep2.style.display = 'none';
+          resetStep1.style.display = 'block';
+        });
+      }
+
+      // Reset password strength indicator for reset modal
+      if (resetNewPassword) {
+        resetNewPassword.addEventListener('input', () => {
+          const password = resetNewPassword.value;
+          if (password) {
+            const requirements = {
+              length: password.length >= 8,
+              uppercase: /[A-Z]/.test(password),
+              lowercase: /[a-z]/.test(password),
+              number: /[0-9]/.test(password),
+              special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+            };
+
+            document.getElementById('reset-req-length').classList.toggle('met', requirements.length);
+            document.getElementById('reset-req-uppercase').classList.toggle('met', requirements.uppercase);
+            document.getElementById('reset-req-lowercase').classList.toggle('met', requirements.lowercase);
+            document.getElementById('reset-req-number').classList.toggle('met', requirements.number);
+            document.getElementById('reset-req-special').classList.toggle('met', requirements.special);
+          }
+        });
+      }
+
+      // Step 1: Request reset token
+      if (resetForm) {
+        resetForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const usernameOrEmail = document.getElementById('reset-username').value;
+          const errorAlert = document.getElementById('reset-error-alert');
+          const errorMessage = document.getElementById('reset-error-message');
+
+          try {
+            const response = await fetch('/api/auth/request-password-reset', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ usernameOrEmail })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              throw new Error(data.error || 'Failed to request reset');
+            }
+
+            if (data.resetToken) {
+              currentResetToken = data.resetToken;
+              document.getElementById('reset-token-display').value = data.resetToken;
+              resetStep1.style.display = 'none';
+              resetStep2.style.display = 'block';
+            }
+          } catch (err) {
+            if (errorMessage) errorMessage.textContent = err.message;
+            if (errorAlert) errorAlert.classList.remove('visually-hidden');
+          }
+        });
+      }
+
+      // Step 2: Confirm password reset
+      if (resetConfirmBtn) {
+        resetConfirmBtn.addEventListener('click', async () => {
+          const newPassword = resetNewPassword.value;
+          const errorAlert = document.getElementById('reset-confirm-error');
+          const errorMessage = document.getElementById('reset-confirm-error-message');
+
+          if (!newPassword) {
+            if (errorMessage) errorMessage.textContent = 'Please enter a new password';
+            if (errorAlert) errorAlert.classList.remove('visually-hidden');
+            return;
+          }
+
+          try {
+            const response = await fetch('/api/auth/reset-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: currentResetToken, newPassword })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              throw new Error(data.error || 'Failed to reset password');
+            }
+
+            alert('Password reset successfully! You can now log in with your new password.');
+            resetModal.classList.remove('active');
+            resetForm.reset();
+            openAuthModal('login');
+          } catch (err) {
+            if (errorMessage) errorMessage.textContent = err.message;
+            if (errorAlert) errorAlert.classList.remove('visually-hidden');
+          }
+        });
+      }
+
+      // Show forgot password link only in login mode
+      if (forgotPasswordLink) {
+        const observer = new MutationObserver(() => {
+          forgotPasswordLink.style.display = authMode === 'login' ? 'inline-block' : 'none';
+        });
       }
     });
   </script>
