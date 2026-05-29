@@ -165,10 +165,14 @@ body {
   height: 56px;
   min-width: 56px;
   min-height: 56px;
+  max-width: 56px;
+  max-height: 56px;
   margin-top: -20px;
   box-shadow: 0 4px 12px rgba(79, 111, 232, 0.3);
   flex-direction: row;
-  padding: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
 }
 
 .nav-item.nav-add span {
