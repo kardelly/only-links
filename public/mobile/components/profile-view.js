@@ -69,7 +69,6 @@ export class ProfileView extends BaseView {
         </div>
       </div>
       <div class="profile-actions">
-        <a href="/settings" class="btn btn-secondary">Settings</a>
         <button class="btn btn-secondary" id="logout-btn">Logout</button>
       </div>
     `;
