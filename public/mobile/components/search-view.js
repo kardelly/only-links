@@ -1,140 +1,92 @@
 import { BaseView } from './base-view.js';
-import { timeAgo, escapeHtml, debounce } from './utils.js';
+import { escapeHtml, timeAgo, debounce, fetchWithError } from './utils.js';
 
 /**
- * SearchView - Search view component with debounced search
+ * Search View
+ * Search bookmarks with debouncing
  */
 export class SearchView extends BaseView {
-  constructor(container) {
-    super(container);
-    this.bookmarks = [];
-    this.searchQuery = '';
-    this.isLoading = false;
-
-    // Create debounced search function
-    this.debouncedSearch = debounce((query) => {
-      this.performSearch(query);
-    }, 300);
+  constructor() {
+    super('search-view');
+    this.query = '';
+    this.results = [];
+    this.debouncedSearch = debounce(this.performSearch.bind(this), 300);
   }
 
   /**
-   * Initialize the view
+   * Load search view (render search input)
    */
-  async init() {
+  async load() {
     this.render();
-    this.setupEventListeners();
   }
 
   /**
-   * Render the view structure
+   * Render search interface
    */
   render() {
-    this.container.innerHTML = `
-      <div class="search-container">
-        <div class="search-header">
-          <div class="search-input-wrapper">
-            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            <input
-              type="search"
-              id="search-input"
-              class="search-input"
-              placeholder="Search bookmarks..."
-              autocomplete="off"
-              autofocus
-            >
-            <button id="clear-search-btn" class="clear-search-btn hidden" aria-label="Clear search">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div id="search-results" class="search-results"></div>
+    this.clear();
+
+    const searchContainer = document.createElement('div');
+    searchContainer.className = 'search-container';
+
+    searchContainer.innerHTML = `
+      <div class="search-input-wrapper">
+        <input 
+          type="search" 
+          id="search-input" 
+          class="search-input" 
+          placeholder="Search bookmarks..."
+          autocomplete="off">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
       </div>
+      <div id="search-results" class="search-results"></div>
     `;
-  }
 
-  /**
-   * Setup event listeners
-   */
-  setupEventListeners() {
-    const searchInput = document.getElementById('search-input');
-    const clearBtn = document.getElementById('clear-search-btn');
+    this.container.appendChild(searchContainer);
 
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim();
-        this.searchQuery = query;
-
-        // Update clear button visibility
-        if (clearBtn) {
-          if (query) {
-            clearBtn.classList.remove('hidden');
-          } else {
-            clearBtn.classList.add('hidden');
-          }
-        }
-
-        // Trigger debounced search
-        if (query) {
-          this.debouncedSearch(query);
-        } else {
-          this.clearResults();
-        }
-      });
-
-      // Focus the search input when view is shown
-      searchInput.focus();
-    }
-
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        if (searchInput) {
-          searchInput.value = '';
-          searchInput.focus();
-        }
-        this.searchQuery = '';
+    // Attach event listener
+    const input = document.getElementById('search-input');
+    input.addEventListener('input', (e) => {
+      this.query = e.target.value.trim();
+      if (this.query.length > 0) {
+        this.debouncedSearch();
+      } else {
         this.clearResults();
-        clearBtn.classList.add('hidden');
-      });
-    }
+      }
+    });
+
+    // Auto-focus on show
+    setTimeout(() => input.focus(), 100);
   }
 
   /**
-   * Perform search query
+   * Perform search API call
    */
-  async performSearch(query) {
-    if (this.isLoading) return;
+  async performSearch() {
+    if (!this.query) {
+      this.clearResults();
+      return;
+    }
 
-    this.isLoading = true;
-    this.showSearchLoading();
+    const resultsContainer = document.getElementById('search-results');
+    if (!resultsContainer) return;
+
+    // Show loading
+    resultsContainer.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
 
     try {
-      const params = new URLSearchParams({
-        q: query,
-        limit: 50
-      });
+      const data = await fetchWithError(`/api/bookmarks?q=${encodeURIComponent(this.query)}`);
 
-      const response = await fetch(`/api/bookmarks?${params}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to search bookmarks');
+      if (data && data.bookmarks) {
+        this.results = data.bookmarks;
+        this.renderResults();
       }
-
-      const data = await response.json();
-      this.bookmarks = data.bookmarks || [];
-
-      this.renderResults();
-    } catch (error) {
-      console.error('Error searching bookmarks:', error);
-      this.showError('Failed to search bookmarks. Please try again.');
-    } finally {
-      this.isLoading = false;
-      this.hideSearchLoading();
+    } catch (err) {
+      console.error('Search failed:', err);
+      resultsContainer.innerHTML = '<div class="error-message">Search failed</div>';
     }
   }
 
@@ -147,22 +99,22 @@ export class SearchView extends BaseView {
 
     resultsContainer.innerHTML = '';
 
-    if (this.bookmarks.length === 0) {
-      this.renderEmptyState(resultsContainer);
+    // No results
+    if (this.results.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="empty-state">
+          <p>No bookmarks found for "${escapeHtml(this.query)}"</p>
+          <p class="subtitle">Try different keywords</p>
+        </div>
+      `;
       return;
     }
 
-    // Render results count
-    const countEl = document.createElement('div');
-    countEl.className = 'search-count';
-    countEl.textContent = `${this.bookmarks.length} result${this.bookmarks.length !== 1 ? 's' : ''}`;
-    resultsContainer.appendChild(countEl);
-
-    // Render bookmarks in card format
+    // Render results grid
     const grid = document.createElement('div');
     grid.className = 'bookmark-grid';
 
-    this.bookmarks.forEach(bookmark => {
+    this.results.forEach(bookmark => {
       const card = this.createBookmarkCard(bookmark);
       grid.appendChild(card);
     });
@@ -171,151 +123,68 @@ export class SearchView extends BaseView {
   }
 
   /**
-   * Create a bookmark card element
+   * Create bookmark card (same as feed view)
    */
   createBookmarkCard(bookmark) {
-    const card = document.createElement('article');
+    const card = document.createElement('div');
     card.className = 'bookmark-card';
     card.dataset.id = bookmark.id;
 
-    // Generate clean hostname
-    let host = 'link';
-    try {
-      host = new URL(bookmark.url).hostname.replace('www.', '');
-    } catch(e) {}
-
-    // Handle thumbnail
-    let thumbnailUrl = bookmark.og_image;
-    if (thumbnailUrl && thumbnailUrl.startsWith('/')) {
-      try {
-        const baseUrl = new URL(bookmark.url);
-        thumbnailUrl = `${baseUrl.protocol}//${baseUrl.host}${thumbnailUrl}`;
-      } catch (e) {
-        console.error('Failed to convert relative URL:', e);
-      }
-    }
-
-    // Render tags
-    const tagsHtml = (bookmark.tags || []).map(tag =>
-      `<span class="tag" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`
-    ).join('');
+    const tagsHtml = this.renderTags(bookmark.tags);
 
     card.innerHTML = `
-      ${thumbnailUrl ? `
-        <div class="bookmark-thumbnail">
-          <img src="${escapeHtml(thumbnailUrl)}"
-               alt="${escapeHtml(bookmark.title)}"
-               loading="lazy"
-               onerror="this.parentElement.style.display='none'">
-        </div>
-      ` : ''}
-
-      <div class="bookmark-content">
-        <h3 class="bookmark-title">${escapeHtml(bookmark.title)}</h3>
-
-        ${bookmark.description ? `
-          <p class="bookmark-description">${escapeHtml(bookmark.description)}</p>
-        ` : ''}
-
-        ${bookmark.tags && bookmark.tags.length > 0 ? `
-          <div class="bookmark-tags">
-            ${tagsHtml}
-          </div>
-        ` : ''}
-
-        <div class="bookmark-meta">
-          <span class="bookmark-author">@${escapeHtml(bookmark.username)}</span>
-          <span>•</span>
-          <span class="bookmark-domain">${escapeHtml(host)}</span>
-          <span>•</span>
-          <span class="bookmark-time">${timeAgo(bookmark.created_at)}</span>
+      <div class="card-thumbnail">
+        <img src="${bookmark.og_image || '/placeholder.png'}" 
+             alt="${escapeHtml(bookmark.title)}"
+             onerror="this.src='/placeholder.png'"
+             loading="lazy">
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">${escapeHtml(bookmark.title)}</h3>
+        ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+        <div class="card-meta">
+          <span class="username">@${escapeHtml(bookmark.username)}</span>
+          <span class="date">${timeAgo(bookmark.created_at)}</span>
         </div>
       </div>
     `;
 
-    // Open bookmark in new tab when clicked
-    card.addEventListener('click', (e) => {
-      // Don't open if clicking on a tag
-      if (e.target.classList.contains('tag')) {
-        return;
-      }
-      window.open(bookmark.url, '_blank', 'noopener,noreferrer');
+    card.addEventListener('click', () => {
+      window.open(bookmark.url, '_blank');
     });
 
     return card;
   }
 
   /**
-   * Render empty state
+   * Render tags HTML
    */
-  renderEmptyState(container) {
-    const hasQuery = this.searchQuery.length > 0;
+  renderTags(tagsString) {
+    if (!tagsString) return '';
 
-    container.innerHTML = `
-      <div class="empty-state">
-        <svg class="empty-state-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="11" cy="11" r="8"></circle>
-          <path d="m21 21-4.35-4.35"></path>
-        </svg>
-        <h3 class="empty-state-title">${hasQuery ? 'No results found' : 'Start searching'}</h3>
-        <p class="empty-state-description">${hasQuery ? `No bookmarks match "${escapeHtml(this.searchQuery)}"` : 'Type to search your bookmarks'}</p>
-      </div>
-    `;
-  }
+    const tags = tagsString.split(',').map(t => t.trim()).filter(t => t);
+    const visibleTags = tags.slice(0, 3);
+    const remainingCount = tags.length - 3;
 
-  /**
-   * Show loading state for search
-   */
-  showSearchLoading() {
-    const resultsContainer = document.getElementById('search-results');
-    if (!resultsContainer) return;
+    let html = visibleTags
+      .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`)
+      .join('');
 
-    resultsContainer.innerHTML = `
-      <div class="search-loading">
-        <div class="spinner"></div>
-        <p>Searching...</p>
-      </div>
-    `;
-  }
-
-  /**
-   * Hide loading state for search
-   */
-  hideSearchLoading() {
-    const loader = document.querySelector('.search-loading');
-    if (loader) {
-      loader.remove();
+    if (remainingCount > 0) {
+      html += `<span class="tag tag-more">+${remainingCount}</span>`;
     }
+
+    return html;
   }
 
   /**
    * Clear search results
    */
   clearResults() {
-    this.bookmarks = [];
-    this.renderEmptyState(document.getElementById('search-results'));
-  }
-
-  /**
-   * Override show to focus search input
-   */
-  show() {
-    super.show();
-
-    // Focus the search input when view is shown
-    setTimeout(() => {
-      const searchInput = document.getElementById('search-input');
-      if (searchInput) {
-        searchInput.focus();
-      }
-    }, 100);
-  }
-
-  /**
-   * Load data (override base class)
-   */
-  async load() {
-    // Search view loads data through search input
-    // Nothing to load on init
+    const resultsContainer = document.getElementById('search-results');
+    if (resultsContainer) {
+      resultsContainer.innerHTML = '';
+    }
+    this.results = [];
   }
 }

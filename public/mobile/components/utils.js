@@ -1,51 +1,78 @@
-// Utility functions for mobile app
+/**
+ * Shared utility functions for mobile app
+ */
 
-// Escape HTML to prevent XSS
+/**
+ * Escape HTML to prevent XSS attacks
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped HTML
+ */
 export function escapeHtml(text) {
+  if (!text) return '';
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-// Format time ago
-export function timeAgo(date) {
-  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+/**
+ * Format timestamp as relative time (e.g., "2h ago")
+ * @param {string|number} timestamp - ISO timestamp or milliseconds
+ * @returns {string} Relative time string
+ */
+export function timeAgo(timestamp) {
+  const now = Date.now();
+  const then = new Date(timestamp).getTime();
+  const diff = now - then;
 
-  const intervals = {
-    year: 31536000,
-    month: 2592000,
-    week: 604800,
-    day: 86400,
-    hour: 3600,
-    minute: 60
-  };
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const week = 7 * day;
+  const month = 30 * day;
+  const year = 365 * day;
 
-  for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-    const interval = Math.floor(seconds / secondsInUnit);
-    if (interval >= 1) {
-      return interval === 1 ? `1 ${unit} ago` : `${interval} ${unit}s ago`;
-    }
-  }
-
-  return 'just now';
+  if (diff < minute) return 'just now';
+  if (diff < hour) return `${Math.floor(diff / minute)}m ago`;
+  if (diff < day) return `${Math.floor(diff / hour)}h ago`;
+  if (diff < week) return `${Math.floor(diff / day)}d ago`;
+  if (diff < month) return `${Math.floor(diff / week)}w ago`;
+  if (diff < year) return `${Math.floor(diff / month)}mo ago`;
+  return `${Math.floor(diff / year)}y ago`;
 }
 
-// Show toast notification
+/**
+ * Show toast notification
+ * @param {string} message - Message to display
+ * @param {number} duration - Duration in milliseconds (default 3000)
+ */
 export function showToast(message, duration = 3000) {
+  // Remove existing toasts
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+
   const toast = document.createElement('div');
   toast.className = 'toast';
   toast.textContent = message;
   document.body.appendChild(toast);
 
-  setTimeout(() => toast.classList.add('show'), 10);
+  // Trigger animation
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
 
+  // Remove after duration
   setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => toast.remove(), 300);
   }, duration);
 }
 
-// Debounce function
+/**
+ * Debounce function calls
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Wait time in milliseconds
+ * @returns {Function} Debounced function
+ */
 export function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -58,27 +85,55 @@ export function debounce(func, wait) {
   };
 }
 
-// Validate URL
-export function isValidUrl(string) {
+/**
+ * Validate URL format
+ * @param {string} url - URL to validate
+ * @returns {boolean} True if valid URL
+ */
+export function isValidUrl(url) {
   try {
-    new URL(string);
+    new URL(url);
     return true;
-  } catch (_) {
+  } catch {
     return false;
   }
 }
 
-// Fetch with error handling
+/**
+ * Fetch with error handling
+ * @param {string} url - URL to fetch
+ * @param {object} options - Fetch options
+ * @returns {Promise<object>} Response data or null on error
+ */
 export async function fetchWithError(url, options = {}) {
   try {
     const response = await fetch(url, options);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status === 401) {
+        // Session expired
+        showToast('Session expired. Please log in again.');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
+        return null;
+      } else if (response.status === 429) {
+        showToast('Too many requests. Please wait a moment.');
+        return null;
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
     }
+
     return await response.json();
-  } catch (error) {
-    console.error('Fetch error:', error);
-    showToast('Failed to load data. Please try again.');
-    throw error;
+  } catch (err) {
+    if (err.name === 'TypeError') {
+      // Network error
+      showToast('Connection failed. Check your internet.');
+    } else {
+      console.error('Fetch error:', err);
+      showToast('Something went wrong. Please try again.');
+    }
+    return null;
   }
 }

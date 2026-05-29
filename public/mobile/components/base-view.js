@@ -1,90 +1,94 @@
 /**
- * BaseView - Base class for all views
+ * Base View Class
+ * All views (Feed, Search, Tags, Profile) extend this
  */
 export class BaseView {
-  constructor(container) {
-    this.container = container;
-    this.isVisible = false;
+  constructor(viewId) {
+    this.viewId = viewId;
+    this.container = null;
+    this.isLoaded = false;
   }
 
   /**
-   * Initialize the view
+   * Initialize view (called once)
    */
-  async init() {
-    // Override in subclasses
-  }
-
-  /**
-   * Show the view
-   */
-  show() {
-    if (this.container) {
-      this.container.classList.remove('hidden');
-      this.isVisible = true;
+  init() {
+    this.container = document.getElementById(this.viewId);
+    if (!this.container) {
+      console.error(`View container #${this.viewId} not found`);
     }
   }
 
   /**
-   * Hide the view
+   * Show view and load data if first time
+   */
+  async show() {
+    if (!this.container) return;
+
+    this.container.style.display = 'block';
+
+    if (!this.isLoaded) {
+      await this.load();
+      this.isLoaded = true;
+    }
+  }
+
+  /**
+   * Hide view
    */
   hide() {
-    if (this.container) {
-      this.container.classList.add('hidden');
-      this.isVisible = false;
-    }
+    if (!this.container) return;
+    this.container.style.display = 'none';
   }
 
   /**
-   * Load data for the view
+   * Load view data (override in subclasses)
    */
   async load() {
-    // Override in subclasses
+    throw new Error('load() must be implemented in subclass');
   }
 
   /**
-   * Show loading state
+   * Show loading spinner
    */
   showLoading() {
-    if (this.container) {
-      const loader = document.createElement('div');
-      loader.className = 'loader';
-      loader.innerHTML = '<div class="spinner"></div>';
-      this.container.appendChild(loader);
-    }
+    if (!this.container) return;
+
+    const loader = document.createElement('div');
+    loader.className = 'loading-spinner';
+    loader.innerHTML = '<div class="spinner"></div>';
+    this.container.appendChild(loader);
   }
 
   /**
-   * Hide loading state
+   * Hide loading spinner
    */
   hideLoading() {
-    if (this.container) {
-      const loader = this.container.querySelector('.loader');
-      if (loader) {
-        loader.remove();
-      }
-    }
+    if (!this.container) return;
+
+    const loader = this.container.querySelector('.loading-spinner');
+    if (loader) loader.remove();
   }
 
   /**
    * Show error message
    */
   showError(message) {
-    if (this.container) {
-      const error = document.createElement('div');
-      error.className = 'error-message';
-      error.textContent = message;
-      this.container.appendChild(error);
+    if (!this.container) return;
 
-      setTimeout(() => error.remove(), 5000);
-    }
+    const error = document.createElement('div');
+    error.className = 'error-message';
+    error.textContent = message;
+    this.container.appendChild(error);
+
+    setTimeout(() => error.remove(), 5000);
   }
 
   /**
-   * Clear the view content
+   * Clear view content
    */
   clear() {
-    if (this.container) {
-      this.container.innerHTML = '';
-    }
+    if (!this.container) return;
+    this.container.innerHTML = '';
   }
 }

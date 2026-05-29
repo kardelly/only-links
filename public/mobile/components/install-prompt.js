@@ -1,100 +1,147 @@
 /**
- * InstallPrompt Component
- * Manages the PWA install prompt banner
+ * Install Prompt Component
+ * Manages PWA installation prompt
  */
-class InstallPrompt {
+export class InstallPrompt {
   constructor() {
     this.deferredPrompt = null;
+    this.banner = null;
     this.dismissCount = 0;
-    this.maxDismissals = 3;
-    this.storageKey = 'pwa-install-dismissed';
-
-    this.init();
   }
 
+  /**
+   * Initialize install prompt
+   */
   init() {
     // Load dismiss count from localStorage
-    const dismissed = localStorage.getItem(this.storageKey);
-    if (dismissed) {
-      this.dismissCount = parseInt(dismissed, 10);
-    }
+    const stored = localStorage.getItem('pwa_install_dismissed');
+    this.dismissCount = stored ? parseInt(stored, 10) : 0;
 
     // Listen for beforeinstallprompt event
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredPrompt = e;
 
-      // Show banner if user hasn't dismissed too many times
-      if (this.dismissCount < this.maxDismissals) {
-        this.showBanner();
+      // Check if should show prompt
+      if (this.shouldShowPrompt()) {
+        this.show();
       }
     });
 
     // Check if already installed
-    window.addEventListener('appinstalled', () => {
-      this.hideBanner();
-      this.trackEvent('installed');
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('[Install] App already installed');
+    }
+  }
+
+  /**
+   * Should show install prompt?
+   */
+  shouldShowPrompt() {
+    // Don't show if dismissed 3+ times
+    if (this.dismissCount >= 3) {
+      return false;
+    }
+
+    // Don't show if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Show install banner
+   */
+  show() {
+    if (this.banner) return;
+
+    this.banner = document.createElement('div');
+    this.banner.className = 'install-banner';
+    this.banner.innerHTML = `
+      <div class="install-content">
+        <p>Install only.link for faster access</p>
+        <div class="install-actions">
+          <button class="btn btn-primary btn-sm" id="install-btn">Install</button>
+          <button class="btn-icon" id="dismiss-btn" aria-label="Dismiss">×</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(this.banner);
+
+    // Attach event listeners
+    document.getElementById('install-btn').addEventListener('click', () => {
+      this.handleInstall();
     });
-  }
 
-  showBanner() {
-    const banner = document.getElementById('install-banner');
-    if (banner) {
-      banner.classList.remove('hidden');
-      this.trackEvent('banner_shown');
+    document.getElementById('dismiss-btn').addEventListener('click', () => {
+      this.dismiss();
+    });
+
+    // Track analytics
+    if (window.gtag) {
+      gtag('event', 'pwa_install_prompt_shown');
     }
   }
 
-  hideBanner() {
-    const banner = document.getElementById('install-banner');
-    if (banner) {
-      banner.classList.add('hidden');
-    }
-  }
+  /**
+   * Handle install button click
+   */
+  async handleInstall() {
+    if (!this.deferredPrompt) return;
 
-  async install() {
-    if (!this.deferredPrompt) {
-      return;
-    }
-
-    // Show the install prompt
+    // Show native install prompt
     this.deferredPrompt.prompt();
 
-    // Wait for the user's response
+    // Wait for user choice
     const { outcome } = await this.deferredPrompt.userChoice;
 
-    this.trackEvent('install_prompt_response', { outcome });
-
     if (outcome === 'accepted') {
-      this.hideBanner();
+      console.log('[Install] User accepted');
+
+      // Track analytics
+      if (window.gtag) {
+        gtag('event', 'pwa_install_accepted');
+      }
+    } else {
+      console.log('[Install] User dismissed');
+
+      // Track analytics
+      if (window.gtag) {
+        gtag('event', 'pwa_install_dismissed');
+      }
     }
 
-    // Clear the deferred prompt
+    // Clear prompt
     this.deferredPrompt = null;
+    this.hide();
   }
 
+  /**
+   * Dismiss banner
+   */
   dismiss() {
     this.dismissCount++;
-    localStorage.setItem(this.storageKey, this.dismissCount.toString());
-    this.hideBanner();
-    this.trackEvent('banner_dismissed', { count: this.dismissCount });
-  }
+    localStorage.setItem('pwa_install_dismissed', this.dismissCount.toString());
+    this.hide();
 
-  trackEvent(eventName, params = {}) {
-    if (typeof gtag !== 'undefined') {
-      gtag('event', eventName, {
-        event_category: 'pwa_install',
-        ...params
+    // Track analytics
+    if (window.gtag) {
+      gtag('event', 'pwa_install_banner_dismissed', {
+        dismiss_count: this.dismissCount
       });
     }
   }
-}
 
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    window.installPrompt = new InstallPrompt();
-  });
-} else {
-  window.installPrompt = new InstallPrompt();
+  /**
+   * Hide banner
+   */
+  hide() {
+    if (this.banner) {
+      this.banner.remove();
+      this.banner = null;
+    }
+  }
 }

@@ -1,148 +1,172 @@
 import { BaseView } from './base-view.js';
+import { escapeHtml, timeAgo, fetchWithError } from './utils.js';
 
+/**
+ * Profile View
+ * Display current user's profile and bookmarks
+ */
 export class ProfileView extends BaseView {
   constructor() {
-    super();
+    super('profile-view');
     this.user = null;
     this.bookmarks = [];
   }
 
+  /**
+   * Load profile data
+   */
   async load() {
-    await this.fetchUser();
-    await this.fetchBookmarks();
-  }
+    this.showLoading();
 
-  async fetchUser() {
     try {
-      const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        this.user = await response.json();
-      } else {
-        throw new Error('Failed to fetch user');
+      // Get current user
+      const userData = await fetchWithError('/api/auth/me');
+      if (!userData || !userData.user) {
+        window.location.href = '/';
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching user:', error);
+
+      this.user = userData.user;
+
+      // Get user's bookmarks
+      const bookmarksData = await fetchWithError(`/api/bookmarks?user=${this.user.username}`);
+      if (bookmarksData) {
+        this.bookmarks = bookmarksData.bookmarks || [];
+      }
+
+      this.render();
+    } catch (err) {
+      console.error('Failed to load profile:', err);
       this.showError('Failed to load profile');
+    } finally {
+      this.hideLoading();
     }
   }
 
-  async fetchBookmarks() {
+  /**
+   * Render profile view
+   */
+  render() {
+    this.clear();
+
     if (!this.user) return;
 
-    try {
-      const response = await fetch(`/api/bookmarks?user=${this.user.id}`);
-      if (response.ok) {
-        this.bookmarks = await response.json();
-      } else {
-        throw new Error('Failed to fetch bookmarks');
-      }
-    } catch (error) {
-      console.error('Error fetching bookmarks:', error);
-      this.showError('Failed to load bookmarks');
-    }
-  }
-
-  async handleLogout() {
-    try {
-      const response = await fetch('/api/auth/logout', { method: 'POST' });
-      if (response.ok) {
-        window.location.href = '/mobile/login';
-      } else {
-        throw new Error('Logout failed');
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
-      this.showError('Failed to logout');
-    }
-  }
-
-  render() {
-    if (!this.user) {
-      return '<div class="loading">Loading profile...</div>';
-    }
-
-    const avatarUrl = this.user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(this.user.username || 'User')}&size=128&background=random`;
-
-    return `
-      <div class="profile-view">
-        <div class="profile-header">
-          <div class="profile-avatar">
-            <img src="${avatarUrl}" alt="${this.user.username || 'User'}" />
-          </div>
-          <h2 class="profile-username">${this.user.username || 'Anonymous'}</h2>
-          ${this.user.email ? `<p class="profile-email">${this.user.email}</p>` : ''}
-        </div>
-
-        <div class="profile-stats">
-          <div class="stat-item">
-            <span class="stat-value">${this.bookmarks.length}</span>
-            <span class="stat-label">Bookmarks</span>
-          </div>
-        </div>
-
-        <div class="profile-actions">
-          <a href="/mobile/settings" class="btn btn-secondary">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M12 1v6m0 6v6m8.66-15l-3 5.19M7.34 16.81l-3 5.19m15.32 0l-3-5.19M7.34 7.19l-3-5.19"></path>
-            </svg>
-            Settings
-          </a>
-          <button class="btn btn-danger" id="logout-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            Logout
-          </button>
-        </div>
-
-        <div class="profile-bookmarks">
-          <h3>My Bookmarks</h3>
-          ${this.renderBookmarksGrid()}
+    // Profile header
+    const header = document.createElement('div');
+    header.className = 'profile-header';
+    header.innerHTML = `
+      <div class="profile-avatar">
+        ${this.user.avatar_url 
+          ? `<img src="${escapeHtml(this.user.avatar_url)}" alt="${escapeHtml(this.user.username)}">` 
+          : `<div class="avatar-placeholder">${escapeHtml(this.user.username[0].toUpperCase())}</div>`
+        }
+      </div>
+      <h2 class="profile-username">@${escapeHtml(this.user.username)}</h2>
+      <div class="profile-stats">
+        <div class="stat">
+          <span class="stat-value">${this.bookmarks.length}</span>
+          <span class="stat-label">Bookmarks</span>
         </div>
       </div>
-    `;
-  }
-
-  renderBookmarksGrid() {
-    if (this.bookmarks.length === 0) {
-      return '<div class="empty-state">No bookmarks yet</div>';
-    }
-
-    return `
-      <div class="bookmarks-grid">
-        ${this.bookmarks.map(bookmark => `
-          <a href="${bookmark.url}" class="bookmark-card" target="_blank" rel="noopener noreferrer">
-            <div class="bookmark-favicon">
-              ${bookmark.favicon ? `<img src="${bookmark.favicon}" alt="" />` : '🔖'}
-            </div>
-            <div class="bookmark-info">
-              <h4 class="bookmark-title">${bookmark.title || 'Untitled'}</h4>
-              ${bookmark.description ? `<p class="bookmark-description">${bookmark.description}</p>` : ''}
-              <span class="bookmark-domain">${new URL(bookmark.url).hostname}</span>
-            </div>
-          </a>
-        `).join('')}
+      <div class="profile-actions">
+        <a href="/settings" class="btn btn-secondary">Settings</a>
+        <button class="btn btn-secondary" id="logout-btn">Logout</button>
       </div>
     `;
-  }
 
-  attachEventListeners() {
+    this.container.appendChild(header);
+
+    // Bookmarks section
+    if (this.bookmarks.length > 0) {
+      const bookmarksSection = document.createElement('div');
+      bookmarksSection.className = 'profile-bookmarks';
+
+      const title = document.createElement('h3');
+      title.textContent = 'Your Bookmarks';
+      bookmarksSection.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'bookmark-grid';
+
+      this.bookmarks.forEach(bookmark => {
+        const card = this.createBookmarkCard(bookmark);
+        grid.appendChild(card);
+      });
+
+      bookmarksSection.appendChild(grid);
+      this.container.appendChild(bookmarksSection);
+    }
+
+    // Attach logout handler
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => this.handleLogout());
     }
   }
 
-  showError(message) {
-    // Simple error display - could be enhanced with a toast/notification system
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-message';
-    errorDiv.textContent = message;
-    errorDiv.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #f44336; color: white; padding: 12px 24px; border-radius: 4px; z-index: 1000;';
-    document.body.appendChild(errorDiv);
-    setTimeout(() => errorDiv.remove(), 3000);
+  /**
+   * Create bookmark card
+   */
+  createBookmarkCard(bookmark) {
+    const card = document.createElement('div');
+    card.className = 'bookmark-card';
+    card.dataset.id = bookmark.id;
+
+    const tagsHtml = this.renderTags(bookmark.tags);
+
+    card.innerHTML = `
+      <div class="card-thumbnail">
+        <img src="${bookmark.og_image || '/placeholder.png'}" 
+             alt="${escapeHtml(bookmark.title)}"
+             onerror="this.src='/placeholder.png'"
+             loading="lazy">
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">${escapeHtml(bookmark.title)}</h3>
+        ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+        <div class="card-meta">
+          <span class="date">${timeAgo(bookmark.created_at)}</span>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      window.open(bookmark.url, '_blank');
+    });
+
+    return card;
+  }
+
+  /**
+   * Render tags HTML
+   */
+  renderTags(tagsString) {
+    if (!tagsString) return '';
+
+    const tags = tagsString.split(',').map(t => t.trim()).filter(t => t);
+    const visibleTags = tags.slice(0, 3);
+    const remainingCount = tags.length - 3;
+
+    let html = visibleTags
+      .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`)
+      .join('');
+
+    if (remainingCount > 0) {
+      html += `<span class="tag tag-more">+${remainingCount}</span>`;
+    }
+
+    return html;
+  }
+
+  /**
+   * Handle logout
+   */
+  async handleLogout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
   }
 }
