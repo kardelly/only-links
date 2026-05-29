@@ -21,7 +21,7 @@
     }
   ],
   "share_target": {
-    "action": "/share-target",
+    "action": "/mobile/app",
     "method": "GET",
     "params": {
       "title": "title",
