@@ -28,10 +28,14 @@ async function checkSession() {
     settingsState.currentUser = data.user;
     console.log('Current user:', data.user);
 
-    // Update username in dropdown
+    // Update username in dropdown and link
     const profileMenuUsername = document.getElementById('profile-menu-username');
     if (profileMenuUsername) {
       profileMenuUsername.textContent = `@${data.user.username}`;
+    }
+    const profileHeaderLink = document.getElementById('profile-menu-header-link');
+    if (profileHeaderLink) {
+      profileHeaderLink.href = `/user/${data.user.username}`;
     }
 
     // Update avatar initial and preview

@@ -64,9 +64,13 @@ function updateHeaderUI() {
     if (authNav) authNav.style.display = 'flex';
     if (guestNav) guestNav.style.display = 'none';
 
-    // Set username display in dropdown
+    // Set username display in dropdown and link
     if (profileMenuUsername) {
       profileMenuUsername.textContent = `@${headerState.currentUser.username}`;
+    }
+    const profileHeaderLink = document.getElementById('profile-menu-header-link');
+    if (profileHeaderLink) {
+      profileHeaderLink.href = `/user/${headerState.currentUser.username}`;
     }
 
     // Set avatar initial or image
