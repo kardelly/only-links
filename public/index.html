@@ -6,6 +6,13 @@
   <title>only.link — Social bookmarking, reimagined</title>
   <meta name="description" content="Save, organize, and discover links. Fast, beautiful, focused.">
 
+  <!-- Favicons -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png">
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZHDLY53QX"></script>
   <script>
@@ -368,16 +375,9 @@
       gap: var(--space-2);
     }
 
-    .nav-logo-icon {
-      width: 32px;
+    .nav-logo-img {
       height: 32px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 18px;
+      width: auto;
     }
 
     .nav-links {
@@ -651,8 +651,7 @@
   <nav class="nav">
     <div class="nav-container">
       <a href="/" class="nav-logo">
-        <div class="nav-logo-icon">🔗</div>
-        <span>only.link</span>
+        <img src="/logo.png" alt="only.link" class="nav-logo-img">
       </a>
 
       <div class="nav-links">
