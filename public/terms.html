@@ -21,6 +21,9 @@
     gtag('config', 'G-4ZHDLY53QX');
   </script>
 
+  <link rel="stylesheet" href="/components/header-styles.css">
+  <link rel="stylesheet" href="/components/auth-modal-styles.css">
+
   <style>
     * {
       margin: 0;
@@ -35,15 +38,29 @@
       --muted:   oklch(52% 0.008 60);
       --border:  oklch(92% 0.006 60);
       --accent:  oklch(56% 0.18 250);
+      --accent-hover: oklch(51% 0.18 250);
       --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+
+      --space-1:  4px;
+      --space-2:  8px;
+      --space-3:  12px;
+      --space-4:  16px;
+      --space-6:  24px;
+      --space-8:  32px;
+      --space-12: 48px;
     }
 
     body {
       font-family: var(--font-sans);
       background: var(--bg);
       color: var(--fg);
-      padding: 40px 20px;
+      padding: 0;
       line-height: 1.65;
+    }
+
+    main {
+      padding: 80px 20px 40px;
+      min-height: calc(100vh - 200px);
     }
 
     .container {
@@ -118,10 +135,51 @@
       border-radius: 4px;
       font-size: 14px;
     }
+
+    .footer {
+      padding: var(--space-12) var(--space-8);
+      border-top: 0.5px solid oklch(from var(--border) l c h / 0.3);
+      background: var(--bg);
+    }
+
+    .footer-container {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-8);
+    }
+
+    .footer-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: var(--space-6);
+    }
+
+    .footer-link {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .footer-link:hover {
+      color: var(--fg);
+    }
   </style>
 </head>
 <body>
-  <div class="container">
+  <!-- HEADER -->
+  <div id="header-placeholder"></div>
+
+  <main>
+    <div class="container">
     <h1>Terms of Service</h1>
     <p class="last-updated">Last updated: May 29, 2026</p>
 
@@ -440,6 +498,17 @@
     </div>
 
     <a href="/" class="back-link">← Back to only.link</a>
-  </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <div id="footer-placeholder"></div>
+
+  <!-- AUTH MODAL -->
+  <div id="auth-modal-placeholder"></div>
+
+  <script src="/components/header.js"></script>
+  <script src="/components/footer.js"></script>
+  <script src="/components/auth-modal.js"></script>
 </body>
 </html>
