@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>delicious.modern — Social Bookmarking Refined</title>
+  <meta name="description" content="Organize, tag, and share links. A thoughtful reimagining of del.icio.us for knowledge workers.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;510;600&family=JetBrains+Mono:wght@400&family=Newsreader:wght@600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== CSS CUSTOM PROPERTIES ===== */
+    :root {
+      /* Colors */
+      --bg:      oklch(98% 0.008 60);
+      --surface: oklch(99.5% 0.004 60);
+      --fg:      oklch(18% 0.012 60);
+      --muted:   oklch(52% 0.008 60);
+      --border:  oklch(90% 0.006 60);
+      --accent:  oklch(56% 0.18 250);
+
+      /* Typography */
+      --font-display: 'Newsreader', Georgia, serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+      --text-xs:   13px;
+      --text-sm:   14px;
+      --text-base: 16px;
+      --text-lg:   20px;
+      --text-xl:   25px;
+
+      /* Spacing */
+      --space-1:  4px;
+      --space-2:  8px;
+      --space-3:  12px;
+      --space-4:  16px;
+      --space-6:  24px;
+      --space-8:  32px;
+      --space-12: 48px;
+
+      /* Effects */
+      --shadow-raised: 0 4px 12px oklch(18% 0.012 60 / 0.08);
+      --transition: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ===== RESET & BASE ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--fg);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ===== TYPOGRAPHY ===== */
+    h1, h2, h3 {
+      font-family: var(--font-display);
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: var(--text-xl);
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: var(--text-lg);
+    }
+
+    .text-mono {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ===== LAYOUT ===== */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: var(--space-12);
+      padding: var(--space-8) 0;
+    }
+
+    @media (max-width: 1023px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        display: none;
+      }
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: oklch(from var(--surface) l c h / 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: 60px;
+    }
+
+    .header-inner {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-6);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--fg);
+      text-decoration: none;
+      transition: opacity 150ms var(--transition);
+    }
+
+    .logo:hover {
+      opacity: 0.7;
+    }
+
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: white;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .search-wrapper {
+      flex: 1;
+      max-width: 480px;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 var(--space-4);
+      font-size: var(--text-base);
+      font-family: var(--font-body);
+      color: var(--fg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 150ms var(--transition);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      border-width: 2px;
+      padding: 0 calc(var(--space-4) - 1px);
+    }
+
+    .search-input::placeholder {
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      padding: 0 var(--space-6);
+      font-size: var(--text-base);
+      font-family: var(--font-body);
+      font-weight: 510;
+      text-decoration: none;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 150ms var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: oklch(from var(--accent) calc(l - 0.05) c h);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      padding: 0 var(--space-4);
+    }
+
+    .btn-ghost:hover {
+      color: var(--fg);
+    }
+
+    /* ===== FEED CONTROLS ===== */
+    .feed-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .filter-tab {
+      padding: var(--space-2) var(--space-4);
+      font-size: var(--text-sm);
+      font-weight: 510;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 150ms var(--transition);
+    }
+
+    .filter-tab:hover {
+      color: var(--fg);
+      background: var(--surface);
+    }
+
+    .filter-tab.active {
+      color: var(--accent);
+      background: oklch(from var(--accent) l c h / 0.08);
+    }
+
+    /* ===== BOOKMARK LIST ===== */
+    .bookmark-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+    }
+
+    .bookmark-item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding: var(--space-6);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 200ms var(--transition);
+    }
+
+    .bookmark-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-raised);
+      border-color: oklch(from var(--border) calc(l - 0.03) c h);
+    }
+
+    .bookmark-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+
+    .bookmark-link-group {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .bookmark-title {
+      font-size: var(--text-base);
+      font-weight: 510;
+      color: var(--fg);
+      text-decoration: none;
+      display: block;
+      margin-bottom: var(--space-1);
+      transition: color 150ms var(--transition);
+    }
+
+    .bookmark-title:hover {
+      color: var(--accent);
+    }
+
+    .bookmark-url {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bookmark-description {
+      font-size: var(--text-sm);
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .bookmark-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+
+    .tags-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-1) var(--space-3);
+      font-size: var(--text-xs);
+      font-weight: 510;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      text-decoration: none;
+      transition: all 150ms var(--transition);
+      cursor: pointer;
+    }
+
+    .tag:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .tag.active {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .bookmark-timestamp {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .bookmark-author {
+      font-size: var(--text-xs);
+      color: var(--muted);
+    }
+
+    .bookmark-author a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 150ms var(--transition);
+    }
+
+    .bookmark-author a:hover {
+      color: var(--accent);
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      position: sticky;
+      top: calc(60px + var(--space-8));
+      align-self: flex-start;
+    }
+
+    .sidebar-section {
+      margin-bottom: var(--space-8);
+    }
+
+    .sidebar-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: var(--space-4);
+    }
+
+    .popular-tags {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .tag-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-sm);
+      color: var(--fg);
+      background: transparent;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: all 150ms var(--transition);
+      cursor: pointer;
+    }
+
+    .tag-item:hover {
+      background: var(--surface);
+      color: var(--accent);
+    }
+
+    .tag-item.active {
+      background: oklch(from var(--accent) l c h / 0.08);
+      color: var(--accent);
+    }
+
+    .tag-count {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--muted);
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: var(--space-12) 0;
+    }
+
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--space-6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 32px;
+      color: var(--muted);
+    }
+
+    .empty-state-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: var(--space-2);
+    }
+
+    .empty-state-text {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    /* ===== PAGINATION ===== */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      margin-top: var(--space-12);
+      padding-top: var(--space-8);
+      border-top: 1px solid var(--border);
+    }
+
+    .pagination-btn {
+      min-width: 40px;
+    }
+
+    .pagination-info {
+      font-size: var(--text-sm);
+      font-family: var(--font-mono);
+      color: var(--muted);
+    }
+
+    /* ===== MODAL ===== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 200;
+      background: oklch(18% 0.012 60 / 0.5);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-raised);
+      animation: modal-enter 300ms var(--transition);
+    }
+
+    @keyframes modal-enter {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .modal-header {
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    .modal-body {
+      padding: var(--space-6);
+    }
+
+    .modal-footer {
+      padding: var(--space-6);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: var(--space-3);
+      justify-content: flex-end;
+    }
+
+    /* ===== FORM ===== */
+    .form-group {
+      margin-bottom: var(--space-6);
+    }
+
+    .form-label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 510;
+      color: var(--fg);
+      margin-bottom: var(--space-2);
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: var(--space-3) var(--space-4);
+      font-size: var(--text-base);
+      font-family: var(--font-body);
+      color: var(--fg);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 150ms var(--transition);
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      border-width: 2px;
+      padding: calc(var(--space-3) - 1px) calc(var(--space-4) - 1px);
+    }
+
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-hint {
+      display: block;
+      font-size: var(--text-xs);
+      color: var(--muted);
+      margin-top: var(--space-2);
+    }
+
+    /* ===== LOADING STATE ===== */
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--surface) 0%,
+        oklch(from var(--surface) calc(l - 0.02) c h) 50%,
+        var(--surface) 100%
+      );
+      background-size: 200% 100%;
+      animation: skeleton-pulse 1.5s ease-in-out infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes skeleton-pulse {
+      0%, 100% {
+        background-position: 200% 0;
+      }
+      50% {
+        background-position: -200% 0;
+      }
+    }
+
+    .skeleton-bookmark {
+      padding: var(--space-6);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .skeleton-title {
+      height: 20px;
+      width: 70%;
+      margin-bottom: var(--space-3);
+    }
+
+    .skeleton-url {
+      height: 14px;
+      width: 40%;
+      margin-bottom: var(--space-4);
+    }
+
+    .skeleton-description {
+      height: 16px;
+      width: 100%;
+      margin-bottom: var(--space-2);
+    }
+
+    .skeleton-tags {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    .skeleton-tag {
+      height: 24px;
+      width: 60px;
+    }
+
+    /* ===== FOCUS STYLES ===== */
+    *:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ===== REDUCED MOTION ===== */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-inner">
+        <a href="/" class="logo">
+          <div class="logo-mark">d.</div>
+          <span>delicious.modern</span>
+        </a>
+
+        <div class="search-wrapper">
+          <input
+            type="search"
+            class="search-input"
+            placeholder="Search links, tags, or users..."
+            id="search-input"
+          >
+        </div>
+
+        <nav class="nav">
+          <div id="guest-nav">
+            <button class="btn btn-ghost" id="login-btn">Sign in</button>
+            <button class="btn btn-primary" id="register-btn">Get started</button>
+          </div>
+
+          <div id="auth-nav" style="display: none;">
+            <button class="btn btn-primary" id="new-bookmark-btn">+ New link</button>
+            <button class="btn btn-secondary" id="profile-btn">
+              <span id="username-display"></span>
+            </button>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="container">
+    <div class="layout">
+
+      <!-- FEED -->
+      <div class="feed">
+        <div class="feed-controls">
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-feed="all">All links</button>
+            <button class="filter-tab" data-feed="mine" style="display: none;">My links</button>
+          </div>
+        </div>
+
+        <!-- BOOKMARK LIST -->
+        <div class="bookmark-list" id="bookmark-list">
+          <!-- Loading skeletons (shown on initial load) -->
+          <div class="skeleton-bookmark">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-url"></div>
+            <div class="skeleton skeleton-description"></div>
+            <div class="skeleton-tags">
+              <div class="skeleton skeleton-tag"></div>
+              <div class="skeleton skeleton-tag"></div>
+              <div class="skeleton skeleton-tag"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="pagination" id="pagination" style="display: none;">
+          <button class="btn btn-secondary pagination-btn" id="prev-btn" disabled>←</button>
+          <span class="pagination-info" id="pagination-info">Page 1 of 1</span>
+          <button class="btn btn-secondary pagination-btn" id="next-btn" disabled>→</button>
+        </div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">Popular tags</h3>
+          <div class="popular-tags" id="popular-tags">
+            <div class="skeleton" style="height: 32px;"></div>
+            <div class="skeleton" style="height: 32px; width: 80%;"></div>
+            <div class="skeleton" style="height: 32px; width: 90%;"></div>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">Get started</h3>
+          <p style="font-size: var(--text-sm); color: var(--muted); line-height: 1.6; margin-bottom: var(--space-4);">
+            Save this bookmarklet to your toolbar to quickly add links:
+          </p>
+          <a href="javascript:(function(){window.open('http://localhost:3000?url='+encodeURIComponent(window.location.href)+'&title='+encodeURIComponent(document.title),'_blank','width=600,height=500');})();"
+             class="btn btn-secondary"
+             style="width: 100%; font-size: var(--text-sm);"
+             onclick="event.preventDefault(); alert('Drag this button to your bookmarks bar!');">
+            + delicious
+          </a>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- AUTH MODAL -->
+  <div class="modal" id="auth-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="auth-modal-title">Sign in</h2>
+      </div>
+      <div class="modal-body">
+        <form id="auth-form">
+          <div class="form-group">
+            <label class="form-label" for="auth-username">Username</label>
+            <input
+              type="text"
+              class="form-input"
+              id="auth-username"
+              autocomplete="username"
+              required
+            >
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="auth-password">Password</label>
+            <input
+              type="password"
+              class="form-input"
+              id="auth-password"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="auth-modal-close">Cancel</button>
+        <button class="btn btn-primary" id="auth-submit">Sign in</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOKMARK MODAL -->
+  <div class="modal" id="bookmark-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add bookmark</h2>
+      </div>
+      <div class="modal-body">
+        <form id="bookmark-form">
+          <div class="form-group">
+            <label class="form-label" for="bookmark-url">URL</label>
+            <input
+              type="url"
+              class="form-input"
+              id="bookmark-url"
+              placeholder="https://example.com"
+              required
+            >
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="bookmark-title">Title</label>
+            <input
+              type="text"
+              class="form-input"
+              id="bookmark-title"
+              placeholder="Link title"
+              required
+            >
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="bookmark-description">Description (optional)</label>
+            <textarea
+              class="form-textarea"
+              id="bookmark-description"
+              placeholder="Add notes about this link..."
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="bookmark-tags">Tags</label>
+            <input
+              type="text"
+              class="form-input"
+              id="bookmark-tags"
+              placeholder="design, development, tools"
+            >
+            <span class="form-hint">Separate tags with commas</span>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="bookmark-modal-close">Cancel</button>
+        <button class="btn btn-primary" id="bookmark-submit">Save bookmark</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script src="/app.js"></script>
+</body>
+</html>

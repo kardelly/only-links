@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — only.link</title>
+  <meta name="description" content="Manage your account settings">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== RESET & BASE ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Neutrals — warm tint (hue 60 amber) */
+      --bg:      oklch(98% 0.008 60);
+      --surface: oklch(99.5% 0.004 60);
+      --fg:      oklch(18% 0.012 60);
+      --muted:   oklch(52% 0.008 60);
+      --border:  oklch(92% 0.006 60);
+
+      /* Accent — cobalt blue */
+      --accent:  oklch(56% 0.18 250);
+      --accent-hover: oklch(51% 0.18 250);
+      --accent-subtle: oklch(96% 0.02 250);
+
+      /* Danger */
+      --danger: oklch(55% 0.18 15);
+      --danger-hover: oklch(50% 0.18 15);
+      --danger-subtle: oklch(96% 0.02 15);
+
+      /* Typography */
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Helvetica Neue", sans-serif;
+
+      /* Spacing (4px base) */
+      --space-1:  4px;
+      --space-2:  8px;
+      --space-3:  12px;
+      --space-4:  16px;
+      --space-5:  20px;
+      --space-6:  24px;
+      --space-8:  32px;
+      --space-10: 40px;
+      --space-12: 48px;
+      --space-16: 64px;
+
+      /* Text scale (1.25 ratio) */
+      --text-xs:   13px;
+      --text-sm:   14px;
+      --text-base: 16px;
+      --text-lg:   20px;
+      --text-xl:   25px;
+      --text-2xl:  31px;
+
+      /* Motion */
+      --transition: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-fast: 150ms;
+      --duration-base: 200ms;
+      --duration-slow: 300ms;
+
+      /* Elevation */
+      --shadow-sm: 0 1px 3px oklch(18% 0.012 60 / 0.08);
+      --shadow-md: 0 4px 12px oklch(18% 0.012 60 / 0.1);
+      --shadow-lg: 0 8px 24px oklch(18% 0.012 60 / 0.12);
+    }
+
+    html {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      line-height: 1.6;
+      color: var(--fg);
+      background: var(--bg);
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: oklch(from var(--bg) l c h / 0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid oklch(from var(--border) l c h / 0.6);
+    }
+
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      text-decoration: none;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+      flex-shrink: 0;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-left: auto;
+    }
+
+    #username-display {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      height: 40px;
+      padding: 0 var(--space-6);
+      font-size: var(--text-base);
+      font-weight: 600;
+      border-radius: 980px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--duration-fast) var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 1px 3px oklch(from var(--accent) l c h / 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px oklch(from var(--accent) l c h / 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+      border-color: oklch(88% 0.008 60);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .btn-ghost:hover {
+      color: var(--fg);
+      background: var(--surface);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+      box-shadow: 0 1px 3px oklch(from var(--danger) l c h / 0.25);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px oklch(from var(--danger) l c h / 0.3);
+    }
+
+    .btn-danger:active {
+      transform: translateY(0);
+    }
+
+    .btn-sm {
+      height: 32px;
+      padding: 0 var(--space-4);
+      font-size: var(--text-sm);
+    }
+
+    /* ===== LAYOUT ===== */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: var(--space-12) var(--space-6);
+    }
+
+    .page-header {
+      margin-bottom: var(--space-12);
+    }
+
+    .page-title {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: var(--space-2);
+    }
+
+    .page-subtitle {
+      font-size: var(--text-base);
+      color: var(--muted);
+    }
+
+    /* ===== PROFILE DROPDOWN ===== */
+    .profile-dropdown {
+      position: relative;
+    }
+
+    .profile-avatar-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, oklch(from var(--accent) calc(l * 0.9) c calc(h + 20)) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: white;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--transition);
+    }
+
+    .profile-avatar-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent);
+    }
+
+    .profile-menu {
+      position: absolute;
+      top: calc(100% + var(--space-2));
+      right: 0;
+      min-width: 200px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      padding: var(--space-2);
+      display: none;
+      z-index: 1000;
+    }
+
+    .profile-menu.active {
+      display: block;
+      animation: menuSlideIn var(--duration-fast) var(--transition);
+    }
+
+    @keyframes menuSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .profile-menu-header {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: var(--space-2);
+    }
+
+    .profile-menu-username {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    .profile-menu-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      width: 100%;
+      padding: var(--space-3) var(--space-4);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--fg);
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--transition);
+      text-decoration: none;
+    }
+
+    .profile-menu-item:hover {
+      background: var(--accent-subtle);
+      color: var(--accent);
+    }
+
+    .profile-menu-separator {
+      height: 1px;
+      background: var(--border);
+      margin: var(--space-2) 0;
+    }
+
+    /* ===== FORM HELPERS ===== */
+    .form-input-with-icon {
+      position: relative;
+    }
+
+    .form-input-icon {
+      position: absolute;
+      right: var(--space-4);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    .form-input-with-icon .form-input {
+      padding-right: calc(var(--space-4) * 2 + 18px);
+    }
+
+    .form-helper {
+      font-size: var(--text-xs);
+      margin-top: var(--space-2);
+    }
+
+    .form-helper.success {
+      color: oklch(45% 0.12 140);
+    }
+
+    .form-helper.error {
+      color: var(--danger);
+    }
+
+    /* ===== AVATAR PREVIEW ===== */
+    .avatar-preview {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, oklch(from var(--accent) calc(l * 0.9) c calc(h + 20)) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: white;
+      border: 3px solid var(--border);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .avatar-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ===== SETTINGS SECTIONS ===== */
+    .settings-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: var(--space-8);
+      margin-bottom: var(--space-8);
+    }
+
+    .section-header {
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: var(--space-2);
+    }
+
+    .section-description {
+      font-size: var(--text-sm);
+      color: var(--muted);
+    }
+
+    /* ===== FORMS ===== */
+    .form-group {
+      margin-bottom: var(--space-6);
+    }
+
+    .form-label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: var(--space-2);
+    }
+
+    .form-input {
+      width: 100%;
+      height: 44px;
+      padding: var(--space-3) var(--space-4);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: var(--text-base);
+      font-family: var(--font-sans);
+      color: var(--fg);
+      transition: all var(--duration-fast) var(--transition);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px oklch(from var(--accent) l c h / 0.1);
+    }
+
+    .form-input::placeholder {
+      color: var(--muted);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: var(--space-3);
+      justify-content: flex-end;
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ===== TOGGLE SWITCH ===== */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-4);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .toggle-label {
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    .toggle-description {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      margin-top: var(--space-1);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 51px;
+      height: 31px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--border);
+      transition: all var(--duration-fast) var(--transition);
+      border-radius: 980px;
+    }
+
+    .toggle-slider:before {
+      content: '';
+      position: absolute;
+      height: 27px;
+      width: 27px;
+      left: 2px;
+      bottom: 2px;
+      background: white;
+      transition: all var(--duration-fast) var(--transition);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px oklch(18% 0.012 60 / 0.2);
+    }
+
+    input:checked + .toggle-slider {
+      background: var(--accent);
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    input:focus + .toggle-slider {
+      box-shadow: 0 0 0 3px oklch(from var(--accent) l c h / 0.1);
+    }
+
+    /* ===== ALERTS ===== */
+    .alert {
+      padding: var(--space-4);
+      border-radius: 10px;
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-6);
+      display: none;
+    }
+
+    .alert.visible {
+      display: block;
+    }
+
+    .alert-success {
+      background: oklch(96% 0.02 140);
+      color: oklch(35% 0.12 140);
+      border: 1px solid oklch(88% 0.05 140);
+    }
+
+    .alert-error {
+      background: var(--danger-subtle);
+      color: var(--danger);
+      border: 1px solid oklch(88% 0.05 15);
+    }
+
+    /* ===== DANGER ZONE ===== */
+    .danger-zone {
+      background: var(--danger-subtle);
+      border: 1px solid oklch(88% 0.05 15);
+    }
+
+    .danger-zone .section-title {
+      color: var(--danger);
+    }
+
+    .danger-action {
+      padding: var(--space-4);
+      background: var(--surface);
+      border: 1px solid oklch(88% 0.05 15);
+      border-radius: 10px;
+    }
+
+    .danger-action-title {
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--danger);
+      margin-bottom: var(--space-2);
+    }
+
+    .danger-action-description {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      margin-bottom: var(--space-4);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    /* ===== MODAL ===== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 200;
+      background: oklch(18% 0.012 60 / 0.4);
+      backdrop-filter: blur(10px);
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-6);
+      animation: modalFadeIn var(--duration-slow) var(--transition);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      animation: modalSlideUp var(--duration-slow) var(--transition);
+    }
+
+    @keyframes modalSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+    }
+
+    .modal-body {
+      padding: var(--space-6);
+    }
+
+    .modal-footer {
+      padding: var(--space-6);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: var(--space-3);
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-container">
+      <a href="/app" class="logo">
+        <div class="logo-icon">🔗</div>
+        <span>only.link</span>
+      </a>
+
+      <nav class="nav">
+        <a href="/app" class="btn btn-ghost btn-sm">← Back to app</a>
+
+        <div class="profile-dropdown">
+          <button class="profile-avatar-btn" id="profile-avatar-btn">
+            <span id="profile-avatar-initial">U</span>
+          </button>
+
+          <div class="profile-menu" id="profile-menu">
+            <div class="profile-menu-header">
+              <div class="profile-menu-username" id="profile-menu-username">@username</div>
+            </div>
+            <a href="/settings" class="profile-menu-item">
+              <span>⚙️</span>
+              <span>Settings</span>
+            </a>
+            <div class="profile-menu-separator"></div>
+            <button class="profile-menu-item" id="logout-btn">
+              <span>👋</span>
+              <span>Sign out</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="container">
+    <div class="page-header">
+      <h1 class="page-title">Settings</h1>
+      <p class="page-subtitle">Manage your account preferences and security</p>
+    </div>
+
+    <!-- ACCOUNT INFO -->
+    <section class="settings-section">
+      <div class="section-header">
+        <h2 class="section-title">Account information</h2>
+        <p class="section-description">Your avatar, username and email</p>
+      </div>
+
+      <div id="avatar-alert" class="alert"></div>
+
+      <form id="avatar-form" enctype="multipart/form-data">
+        <div class="form-group">
+          <label class="form-label">Profile avatar</label>
+          <div style="display: flex; align-items: center; gap: var(--space-6);">
+            <div class="avatar-preview" id="avatar-preview">
+              <span id="avatar-preview-initial">U</span>
+            </div>
+            <div style="flex: 1;">
+              <input
+                type="file"
+                id="avatar-input"
+                accept="image/jpeg,image/png,image/webp"
+                style="display: none;"
+              >
+              <button type="button" class="btn btn-secondary" id="avatar-upload-btn">
+                Choose photo
+              </button>
+              <button type="button" class="btn btn-ghost btn-sm" id="avatar-remove-btn" style="display: none;">
+                Remove photo
+              </button>
+              <p style="font-size: var(--text-xs); color: var(--muted); margin-top: var(--space-2);">
+                JPG, PNG or WebP. Max 2MB.
+              </p>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <div id="username-alert" class="alert"></div>
+
+      <form id="username-form">
+        <div class="form-group">
+          <label class="form-label" for="username-field">Username</label>
+          <div class="form-input-with-icon">
+            <input
+              type="text"
+              class="form-input"
+              id="username-field"
+              placeholder="your-username"
+              required
+            >
+            <span class="form-input-icon" id="username-icon"></span>
+          </div>
+          <p class="form-helper" id="username-helper"></p>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Update username</button>
+        </div>
+      </form>
+
+      <div id="email-alert" class="alert"></div>
+
+      <form id="email-form">
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <input
+            type="email"
+            class="form-input"
+            id="email"
+            placeholder="you@example.com"
+            required
+          >
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Update email</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- PASSWORD CHANGE -->
+    <section class="settings-section">
+      <div class="section-header">
+        <h2 class="section-title">Change password</h2>
+        <p class="section-description">Update your password to keep your account secure</p>
+      </div>
+
+      <div id="password-alert" class="alert"></div>
+
+      <form id="password-form">
+        <div class="form-group">
+          <label class="form-label" for="current-password">Current password</label>
+          <input
+            type="password"
+            class="form-input"
+            id="current-password"
+            placeholder="••••••••"
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-password">New password</label>
+          <input
+            type="password"
+            class="form-input"
+            id="new-password"
+            placeholder="••••••••"
+            minlength="8"
+            required
+          >
+          <p style="font-size: var(--text-xs); color: var(--muted); margin-top: var(--space-2);">
+            Min. 8 characters with letters, numbers, and special characters (!@#$%...)
+          </p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirm-password">Confirm new password</label>
+          <input
+            type="password"
+            class="form-input"
+            id="confirm-password"
+            placeholder="••••••••"
+            required
+          >
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Update password</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- PRIVACY SETTINGS -->
+    <section class="settings-section">
+      <div class="section-header">
+        <h2 class="section-title">Privacy</h2>
+        <p class="section-description">Control who can see your bookmarks</p>
+      </div>
+
+      <div id="privacy-alert" class="alert"></div>
+
+      <div class="toggle-container">
+        <div>
+          <div class="toggle-label">Public bookmarks by default</div>
+          <div class="toggle-description">New bookmarks will be visible to everyone unless changed</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="default-public" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- DATA MANAGEMENT -->
+    <section class="settings-section">
+      <div class="section-header">
+        <h2 class="section-title">Data management</h2>
+        <p class="section-description">Import and export your bookmarks</p>
+      </div>
+
+      <div id="data-alert" class="alert"></div>
+
+      <div class="danger-action" style="background: var(--bg); border: 1px solid var(--border); margin-bottom: var(--space-6);">
+        <div style="font-size: var(--text-base); font-weight: 600; color: var(--fg); margin-bottom: var(--space-2);">
+          Export bookmarks
+        </div>
+        <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
+          Download all your bookmarks as a JSON file that can be imported later.
+        </p>
+        <button class="btn btn-secondary btn-sm" id="export-bookmarks-btn">Export as JSON</button>
+      </div>
+
+      <div class="danger-action" style="background: var(--bg); border: 1px solid var(--border);">
+        <div style="font-size: var(--text-base); font-weight: 600; color: var(--fg); margin-bottom: var(--space-2);">
+          Import bookmarks
+        </div>
+        <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
+          Upload a JSON or HTML file to import bookmarks. Supported formats: only.link export, Delicious, Pinboard, Netscape Bookmark format.
+        </p>
+        <input type="file" id="import-file-input" accept=".json,.html,.htm,application/json,text/html" style="display: none;">
+        <button class="btn btn-secondary btn-sm" id="import-bookmarks-btn">Choose file</button>
+      </div>
+    </section>
+
+    <!-- DANGER ZONE -->
+    <section class="settings-section danger-zone">
+      <div class="section-header">
+        <h2 class="section-title">Danger zone</h2>
+        <p class="section-description">Irreversible actions that affect your account</p>
+      </div>
+
+      <div class="danger-action" style="margin-bottom: var(--space-6);">
+        <div class="danger-action-title">Delete all bookmarks</div>
+        <p class="danger-action-description">
+          Permanently delete all your bookmarks. Your account will remain active. This action cannot be undone.
+        </p>
+        <button class="btn btn-danger btn-sm" id="delete-all-bookmarks-btn">Delete all my links</button>
+      </div>
+
+      <div class="danger-action">
+        <div class="danger-action-title">Delete account</div>
+        <p class="danger-action-description">
+          Permanently delete your account and all bookmarks. This action cannot be undone.
+        </p>
+        <button class="btn btn-danger btn-sm" id="delete-account-btn">Delete my account</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- CONFIRMATION MODAL -->
+  <div class="modal" id="confirmation-modal">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="confirmation-title">Confirm action</h2>
+      </div>
+      <div class="modal-body">
+        <p id="confirmation-message" style="font-size: var(--text-base); color: var(--fg); line-height: 1.6;">
+          Are you sure?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="confirmation-cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmation-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT PREVIEW MODAL -->
+  <div class="modal" id="import-preview-modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Import Preview</h2>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: var(--space-6);">
+          <div style="background: var(--accent-subtle); padding: var(--space-6); border-radius: 12px; margin-bottom: var(--space-4);">
+            <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--accent); margin-bottom: var(--space-2);" id="import-total-count">
+              0 bookmarks
+            </div>
+            <div style="font-size: var(--text-sm); color: var(--muted);">
+              found in file
+            </div>
+          </div>
+
+          <div id="import-preview-list" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: var(--space-4);">
+            <!-- Preview items will be inserted here -->
+          </div>
+        </div>
+
+        <p style="font-size: var(--text-sm); color: var(--muted);">
+          Duplicates will be skipped automatically. This may take a few minutes for large imports.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="import-preview-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="import-preview-confirm">Start Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT PROGRESS MODAL -->
+  <div class="modal" id="import-progress-modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Importing Bookmarks...</h2>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: var(--space-6);">
+          <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-3);">
+            <span style="font-size: var(--text-sm); font-weight: 600; color: var(--fg);">Progress</span>
+            <span style="font-size: var(--text-sm); font-weight: 600; color: var(--accent);" id="import-progress-text">0 / 0</span>
+          </div>
+
+          <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+            <div id="import-progress-bar" style="height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+          <div style="text-align: center; padding: var(--space-4); background: oklch(96% 0.02 140); border-radius: 8px;">
+            <div style="font-size: var(--text-xl); font-weight: 700; color: oklch(45% 0.12 140);" id="import-success-count">0</div>
+            <div style="font-size: var(--text-xs); color: var(--muted); margin-top: var(--space-1);">Imported</div>
+          </div>
+          <div style="text-align: center; padding: var(--space-4); background: var(--danger-subtle); border-radius: 8px;">
+            <div style="font-size: var(--text-xl); font-weight: 700; color: var(--danger);" id="import-failed-count">0</div>
+            <div style="font-size: var(--text-xs); color: var(--muted); margin-top: var(--space-1);">Failed</div>
+          </div>
+        </div>
+
+        <div id="import-error-details" style="display: none; margin-top: var(--space-4); padding: var(--space-4); background: var(--danger-subtle); border-radius: 8px; max-height: 150px; overflow-y: auto;">
+          <div style="font-size: var(--text-sm); font-weight: 600; color: var(--danger); margin-bottom: var(--space-2);">Common errors:</div>
+          <ul id="import-error-list" style="font-size: var(--text-xs); color: var(--danger); margin: 0; padding-left: var(--space-5);">
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="import-progress-close" disabled>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE ACCOUNT MODAL -->
+  <div class="modal" id="delete-account-modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Wait, are you sure? 🥺</h2>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: var(--text-base); color: var(--fg); line-height: 1.6; margin-bottom: var(--space-6);">
+          We'd hate to see you go! Deleting your account means:
+        </p>
+        <ul style="list-style: none; padding: 0; margin-bottom: var(--space-6);">
+          <li style="padding: var(--space-3); background: var(--accent-subtle); border-radius: 8px; margin-bottom: var(--space-3); font-size: var(--text-sm);">
+            📚 All your bookmarks will be permanently deleted
+          </li>
+          <li style="padding: var(--space-3); background: var(--accent-subtle); border-radius: 8px; margin-bottom: var(--space-3); font-size: var(--text-sm);">
+            🏷️ All your carefully curated tags will be lost
+          </li>
+          <li style="padding: var(--space-3); background: var(--accent-subtle); border-radius: 8px; font-size: var(--text-sm);">
+            ⏰ This action cannot be undone. Like, ever.
+          </li>
+        </ul>
+        <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
+          Maybe just take a break instead? Your links will be here when you come back. 💙
+        </p>
+        <p style="font-size: var(--text-sm); color: var(--fg); font-weight: 600; margin-bottom: var(--space-2);">
+          If you're really sure, type your username to confirm:
+        </p>
+        <input
+          type="text"
+          class="form-input"
+          id="delete-account-username"
+          placeholder="Your username"
+          style="margin-bottom: var(--space-2);"
+        >
+        <p id="delete-account-error" style="font-size: var(--text-xs); color: var(--danger); display: none;"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="delete-account-cancel">Keep my account</button>
+        <button type="button" class="btn btn-danger" id="delete-account-confirm" disabled>Delete anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delicious.Modern - Diagnostic Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/styles.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 p-8">
+
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold mb-8">🔍 Diagnostic Page</h1>
+
+    <div class="grid gap-4">
+
+      <!-- Tailwind Test -->
+      <div class="glass-panel p-6 rounded-2xl">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <span id="tailwind-status" class="w-4 h-4 rounded-full bg-yellow-500"></span>
+          Tailwind CSS
+        </h2>
+        <p class="text-sm">Se você vê glassmorphism neste card, Tailwind está OK</p>
+        <div class="mt-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg inline-block">
+          Gradient Test
+        </div>
+      </div>
+
+      <!-- Material Icons Test -->
+      <div class="glass-panel p-6 rounded-2xl">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <span id="icons-status" class="w-4 h-4 rounded-full bg-yellow-500"></span>
+          Material Icons
+        </h2>
+        <div class="flex gap-4 text-3xl">
+          <span class="material-icons-round">bookmarks</span>
+          <span class="material-icons-round">search</span>
+          <span class="material-icons-round">add</span>
+        </div>
+        <p class="text-sm mt-2">Se vê ícones acima, Material Icons está OK</p>
+      </div>
+
+      <!-- Custom Fonts Test -->
+      <div class="glass-panel p-6 rounded-2xl">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <span id="fonts-status" class="w-4 h-4 rounded-full bg-yellow-500"></span>
+          Custom Fonts (Outfit + Inter)
+        </h2>
+        <p style="font-family: var(--font-heading);" class="text-2xl mb-2">Outfit Heading Test</p>
+        <p style="font-family: var(--font-sans);">Inter Body Test - This should look modern and clean</p>
+      </div>
+
+      <!-- Custom CSS Test -->
+      <div class="glass-panel p-6 rounded-2xl">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <span id="css-status" class="w-4 h-4 rounded-full bg-yellow-500"></span>
+          Custom CSS (styles.css)
+        </h2>
+        <div class="glass-card p-4 rounded-xl">
+          <p class="text-sm">Se este card tem glassmorphism, styles.css está OK</p>
+        </div>
+      </div>
+
+      <!-- Background Mesh Test -->
+      <div class="glass-panel p-6 rounded-2xl">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <span id="mesh-status" class="w-4 h-4 rounded-full bg-yellow-500"></span>
+          Background Mesh Glows
+        </h2>
+        <p class="text-sm">Se vê glows roxos/azuis no fundo, animations estão OK</p>
+      </div>
+
+      <!-- API Test -->
+      <div class="glass-panel p-6 rounded-2xl">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <span id="api-status" class="w-4 h-4 rounded-full bg-yellow-500"></span>
+          API Connection
+        </h2>
+        <p class="text-sm mb-2">Testing connection to backend...</p>
+        <pre id="api-result" class="bg-slate-900 text-green-400 p-3 rounded text-xs overflow-auto">Testing...</pre>
+      </div>
+
+    </div>
+
+    <div class="mt-8 glass-panel p-6 rounded-2xl">
+      <h2 class="text-xl font-bold mb-4">📊 Summary</h2>
+      <div id="summary" class="space-y-2 text-sm"></div>
+      <a href="/" class="mt-4 inline-block px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:scale-105 transition-transform">
+        ← Back to App
+      </a>
+    </div>
+  </div>
+
+  <!-- Background Mesh -->
+  <div class="mesh-bg">
+    <div class="mesh-glow-1"></div>
+    <div class="mesh-glow-2"></div>
+  </div>
+
+  <script>
+    // Test API
+    async function testAPI() {
+      try {
+        const response = await fetch('/api/bookmarks?limit=1');
+        const data = await response.json();
+        document.getElementById('api-result').textContent = JSON.stringify(data, null, 2);
+        setStatus('api-status', 'green');
+      } catch (error) {
+        document.getElementById('api-result').textContent = `Error: ${error.message}`;
+        setStatus('api-status', 'red');
+      }
+    }
+
+    function setStatus(id, color) {
+      const colors = {
+        green: 'bg-green-500',
+        red: 'bg-red-500',
+        yellow: 'bg-yellow-500'
+      };
+      const el = document.getElementById(id);
+      el.className = el.className.replace(/bg-\w+-500/, colors[color]);
+    }
+
+    // Auto-check on load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Check if Tailwind classes applied
+      const glassPanel = document.querySelector('.glass-panel');
+      if (glassPanel && window.getComputedStyle(glassPanel).backdropFilter !== 'none') {
+        setStatus('tailwind-status', 'green');
+        setStatus('css-status', 'green');
+      }
+
+      // Check icons
+      const hasIcons = document.querySelector('.material-icons-round');
+      if (hasIcons) {
+        setStatus('icons-status', 'green');
+      }
+
+      // Check fonts
+      const heading = document.querySelector('[style*="font-heading"]');
+      if (heading && window.getComputedStyle(heading).fontFamily.includes('Outfit')) {
+        setStatus('fonts-status', 'green');
+      }
+
+      // Check mesh
+      const mesh = document.querySelector('.mesh-glow-1');
+      if (mesh) {
+        setStatus('mesh-status', 'green');
+      }
+
+      // Test API
+      testAPI();
+
+      // Generate summary
+      setTimeout(() => {
+        const statuses = {
+          'Tailwind CSS': document.getElementById('tailwind-status').className.includes('green'),
+          'Material Icons': document.getElementById('icons-status').className.includes('green'),
+          'Custom Fonts': document.getElementById('fonts-status').className.includes('green'),
+          'Custom CSS': document.getElementById('css-status').className.includes('green'),
+          'Mesh Animations': document.getElementById('mesh-status').className.includes('green'),
+          'API Connection': document.getElementById('api-status').className.includes('green')
+        };
+
+        const summary = document.getElementById('summary');
+        for (const [name, ok] of Object.entries(statuses)) {
+          const div = document.createElement('div');
+          div.className = `flex items-center gap-2 ${ok ? 'text-green-600' : 'text-red-600'}`;
+          div.innerHTML = `<span>${ok ? '✅' : '❌'}</span> ${name}`;
+          summary.appendChild(div);
+        }
+
+        const allOk = Object.values(statuses).every(v => v);
+        if (allOk) {
+          summary.innerHTML += '<p class="mt-4 text-green-600 font-bold">🎉 Tudo funcionando perfeitamente!</p>';
+        } else {
+          summary.innerHTML += '<p class="mt-4 text-red-600 font-bold">⚠️ Alguns recursos não carregaram</p>';
+        }
+      }, 2000);
+    });
+  </script>
+</body>
+</html>

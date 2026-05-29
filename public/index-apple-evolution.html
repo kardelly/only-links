@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>delicious — Social bookmarking, reimagined</title>
+  <meta name="description" content="Save, organize, and discover links. Fast, beautiful, focused.">
+
+  <style>
+    /* ===== RESET & BASE ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Neutrals — warm tint (hue 60 amber) */
+      --bg:      oklch(98% 0.008 60);
+      --surface: oklch(99.5% 0.004 60);
+      --fg:      oklch(18% 0.012 60);
+      --muted:   oklch(52% 0.008 60);
+      --border:  oklch(92% 0.006 60);
+
+      /* Accent — cobalt blue */
+      --accent:  oklch(56% 0.18 250);
+      --accent-hover: oklch(51% 0.18 250);
+
+      /* Typography */
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+      --font-serif: "SF Pro Display", "New York", Georgia, serif;
+
+      /* Spacing (4px base) */
+      --space-1:  4px;
+      --space-2:  8px;
+      --space-3:  12px;
+      --space-4:  16px;
+      --space-6:  24px;
+      --space-8:  32px;
+      --space-12: 48px;
+      --space-16: 64px;
+      --space-20: 80px;
+      --space-24: 96px;
+
+      /* Text scale (1.25 ratio) */
+      --text-xs:   13px;
+      --text-sm:   14px;
+      --text-base: 17px;
+      --text-lg:   21px;
+      --text-xl:   26px;
+      --text-2xl:  32px;
+      --text-3xl:  40px;
+      --text-4xl:  50px;
+
+      /* Motion */
+      --transition: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-fast: 200ms;
+      --duration-base: 300ms;
+
+      /* Elevation */
+      --shadow-sm: 0 1px 3px oklch(18% 0.012 60 / 0.08);
+      --shadow-md: 0 4px 12px oklch(18% 0.012 60 / 0.1);
+      --shadow-lg: 0 8px 24px oklch(18% 0.012 60 / 0.12);
+    }
+
+    html {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      line-height: 1.6;
+      color: var(--fg);
+      background: var(--bg);
+    }
+
+    /* ===== HERO SECTION ===== */
+    .hero {
+      position: relative;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: linear-gradient(
+        180deg,
+        var(--bg) 0%,
+        oklch(99% 0.006 60) 100%
+      );
+    }
+
+    /* Ambient gradient orbs */
+    .hero::before,
+    .hero::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.3;
+      pointer-events: none;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    .hero::before {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(
+        circle,
+        oklch(70% 0.15 250) 0%,
+        transparent 70%
+      );
+      top: -200px;
+      right: -100px;
+      animation-delay: -5s;
+    }
+
+    .hero::after {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(
+        circle,
+        oklch(75% 0.12 280) 0%,
+        transparent 70%
+      );
+      bottom: -150px;
+      left: -50px;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translate(0, 0) scale(1);
+      }
+      33% {
+        transform: translate(30px, -30px) scale(1.1);
+      }
+      66% {
+        transform: translate(-20px, 20px) scale(0.9);
+      }
+    }
+
+    .hero-container {
+      position: relative;
+      z-index: 1;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: var(--space-8);
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: var(--space-4);
+      opacity: 0;
+      animation: fadeInUp 800ms var(--transition) 200ms forwards;
+    }
+
+    .hero-title {
+      font-size: var(--text-4xl);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--fg);
+      margin-bottom: var(--space-6);
+      opacity: 0;
+      animation: fadeInUp 800ms var(--transition) 400ms forwards;
+    }
+
+    @media (min-width: 768px) {
+      .hero-title {
+        font-size: 72px;
+      }
+    }
+
+    .hero-subtitle {
+      font-size: var(--text-lg);
+      line-height: 1.5;
+      color: var(--muted);
+      max-width: 620px;
+      margin: 0 auto var(--space-12);
+      opacity: 0;
+      animation: fadeInUp 800ms var(--transition) 600ms forwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: var(--space-4);
+      justify-content: center;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeInUp 800ms var(--transition) 800ms forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: var(--space-4) var(--space-8);
+      font-size: var(--text-base);
+      font-weight: 600;
+      border-radius: 980px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--duration-fast) var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 2px 8px oklch(from var(--accent) l c h / 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px oklch(from var(--accent) l c h / 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg);
+      border-color: oklch(88% 0.008 60);
+    }
+
+    /* ===== FEATURES SECTION ===== */
+    .features {
+      padding: var(--space-24) var(--space-8);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--space-12);
+      margin-top: var(--space-16);
+    }
+
+    .feature-card {
+      text-align: center;
+      padding: var(--space-8);
+      opacity: 0;
+      animation: fadeInUp 600ms var(--transition) forwards;
+    }
+
+    .feature-card:nth-child(1) { animation-delay: 100ms; }
+    .feature-card:nth-child(2) { animation-delay: 200ms; }
+    .feature-card:nth-child(3) { animation-delay: 300ms; }
+
+    .feature-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto var(--space-6);
+      background: linear-gradient(135deg,
+        oklch(96% 0.01 250) 0%,
+        oklch(98% 0.005 260) 100%
+      );
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .feature-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      margin-bottom: var(--space-3);
+      letter-spacing: -0.01em;
+    }
+
+    .feature-description {
+      font-size: var(--text-base);
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    /* ===== SCREENSHOT SECTION ===== */
+    .screenshot-section {
+      padding: var(--space-24) var(--space-8);
+      background: linear-gradient(
+        180deg,
+        var(--bg) 0%,
+        var(--surface) 50%,
+        var(--bg) 100%
+      );
+    }
+
+    .screenshot-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .screenshot-frame {
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow:
+        0 40px 80px oklch(18% 0.012 60 / 0.15),
+        0 0 0 1px oklch(18% 0.012 60 / 0.08);
+      background: var(--surface);
+    }
+
+    .screenshot-header {
+      height: 48px;
+      background: linear-gradient(
+        180deg,
+        oklch(96% 0.006 60) 0%,
+        oklch(94% 0.006 60) 100%
+      );
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-6);
+      gap: var(--space-2);
+    }
+
+    .screenshot-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: oklch(85% 0.006 60);
+    }
+
+    .screenshot-image {
+      width: 100%;
+      display: block;
+      background: var(--surface);
+      aspect-ratio: 16 / 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-lg);
+      color: var(--muted);
+    }
+
+    /* ===== SOCIAL PROOF ===== */
+    .social-proof {
+      padding: var(--space-20) var(--space-8);
+      text-align: center;
+    }
+
+    .social-proof-title {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: var(--space-8);
+    }
+
+    .social-proof-stats {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-16);
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+      display: block;
+    }
+
+    .stat-label {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      margin-top: var(--space-2);
+    }
+
+    /* ===== FINAL CTA ===== */
+    .final-cta {
+      padding: var(--space-24) var(--space-8);
+      text-align: center;
+      background: linear-gradient(
+        180deg,
+        var(--bg) 0%,
+        oklch(99.5% 0.004 60) 100%
+      );
+    }
+
+    .final-cta-title {
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: var(--space-6);
+    }
+
+    .final-cta-subtitle {
+      font-size: var(--text-lg);
+      color: var(--muted);
+      margin-bottom: var(--space-12);
+    }
+
+    /* ===== NAV BAR ===== */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: oklch(from var(--bg) l c h / 0.8);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid oklch(from var(--border) l c h / 0.6);
+      transition: all var(--duration-fast) var(--transition);
+    }
+
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 var(--space-8);
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .nav-logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: var(--space-8);
+      align-items: center;
+    }
+
+    .nav-link {
+      font-size: var(--text-base);
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color var(--duration-fast) var(--transition);
+    }
+
+    .nav-link:hover {
+      color: var(--fg);
+    }
+
+    @media (max-width: 768px) {
+      .nav-links .nav-link:not(.btn) {
+        display: none;
+      }
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      padding: var(--space-16) var(--space-8);
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-8);
+    }
+
+    .footer-text {
+      font-size: var(--text-sm);
+      color: var(--muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: var(--space-6);
+    }
+
+    .footer-link {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      text-decoration: none;
+      transition: color var(--duration-fast) var(--transition);
+    }
+
+    .footer-link:hover {
+      color: var(--fg);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVIGATION -->
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="/" class="nav-logo">
+        <div class="nav-logo-icon">📑</div>
+        <span>delicious</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#" class="nav-link">Pricing</a>
+        <a href="/app" class="btn btn-secondary btn-sm">Sign in</a>
+        <a href="/app" class="btn btn-primary btn-sm">Get started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-container">
+      <span class="hero-eyebrow">Social bookmarking</span>
+
+      <h1 class="hero-title">
+        Save everything.<br>
+        Find anything.
+      </h1>
+
+      <p class="hero-subtitle">
+        Organize your digital life with tags, not folders. Fast, focused, and built for people who save hundreds of links a year.
+      </p>
+
+      <div class="hero-cta">
+        <a href="/app" class="btn btn-primary">Start saving for free</a>
+        <a href="#features" class="btn btn-secondary">See how it works</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">Instant search</h3>
+        <p class="feature-description">
+          Find any link in milliseconds. Search by title, URL, tags, or full-text description.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🏷️</div>
+        <h3 class="feature-title">Tags over folders</h3>
+        <p class="feature-description">
+          Organize with flexible tags. One link, many contexts. No forced hierarchies.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3 class="feature-title">Public by default</h3>
+        <p class="feature-description">
+          Discover what others are saving. Build your collection from shared knowledge.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREENSHOT -->
+  <section class="screenshot-section">
+    <div class="screenshot-container">
+      <div class="screenshot-frame">
+        <div class="screenshot-header">
+          <div class="screenshot-dot"></div>
+          <div class="screenshot-dot"></div>
+          <div class="screenshot-dot"></div>
+        </div>
+        <div class="screenshot-image">
+          [Screenshot of app interface here]
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF -->
+  <section class="social-proof">
+    <h2 class="social-proof-title">Trusted by curators worldwide</h2>
+    <div class="social-proof-stats">
+      <div class="stat">
+        <span class="stat-number">12K+</span>
+        <span class="stat-label">Active users</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">2.4M</span>
+        <span class="stat-label">Links saved</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">450K</span>
+        <span class="stat-label">Tags created</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <h2 class="final-cta-title">Ready to get organized?</h2>
+    <p class="final-cta-subtitle">Start saving links in seconds. No credit card required.</p>
+    <a href="/app" class="btn btn-primary">Create your free account</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      <p class="footer-text">© 2026 delicious.modern. Built with care.</p>
+      <div class="footer-links">
+        <a href="#" class="footer-link">Privacy</a>
+        <a href="#" class="footer-link">Terms</a>
+        <a href="#" class="footer-link">API</a>
+        <a href="https://github.com" class="footer-link">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

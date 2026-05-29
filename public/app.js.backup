@@ -1,0 +1,1067 @@
+/**
+ * delicious.modern — Frontend SPA Controller (ESM)
+ */
+
+// CENTRAL STATE MANAGEMENT
+const state = {
+  currentUser: null,
+  feedType: 'all', // 'all' or 'mine'
+  searchQuery: '',
+  activeTag: null,
+  currentPage: 1,
+  limit: 10,
+  bookmarks: [],
+  popularTags: [],
+  pagination: {
+    total: 0,
+    totalPages: 0
+  },
+  authMode: 'login' // 'login' or 'register'
+};
+
+// ==========================================
+// 1. INITIALIZE FRONTEND APPLICATION
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+  initTheme();
+  setupEventListeners();
+  
+  // Setup native dialog dismiss fallbacks
+  setupDialogLightDismiss(document.getElementById('auth-dialog'));
+  setupDialogLightDismiss(document.getElementById('bookmark-dialog'));
+
+  // Inject bookmarklet href dynamically using current server origin
+  const baseUrl = window.location.origin;
+  const bookmarkletCode = `javascript:(function(){` +
+    `var u=encodeURIComponent(location.href);` +
+    `var t=encodeURIComponent(document.title);` +
+    `var d=encodeURIComponent((document.querySelector('meta[name="description"]')||{}).content||'');` +
+    `window.open('${baseUrl}/?url='+u+'&title='+t+'&desc='+d,'_blank','width=520,height=680,scrollbars=yes');` +
+    `})();`;
+  const bookmarkletEl = document.getElementById('bookmarklet-link');
+  if (bookmarkletEl) bookmarkletEl.href = bookmarkletCode;
+
+  // Check user session & load initial feed
+  await checkSession();
+  await refreshFeed();
+  
+  // Handle URL query parameters (for Bookmarklet triggers)
+  handleUrlParameters();
+});
+
+// Theme System Initialization
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}
+
+// Check active session via API
+async function checkSession() {
+  try {
+    const response = await fetch('/api/auth/me');
+    const data = await response.json();
+    state.currentUser = data.user;
+    updateUserSessionUI();
+  } catch (err) {
+    console.error('Error fetching session:', err);
+    state.currentUser = null;
+    updateUserSessionUI();
+  }
+}
+
+// Refresh Feed and popular tags
+async function refreshFeed() {
+  showSkeletonLoading();
+  await Promise.all([
+    fetchBookmarks(),
+    fetchPopularTags()
+  ]);
+}
+
+// ==========================================
+// 2. BACKEND API OPERATIONS
+// ==========================================
+
+// Fetch paginated & filtered bookmarks
+async function fetchBookmarks() {
+  try {
+    const params = new URLSearchParams({
+      page: state.currentPage,
+      limit: state.limit
+    });
+    
+    if (state.searchQuery) {
+      params.append('q', state.searchQuery);
+    }
+    if (state.activeTag) {
+      params.append('tag', state.activeTag);
+    }
+    if (state.feedType === 'mine' && state.currentUser) {
+      params.append('mine', 'true');
+    }
+    
+    const response = await fetch(`/api/bookmarks?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error('Failed to load bookmarks');
+    }
+    
+    const data = await response.json();
+    state.bookmarks = data.items;
+    state.pagination = data.pagination;
+    
+    renderBookmarks();
+    renderPagination();
+  } catch (err) {
+    console.error('Fetch Bookmarks Error:', err);
+    const container = document.getElementById('bookmark-list');
+    container.innerHTML = `
+      <div class="glass-panel p-8 rounded-2xl text-center border border-red-500/20 text-red-600 dark:text-red-400">
+        <span class="material-icons-round text-4xl mb-2">error_outline</span>
+        <p class="font-semibold">Unable to connect to Delicious server.</p>
+        <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-slate-200 dark:bg-slate-800 rounded-xl text-xs font-bold transition-all">Retry</button>
+      </div>
+    `;
+  }
+}
+
+// Fetch popular tags list
+async function fetchPopularTags() {
+  try {
+    const response = await fetch('/api/tags?limit=25');
+    if (!response.ok) throw new Error();
+    const data = await response.json();
+    state.popularTags = data.tags;
+    renderPopularTags();
+  } catch (err) {
+    console.error('Fetch Tags Error:', err);
+  }
+}
+
+// Save bookmark (Create or Edit)
+async function saveBookmark(payload) {
+  const bookmarkId = document.getElementById('bookmark-id').value;
+  const isEdit = !!bookmarkId;
+  const url = isEdit ? `/api/bookmarks/${bookmarkId}` : '/api/bookmarks';
+  const method = isEdit ? 'PUT' : 'POST';
+  
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to save bookmark');
+    }
+    
+    // Success - reset form, close dialogue, reload feed
+    document.getElementById('bookmark-dialog').close();
+    document.getElementById('bookmark-form').reset();
+    await refreshFeed();
+  } catch (err) {
+    showBookmarkError(err.message);
+  }
+}
+
+// Delete a bookmark
+async function performDeleteBookmark(id) {
+  if (!confirm('Are you sure you want to delete this bookmark?')) return;
+  
+  try {
+    const response = await fetch(`/api/bookmarks/${id}`, { method: 'DELETE' });
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to delete bookmark');
+    }
+    
+    await refreshFeed();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// Perform User Login or Register
+async function authenticateUser(payload) {
+  const isLogin = state.authMode === 'login';
+  const url = isLogin ? '/api/auth/login' : '/api/auth/register';
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Authentication failed');
+    }
+    
+    // Auth Success
+    state.currentUser = data.user;
+    updateUserSessionUI();
+    document.getElementById('auth-dialog').close();
+    document.getElementById('auth-form').reset();
+    
+    // Reset to "All" feed upon login/registration to show fresh state
+    state.feedType = 'all';
+    state.currentPage = 1;
+    await refreshFeed();
+    
+    // If there was a pending bookmark trigger from a bookmarklet, open it!
+    if (state.pendingBookmark) {
+      openBookmarkModalPrefilled(state.pendingBookmark);
+      state.pendingBookmark = null;
+    }
+  } catch (err) {
+    showAuthError(err.message);
+  }
+}
+
+// Perform Logout
+async function performLogout() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    state.currentUser = null;
+    state.feedType = 'all';
+    state.currentPage = 1;
+    updateUserSessionUI();
+    await refreshFeed();
+  } catch (err) {
+    console.error('Logout error:', err);
+  }
+}
+
+// ==========================================
+// 3. UI RENDERING AND DOM MANIPULATION
+// ==========================================
+
+// Display skeleton loading pulse cards
+function showSkeletonLoading() {
+  const container = document.getElementById('bookmark-list');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="skeleton-bookmark">
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-url"></div>
+      <div class="skeleton skeleton-description"></div>
+      <div class="skeleton-tags">
+        <div class="skeleton skeleton-tag"></div>
+        <div class="skeleton skeleton-tag"></div>
+        <div class="skeleton skeleton-tag"></div>
+      </div>
+    </div>
+    <div class="skeleton-bookmark">
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-url"></div>
+      <div class="skeleton skeleton-description"></div>
+      <div class="skeleton-tags">
+        <div class="skeleton skeleton-tag"></div>
+        <div class="skeleton skeleton-tag"></div>
+      </div>
+    </div>
+    <div class="skeleton-bookmark">
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-url"></div>
+      <div class="skeleton skeleton-description"></div>
+      <div class="skeleton-tags">
+        <div class="skeleton skeleton-tag"></div>
+        <div class="skeleton skeleton-tag"></div>
+        <div class="skeleton skeleton-tag"></div>
+      </div>
+    </div>
+  `;
+}
+
+// Render bookmarks feed
+function renderBookmarks() {
+  const container = document.getElementById('bookmark-list');
+  if (!container) return;
+
+  container.innerHTML = '';
+  
+  if (state.bookmarks.length === 0) {
+    container.innerHTML = `
+      <div class="glass-panel p-12 rounded-3xl text-center border border-dashed border-slate-300 dark:border-slate-800 flex flex-col items-center justify-center gap-4">
+        <div class="w-16 h-16 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center shadow-inner">
+          <span class="material-icons-round text-3xl">cloud_off</span>
+        </div>
+        <div>
+          <h3 class="font-bold text-lg text-slate-800 dark:text-white">No bookmarks found</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm">No items match your active filters or searches. Add some new bookmarks to build the catalog!</p>
+        </div>
+        ${state.currentUser ? `
+          <button id="empty-state-add-btn" class="mt-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-semibold rounded-xl btn-premium shadow-md">
+            Add First Bookmark
+          </button>
+        ` : `
+          <button id="empty-state-login-btn" class="mt-2 px-5 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white text-sm font-semibold rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">
+            Sign In to Contribute
+          </button>
+        `}
+      </div>
+    `;
+    
+    // Attach trigger actions inside empty states
+    const addBtn = document.getElementById('empty-state-add-btn');
+    if (addBtn) addBtn.onclick = () => openBookmarkModal();
+    const loginBtn = document.getElementById('empty-state-login-btn');
+    if (loginBtn) loginBtn.onclick = () => openAuthModal('login');
+    
+    return;
+  }
+  
+  // Render bookmarks
+  state.bookmarks.forEach(item => {
+    // Generate clean hostname
+    let host = 'link';
+    try {
+      host = new URL(item.url).hostname.replace('www.', '');
+    } catch(e) {}
+    
+    const isOwner = state.currentUser && state.currentUser.id === item.user_id;
+    
+    const card = document.createElement('div');
+    card.className = 'glass-card p-6 rounded-2xl flex flex-col justify-between gap-4 relative overflow-hidden';
+    
+    // Render dynamic pills string
+    const tagsHtml = item.tags.map(tag => `
+      <button class="tag-badge text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/10 hover:border-indigo-500/30 transition-all" data-tag="${tag}">
+        #${tag}
+      </button>
+    `).join(' ');
+    
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-start gap-4 flex-1">
+          <!-- Site Favicon -->
+          <img 
+            src="https://www.google.com/s2/favicons?domain=${host}&sz=32" 
+            alt="${host} Icon" 
+            class="w-8 h-8 rounded-lg mt-0.5 border border-slate-200 dark:border-slate-800 shadow-sm bg-white"
+            onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22purple%22><rect width=%2224%22 height=%2224%22 rx=%226%22/></svg>'"
+          >
+          <div class="flex-1 min-w-0">
+            <!-- Title -->
+            <h3 class="font-bold text-base leading-snug tracking-tight text-slate-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors truncate">
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 inline-block max-w-full">
+                <span>${escapeHTML(item.title)}</span>
+                <span class="material-icons-round text-sm text-slate-400 inline-block">open_in_new</span>
+              </a>
+            </h3>
+            
+            <!-- Excerpt URL -->
+            <span class="text-xs text-slate-400 dark:text-slate-500 font-medium">${host}</span>
+            
+            <!-- Description -->
+            ${item.description ? `
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+                ${escapeHTML(item.description)}
+              </p>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- OWNER ACTIONS -->
+        ${isOwner ? `
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button class="edit-bookmark-btn p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors" data-id="${item.id}" title="Edit Bookmark">
+              <span class="material-icons-round text-lg">edit</span>
+            </button>
+            <button class="delete-bookmark-btn p-1.5 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors" data-id="${item.id}" title="Delete Bookmark">
+              <span class="material-icons-round text-lg">delete_outline</span>
+            </button>
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- FOOTER META: TAGS & META -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/50 dark:border-slate-800/50 pt-4 text-xs text-slate-500 dark:text-slate-400">
+        <!-- Tags container -->
+        <div class="flex flex-wrap gap-1.5">
+          ${tagsHtml || '<span class="italic text-slate-400">no tags</span>'}
+        </div>
+        
+        <!-- Saved By / Date details -->
+        <div class="flex items-center gap-2 font-medium">
+          <span class="flex items-center gap-1">
+            <span class="material-icons-round text-sm text-indigo-500/70">person</span>
+            @${escapeHTML(item.username)}
+          </span>
+          <span class="text-slate-300 dark:text-slate-800">•</span>
+          <span>${timeAgo(item.created_at)}</span>
+        </div>
+      </div>
+    `;
+    
+    container.appendChild(card);
+  });
+  
+  // Attach event listeners dynamically to tag pills
+  container.querySelectorAll('.tag-badge').forEach(pill => {
+    pill.onclick = () => {
+      filterByTag(pill.getAttribute('data-tag'));
+    };
+  });
+  
+  // Attach edit and delete listeners
+  container.querySelectorAll('.edit-bookmark-btn').forEach(btn => {
+    btn.onclick = () => {
+      const id = parseInt(btn.getAttribute('data-id'));
+      openEditBookmarkModal(id);
+    };
+  });
+  
+  container.querySelectorAll('.delete-bookmark-btn').forEach(btn => {
+    btn.onclick = () => {
+      const id = parseInt(btn.getAttribute('data-id'));
+      performDeleteBookmark(id);
+    };
+  });
+}
+
+// Render Sidebar popular tags
+function renderPopularTags() {
+  const container = document.getElementById('tags-cloud');
+  container.innerHTML = '';
+  
+  if (state.popularTags.length === 0) {
+    container.innerHTML = `
+      <span class="text-xs italic text-slate-400">No tags active in system</span>
+    `;
+    return;
+  }
+  
+  state.popularTags.forEach(tag => {
+    const isSelected = state.activeTag === tag.name;
+    const button = document.createElement('button');
+    button.className = `tag-pill text-xs font-semibold px-3 py-1.5 rounded-xl border flex items-center gap-1 transition-all ${
+      isSelected 
+      ? 'bg-purple-600 border-purple-600 text-white shadow-sm shadow-purple-500/25' 
+      : 'bg-white border-slate-200 text-slate-600 hover:border-purple-300 hover:text-purple-600 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 dark:hover:text-purple-400 dark:hover:border-purple-500/50'
+    }`;
+    button.innerHTML = `
+      <span>#${escapeHTML(tag.name)}</span>
+      <span class="px-1.5 py-0.5 rounded-md text-[10px] ${isSelected ? 'bg-purple-700 text-purple-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'} font-medium">
+        ${tag.count}
+      </span>
+    `;
+    
+    button.onclick = () => {
+      if (isSelected) {
+        clearFilters();
+      } else {
+        filterByTag(tag.name);
+      }
+    };
+    
+    container.appendChild(button);
+  });
+}
+
+// Render Pagination components
+function renderPagination() {
+  const container = document.getElementById('pagination-container');
+  const numbersContainer = document.getElementById('page-numbers');
+  numbersContainer.innerHTML = '';
+  
+  const { totalPages, page } = state.pagination;
+  
+  if (totalPages <= 1) {
+    container.classList.add('hidden');
+    return;
+  }
+  
+  container.classList.remove('hidden');
+  
+  // Set disabled states on chevrons
+  document.getElementById('prev-page-btn').disabled = (page === 1);
+  document.getElementById('next-page-btn').disabled = (page === totalPages);
+  
+  // Render elegant dynamic page buttons
+  const maxButtons = 5;
+  let startPage = Math.max(1, page - Math.floor(maxButtons / 2));
+  let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+  
+  if (endPage - startPage + 1 < maxButtons) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+  
+  for (let i = startPage; i <= endPage; i++) {
+    const btn = document.createElement('button');
+    const isCurrent = (i === page);
+    btn.className = `px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all ${
+      isCurrent 
+      ? 'bg-purple-600 text-white shadow-md shadow-purple-500/15' 
+      : 'border border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+    }`;
+    btn.textContent = i;
+    btn.onclick = async () => {
+      if (isCurrent) return;
+      state.currentPage = i;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      await fetchBookmarks();
+    };
+    numbersContainer.appendChild(btn);
+  }
+}
+
+// Reactive session view updates
+function updateUserSessionUI() {
+  const authNav = document.getElementById('auth-nav');
+  const guestNav = document.getElementById('guest-nav');
+  const usernameDisplay = document.getElementById('username-display');
+
+  if (state.currentUser) {
+    // Show logged-in elements
+    if (authNav) authNav.style.display = 'flex';
+    if (guestNav) guestNav.style.display = 'none';
+
+    // Set username display
+    if (usernameDisplay) {
+      usernameDisplay.textContent = state.currentUser.username;
+    }
+  } else {
+    // Hide logged-in elements, show guests
+    if (authNav) authNav.style.display = 'none';
+    if (guestNav) guestNav.style.display = 'flex';
+
+    // If active feed was "Mine", force it back to "All"
+    if (state.feedType === 'mine') {
+      state.feedType = 'all';
+      toggleFeedButtons('all');
+    }
+  }
+}
+
+// ==========================================
+// 4. ACTION TRIGGERS & LISTENERS
+// ==========================================
+function setupEventListeners() {
+  
+  // Theme Switching Event
+  const themeToggle = document.getElementById('dark-mode-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      state.darkMode = !state.darkMode;
+      document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : 'light');
+      localStorage.setItem('darkMode', state.darkMode);
+      themeToggle.textContent = state.darkMode ? '🌙' : '☀️';
+    });
+  }
+  
+  // Desktop Debounced Search Input
+  const searchInput = document.getElementById('search-input');
+  const searchClear = document.getElementById('search-clear-btn');
+
+  if (searchInput && searchClear) {
+    searchInput.addEventListener('input', debounce(async (e) => {
+      state.searchQuery = e.target.value.trim();
+      state.currentPage = 1;
+
+      if (state.searchQuery) {
+        searchClear.classList.remove('hidden');
+      } else {
+        searchClear.classList.add('hidden');
+      }
+
+      // Mirror desktop query to mobile input if visible
+      const mobileInput = document.getElementById('search-input-mobile');
+      if (mobileInput) mobileInput.value = state.searchQuery;
+
+      await fetchBookmarks();
+    }, 300));
+
+    searchClear.addEventListener('click', async () => {
+      searchInput.value = '';
+      searchClear.classList.add('hidden');
+      state.searchQuery = '';
+      state.currentPage = 1;
+      const mobileInput = document.getElementById('search-input-mobile');
+      if (mobileInput) mobileInput.value = '';
+      await fetchBookmarks();
+    });
+  }
+  
+  // Mobile Search Debounce
+  const mobileInput = document.getElementById('search-input-mobile');
+  const mobileClear = document.getElementById('search-clear-btn-mobile');
+
+  if (mobileInput && mobileClear) {
+    mobileInput.addEventListener('input', debounce(async (e) => {
+      state.searchQuery = e.target.value.trim();
+      state.currentPage = 1;
+
+      if (state.searchQuery) {
+        mobileClear.classList.remove('hidden');
+      } else {
+        mobileClear.classList.add('hidden');
+      }
+
+      // Mirror mobile to desktop search
+      const desktopInput = document.getElementById('search-input');
+      if (desktopInput) desktopInput.value = state.searchQuery;
+
+      await fetchBookmarks();
+    }, 300));
+
+    mobileClear.addEventListener('click', async () => {
+      mobileInput.value = '';
+      mobileClear.classList.add('hidden');
+      state.searchQuery = '';
+      state.currentPage = 1;
+      const desktopInput = document.getElementById('search-input');
+      if (desktopInput) desktopInput.value = '';
+      await fetchBookmarks();
+    });
+  }
+  
+  // Feed filters buttons
+  const allBtn = document.getElementById('feed-all-btn');
+  const mineBtn = document.getElementById('feed-mine-btn');
+
+  if (allBtn && mineBtn) {
+    allBtn.addEventListener('click', async () => {
+      if (state.feedType === 'all') return;
+      state.feedType = 'all';
+      state.currentPage = 1;
+      toggleFeedButtons('all');
+      await fetchBookmarks();
+    });
+
+    mineBtn.addEventListener('click', async () => {
+      if (state.feedType === 'mine') return;
+      state.feedType = 'mine';
+      state.currentPage = 1;
+      toggleFeedButtons('mine');
+      await fetchBookmarks();
+    });
+  }
+
+  // Clear filter banner action
+  const clearFilterBtn = document.getElementById('clear-filter-btn');
+  if (clearFilterBtn) {
+    clearFilterBtn.addEventListener('click', () => {
+      clearFilters();
+    });
+  }
+  
+  // Auth Dialog Trigger events
+  const loginTrigger = document.getElementById('login-trigger-btn');
+  const registerTrigger = document.getElementById('register-trigger-btn');
+  const authCloseBtn = document.getElementById('auth-close-btn');
+  const tabLogin = document.getElementById('tab-login');
+  const tabRegister = document.getElementById('tab-register');
+  const authForm = document.getElementById('auth-form');
+
+  if (loginTrigger) loginTrigger.addEventListener('click', () => openAuthModal('login'));
+  if (registerTrigger) registerTrigger.addEventListener('click', () => openAuthModal('register'));
+  if (authCloseBtn) {
+    authCloseBtn.addEventListener('click', () => {
+      const authDialog = document.getElementById('auth-dialog');
+      if (authDialog) authDialog.close();
+    });
+  }
+
+  // Toggle Auth form tabs
+  if (tabLogin) tabLogin.addEventListener('click', () => switchAuthTab('login'));
+  if (tabRegister) tabRegister.addEventListener('click', () => switchAuthTab('register'));
+
+  // Handle Auth submission
+  if (authForm) authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('auth-username').value;
+    const password = document.getElementById('auth-password').value;
+    
+    await authenticateUser({ username, password });
+  });
+
+  // Logout Trigger
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      performLogout();
+    });
+  }
+
+  // Bookmark Dialog Triggers
+  const addBookmarkBtn = document.getElementById('add-bookmark-btn');
+  const sidebarAddBtn = document.getElementById('sidebar-add-bookmark-btn');
+  const bookmarkCloseBtn = document.getElementById('bookmark-close-btn');
+  const bookmarkCancelBtn = document.getElementById('bookmark-cancel-btn');
+
+  if (addBookmarkBtn) addBookmarkBtn.addEventListener('click', () => openBookmarkModal());
+  if (sidebarAddBtn) sidebarAddBtn.addEventListener('click', () => openBookmarkModal());
+
+  if (bookmarkCloseBtn) {
+    bookmarkCloseBtn.addEventListener('click', () => {
+      const dialog = document.getElementById('bookmark-dialog');
+      if (dialog) dialog.close();
+    });
+  }
+  if (bookmarkCancelBtn) {
+    bookmarkCancelBtn.addEventListener('click', () => {
+      const dialog = document.getElementById('bookmark-dialog');
+      if (dialog) dialog.close();
+    });
+  }
+
+  // Fetch metadata on URL change/blur
+  const urlInput = document.getElementById('bookmark-url');
+  if (urlInput) {
+    urlInput.addEventListener('blur', async () => {
+      const url = urlInput.value.trim();
+      if (!url) return;
+
+      // Only scrape if we are ADDING a bookmark (bookmark-id is empty)
+      const bookmarkIdInput = document.getElementById('bookmark-id');
+      const isEdit = bookmarkIdInput && !!bookmarkIdInput.value;
+      if (isEdit) return;
+
+      await fetchMetadata(url);
+    });
+  }
+
+  // Bookmark Submit Event
+  const bookmarkForm = document.getElementById('bookmark-form');
+  if (bookmarkForm) {
+    bookmarkForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = document.getElementById('bookmark-url')?.value;
+      const title = document.getElementById('bookmark-title')?.value;
+      const description = document.getElementById('bookmark-desc')?.value;
+      const tags = document.getElementById('bookmark-tags')?.value;
+
+      await saveBookmark({ url, title, description, tags });
+    });
+  }
+  
+  // Pagination actions
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', async () => {
+      if (state.currentPage > 1) {
+        state.currentPage--;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        await fetchBookmarks();
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', async () => {
+      if (state.currentPage < state.pagination.totalPages) {
+        state.currentPage++;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        await fetchBookmarks();
+      }
+    });
+  }
+
+  // Logo home navigation
+  const logoHome = document.getElementById('logo-home');
+  if (logoHome) {
+    logoHome.addEventListener('click', (e) => {
+      e.preventDefault();
+      clearFilters();
+    });
+  }
+}
+
+// Helper: Toggle Feed tab button styles
+function toggleFeedButtons(type) {
+  const allBtn = document.getElementById('feed-all-btn');
+  const mineBtn = document.getElementById('feed-mine-btn');
+  
+  if (type === 'all') {
+    allBtn.className = 'px-3 py-1.5 rounded-lg font-medium transition-colors text-purple-600 dark:text-purple-400 bg-white dark:bg-slate-900 shadow-sm';
+    mineBtn.className = 'px-3 py-1.5 rounded-lg font-medium transition-colors text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white';
+  } else {
+    mineBtn.className = 'px-3 py-1.5 rounded-lg font-medium transition-colors text-purple-600 dark:text-purple-400 bg-white dark:bg-slate-900 shadow-sm';
+    allBtn.className = 'px-3 py-1.5 rounded-lg font-medium transition-colors text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white';
+  }
+}
+
+// Helper: Open Authentication modal dialogue
+function openAuthModal(mode = 'login') {
+  const dialog = document.getElementById('auth-dialog');
+  hideAuthError();
+  document.getElementById('auth-form').reset();
+  switchAuthTab(mode);
+  dialog.showModal();
+}
+
+// Switch between Login and Register tabs inside Modal
+function switchAuthTab(mode) {
+  state.authMode = mode;
+  hideAuthError();
+  
+  const loginTab = document.getElementById('tab-login');
+  const registerTab = document.getElementById('tab-register');
+  const dialogTitle = document.getElementById('auth-dialog-title');
+  const submitBtn = document.getElementById('auth-submit-btn');
+  
+  if (mode === 'login') {
+    loginTab.className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm transition-all';
+    registerTab.className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all';
+    dialogTitle.textContent = 'Sign In to Delicious';
+    submitBtn.textContent = 'Sign In';
+  } else {
+    registerTab.className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm transition-all';
+    loginTab.className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all';
+    dialogTitle.textContent = 'Create an Account';
+    submitBtn.textContent = 'Register & Start Saving';
+  }
+}
+
+// Helper: Open New Bookmark dialog modal
+function openBookmarkModal() {
+  if (!state.currentUser) {
+    openAuthModal('login');
+    return;
+  }
+  
+  const dialog = document.getElementById('bookmark-dialog');
+  hideBookmarkError();
+  document.getElementById('bookmark-form').reset();
+  document.getElementById('bookmark-id').value = '';
+  document.getElementById('bookmark-dialog-title').textContent = 'Add New Bookmark';
+  dialog.showModal();
+}
+
+// Helper: Open Edit Bookmark dialog modal with prefilled data
+async function openEditBookmarkModal(bookmarkId) {
+  const bookmark = state.bookmarks.find(b => b.id === bookmarkId);
+  if (!bookmark) return;
+  
+  const dialog = document.getElementById('bookmark-dialog');
+  hideBookmarkError();
+  document.getElementById('bookmark-form').reset();
+  
+  // Prefill forms
+  document.getElementById('bookmark-id').value = bookmark.id;
+  document.getElementById('bookmark-url').value = bookmark.url;
+  document.getElementById('bookmark-title').value = bookmark.title;
+  document.getElementById('bookmark-desc').value = bookmark.description || '';
+  document.getElementById('bookmark-tags').value = bookmark.tags.join(', ');
+  
+  document.getElementById('bookmark-dialog-title').textContent = 'Edit Bookmark';
+  dialog.showModal();
+}
+
+// Filter feed by specific tag
+async function filterByTag(tagName) {
+  state.activeTag = tagName;
+  state.currentPage = 1;
+  
+  // Display active filter tag in the banner
+  const banner = document.getElementById('filter-banner');
+  const bannerText = document.getElementById('filter-banner-text');
+  bannerText.innerHTML = `Showing bookmarks tagged: <span class="bg-indigo-500/20 text-indigo-800 dark:text-indigo-200 px-2 py-0.5 rounded-md font-bold">#${escapeHTML(tagName)}</span>`;
+  banner.classList.remove('hidden');
+  
+  await refreshFeed();
+}
+
+// Clear all active filters and tags
+async function clearFilters() {
+  state.activeTag = null;
+  state.searchQuery = '';
+  state.currentPage = 1;
+  
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-input-mobile').value = '';
+  document.getElementById('search-clear-btn').classList.add('hidden');
+  document.getElementById('search-clear-btn-mobile').classList.add('hidden');
+  document.getElementById('filter-banner').classList.add('hidden');
+  
+  await refreshFeed();
+}
+
+// ==========================================
+// 5. HELPER AND ERROR UTILITIES
+// ==========================================
+
+// Setup click fallback outside the dialog coordinates to enable light dismissal on older browsers
+function setupDialogLightDismiss(dialog) {
+  if (!dialog) return;
+  if (!('closedBy' in HTMLDialogElement.prototype)) {
+    dialog.addEventListener('click', (event) => {
+      if (event.target !== dialog) return;
+      const rect = dialog.getBoundingClientRect();
+      const isDialogContent = (
+        rect.top <= event.clientY &&
+        event.clientY <= rect.top + rect.height &&
+        rect.left <= event.clientX &&
+        event.clientX <= rect.left + rect.width
+      );
+      if (isDialogContent) return;
+      dialog.close();
+    });
+  }
+}
+
+// HTML XSS escape helper
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, 
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag)
+  );
+}
+
+// Standard debounce helper for fast typing inputs
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Relative humanized dates helper
+function timeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+  
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return `${seconds}s ago`;
+  
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Auth error triggers
+function showAuthError(msg) {
+  const alertBox = document.getElementById('auth-error-alert');
+  const alertText = document.getElementById('auth-error-message');
+  alertText.textContent = msg;
+  alertBox.classList.remove('hidden');
+}
+
+function hideAuthError() {
+  document.getElementById('auth-error-alert').classList.add('hidden');
+}
+
+// Bookmark error triggers
+function showBookmarkError(msg) {
+  const alertBox = document.getElementById('bookmark-error-alert');
+  const alertText = document.getElementById('bookmark-error-message');
+  alertText.textContent = msg;
+  alertBox.classList.remove('hidden');
+}
+
+function hideBookmarkError() {
+  document.getElementById('bookmark-error-alert').classList.add('hidden');
+}
+
+// Fetch site metadata dynamically and prefill forms
+async function fetchMetadata(url) {
+  const titleInput = document.getElementById('bookmark-title');
+  const descInput = document.getElementById('bookmark-desc');
+  const tagsInput = document.getElementById('bookmark-tags');
+  
+  // Show subtle fetching indicator inside placeholders
+  const originalTitle = titleInput.placeholder;
+  const originalDesc = descInput.placeholder;
+  const originalTags = tagsInput.placeholder;
+  
+  titleInput.placeholder = 'Fetching site title...';
+  descInput.placeholder = 'Fetching site description...';
+  tagsInput.placeholder = 'Fetching site keywords...';
+  
+  try {
+    const response = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
+    if (!response.ok) throw new Error();
+    const data = await response.json();
+    
+    // Prefill inputs only if the user hasn't already typed in them
+    if (data.title && !titleInput.value.trim()) {
+      titleInput.value = data.title;
+    }
+    if (data.description && !descInput.value.trim()) {
+      descInput.value = data.description;
+    }
+    if (data.tags && !tagsInput.value.trim()) {
+      tagsInput.value = data.tags;
+    }
+  } catch (err) {
+    console.warn('Could not load site metadata. Safe to ignore.', err);
+  } finally {
+    // Restore placeholders
+    titleInput.placeholder = originalTitle;
+    descInput.placeholder = originalDesc;
+    tagsInput.placeholder = originalTags;
+  }
+}
+
+// Parse URL params on startup (to support Bookmarklets)
+function handleUrlParameters() {
+  const params = new URLSearchParams(window.location.search);
+  const addUrl = params.get('url');
+  if (!addUrl) return;
+  
+  const addTitle = params.get('title') || '';
+  const addDesc = params.get('desc') || '';
+  
+  // Clear URL search params immediately to avoid re-triggering on manual refreshes
+  window.history.replaceState({}, document.title, window.location.pathname);
+  
+  if (!state.currentUser) {
+    // Save pending details and request login
+    state.pendingBookmark = { url: addUrl, title: addTitle, description: addDesc };
+    openAuthModal('login');
+    showAuthError('Please sign in first to archive this link.');
+  } else {
+    openBookmarkModalPrefilled({ url: addUrl, title: addTitle, description: addDesc });
+  }
+}
+
+// Open Add Bookmark dialogue with pre-filled inputs
+function openBookmarkModalPrefilled({ url, title, description }) {
+  const dialog = document.getElementById('bookmark-dialog');
+  hideBookmarkError();
+  document.getElementById('bookmark-form').reset();
+  document.getElementById('bookmark-id').value = '';
+  
+  document.getElementById('bookmark-url').value = url;
+  document.getElementById('bookmark-title').value = title;
+  document.getElementById('bookmark-desc').value = description;
+  
+  document.getElementById('bookmark-dialog-title').textContent = 'Add New Bookmark';
+  
+  // Also fetch tags/keywords from the page automatically!
+  fetchMetadata(url);
+  
+  dialog.showModal();
+}

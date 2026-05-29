@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>delicious.modern — Reimagining Social Bookmarking</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="A highly-polished social bookmarking catalog. Discover, save, tag, and search links with seamless speed and rich glassmorphic aesthetics.">
+  <meta name="keywords" content="bookmarks, delicious, tags, search, catalog, web app">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ['Outfit', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c084fc',
+              400: '#a855f7',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/styles.css">
+  <!-- Material Icons CDN -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 min-h-screen flex flex-col selection:bg-purple-500/20">
+
+  <!-- Background Mesh Glows -->
+  <div class="mesh-bg">
+    <div class="mesh-glow-1"></div>
+    <div class="mesh-glow-2"></div>
+  </div>
+
+  <!-- STICKY HEADER -->
+  <header class="sticky top-0 z-40 glass-header transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- LOGO -->
+      <a href="/" class="flex items-center gap-2 group" id="logo-home">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:scale-105 transition-transform duration-300">
+          <span class="material-icons-round text-2xl">bookmarks</span>
+        </div>
+        <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-900 dark:from-white dark:via-purple-100 dark:to-indigo-200 bg-clip-text text-transparent">
+          delicious<span class="text-purple-500 font-extrabold">.</span>modern
+        </span>
+      </a>
+
+      <!-- SEARCH BAR -->
+      <div class="flex-1 max-w-md mx-8 hidden md:block">
+        <div class="relative w-full">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+            <span class="material-icons-round text-xl">search</span>
+          </span>
+          <input 
+            type="search" 
+            id="search-input" 
+            placeholder="Search keywords, tags, or URLs..." 
+            class="w-full pl-10 pr-10 py-2 rounded-xl text-sm border border-slate-200 bg-white/50 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 dark:text-white form-input focus:outline-none"
+          >
+          <button 
+            id="search-clear-btn" 
+            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-white hidden"
+          >
+            <span class="material-icons-round text-lg">close</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- HEADER NAVIGATION / USER STATUS -->
+      <nav class="flex items-center gap-3">
+        <!-- Guest View Links -->
+        <div id="guest-nav" class="flex items-center gap-2">
+          <button 
+            id="login-trigger-btn"
+            class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
+          >
+            Sign In
+          </button>
+          <button 
+            id="register-trigger-btn"
+            class="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-xl shadow-md shadow-purple-500/10 hover:shadow-purple-500/25 btn-premium"
+          >
+            Create Account
+          </button>
+        </div>
+
+        <!-- Authenticated View Links -->
+        <div id="user-nav" class="hidden flex items-center gap-3">
+          <!-- Feed Toggle Buttons -->
+          <div class="bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-xl flex items-center text-xs">
+            <button 
+              id="feed-all-btn" 
+              class="px-3 py-1.5 rounded-lg font-medium transition-colors text-purple-600 dark:text-purple-400 bg-white dark:bg-slate-900 shadow-sm"
+            >
+              All Links
+            </button>
+            <button 
+              id="feed-mine-btn" 
+              class="px-3 py-1.5 rounded-lg font-medium transition-colors text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+            >
+              My Links
+            </button>
+          </div>
+
+          <!-- Add Bookmark Button -->
+          <button 
+            id="add-bookmark-btn" 
+            class="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-xl shadow-md shadow-purple-500/10 hover:shadow-purple-500/25 btn-premium"
+          >
+            <span class="material-icons-round text-lg">add</span>
+            <span class="hidden sm:inline">Add Bookmark</span>
+          </button>
+
+          <!-- User Dropdown (Simplified Button & Logout) -->
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 dark:text-indigo-400 flex items-center justify-center font-bold text-sm" id="user-avatar">
+              U
+            </div>
+            <button 
+              id="logout-btn" 
+              class="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+              title="Sign Out"
+            >
+              <span class="material-icons-round text-lg">logout</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dark/Light Theme Switcher -->
+        <button 
+          id="theme-toggle-btn" 
+          class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
+        >
+          <span class="material-icons-round text-xl dark:hidden">dark_mode</span>
+          <span class="material-icons-round text-xl hidden dark:inline">light_mode</span>
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE SEARCH BAR (visible on screens < md) -->
+  <div class="px-4 py-3 bg-white/30 backdrop-blur-md border-b border-slate-200 dark:bg-slate-900/30 dark:border-slate-800 md:hidden">
+    <div class="relative w-full">
+      <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+        <span class="material-icons-round text-lg">search</span>
+      </span>
+      <input 
+        type="search" 
+        id="search-input-mobile" 
+        placeholder="Search keywords, tags, or URLs..." 
+        class="w-full pl-10 pr-10 py-2 rounded-xl text-sm border border-slate-200 bg-white/50 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 dark:text-white form-input focus:outline-none"
+      >
+      <button 
+        id="search-clear-btn-mobile" 
+        class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-white hidden"
+      >
+        <span class="material-icons-round text-lg">close</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN BODY LAYOUT -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Active Search / Tag Filter Banner -->
+    <div id="filter-banner" class="hidden mb-6 flex items-center justify-between p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-300">
+      <div class="flex items-center gap-2">
+        <span class="material-icons-round">filter_list</span>
+        <span class="text-sm font-medium" id="filter-banner-text">Showing bookmarks tagged: <strong>tech</strong></span>
+      </div>
+      <button 
+        id="clear-filter-btn" 
+        class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-indigo-500/20 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+      >
+        <span>Clear</span>
+        <span class="material-icons-round text-sm">close</span>
+      </button>
+    </div>
+
+    <!-- DASHBOARD GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      
+      <!-- LEFT SECTION: BOOKMARKS FEED -->
+      <section class="lg:col-span-3 flex flex-col gap-6">
+        
+        <!-- Section Header -->
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white" id="feed-title">
+            Global Links Feed
+          </h2>
+          <span class="text-xs text-slate-500 dark:text-slate-400 font-medium" id="feed-count">
+            Loading...
+          </span>
+        </div>
+
+        <!-- Bookmarks List Container -->
+        <div id="bookmarks-list" class="flex flex-col gap-4">
+          <!-- Dynamically populated cards or loading skeletons -->
+          <div class="shimmer-placeholder flex flex-col gap-4">
+            <div class="glass-card p-6 rounded-2xl h-36 shimmer"></div>
+            <div class="glass-card p-6 rounded-2xl h-36 shimmer"></div>
+            <div class="glass-card p-6 rounded-2xl h-36 shimmer"></div>
+          </div>
+        </div>
+
+        <!-- PAGINATION CONTAINER -->
+        <div id="pagination-container" class="mt-6 flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-6 hidden">
+          <button 
+            id="prev-page-btn" 
+            class="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          >
+            <span class="material-icons-round text-lg">chevron_left</span>
+            Previous
+          </button>
+          
+          <div class="flex items-center gap-1.5" id="page-numbers">
+            <!-- Dynamically populated page buttons -->
+          </div>
+
+          <button 
+            id="next-page-btn" 
+            class="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+          >
+            Next
+            <span class="material-icons-round text-lg">chevron_right</span>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- RIGHT SECTION: SIDEBAR -->
+      <aside class="lg:col-span-1 flex flex-col gap-6">
+
+        <!-- USER SUMMARY PANEL (For Authenticated Users) -->
+        <div id="user-summary-panel" class="glass-panel p-6 rounded-2xl hidden">
+          <h3 class="font-bold text-lg mb-3">Welcome Back</h3>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xl" id="summary-avatar">
+              U
+            </div>
+            <div>
+              <div class="font-bold text-slate-800 dark:text-white" id="summary-username">@username</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400" id="summary-joined">Joined May 2026</div>
+            </div>
+          </div>
+          <button 
+            id="sidebar-add-bookmark-btn" 
+            class="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-xl shadow-lg shadow-purple-500/10 hover:shadow-purple-500/25 btn-premium"
+          >
+            <span class="material-icons-round text-lg">add</span>
+            Add New Bookmark
+          </button>
+        </div>
+
+        <!-- POPULAR TAGS CLOUD -->
+        <div class="glass-panel p-6 rounded-2xl flex flex-col gap-4">
+          <div class="flex items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-3">
+            <span class="material-icons-round text-purple-500">sell</span>
+            <h3 class="font-bold text-base tracking-tight">Popular Tags</h3>
+          </div>
+          
+          <div id="tags-cloud" class="flex flex-wrap gap-2">
+            <!-- Dynamic tag buttons -->
+            <span class="text-xs text-slate-500 dark:text-slate-400">Loading tags...</span>
+          </div>
+        </div>
+
+        <!-- BOOKMARKLET INSTALLER CARD -->
+        <div class="glass-panel p-6 rounded-2xl flex flex-col gap-4" id="bookmarklet-panel">
+          <div class="flex items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-3">
+            <span class="material-icons-round text-purple-500">bookmark_add</span>
+            <h3 class="font-bold text-base tracking-tight">1-Click Save</h3>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Salve qualquer página com um clique. Arraste o botão abaixo para a sua barra de favoritos:
+          </p>
+
+          <!-- DRAGGABLE BOOKMARKLET BUTTON -->
+          <a
+            id="bookmarklet-link"
+            href="#"
+            draggable="true"
+            class="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 cursor-grab active:cursor-grabbing transition-all duration-200 btn-premium select-none"
+            title="Arraste para a barra de favoritos!"
+            onclick="return false;"
+          >
+            <span class="material-icons-round text-lg">bookmarks</span>
+            + delicious.modern
+          </a>
+
+          <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center leading-relaxed">
+            ⬆️ Arraste para a barra de favoritos do navegador
+          </p>
+
+          <!-- DIVIDER -->
+          <div class="flex items-center gap-2">
+            <div class="flex-1 h-px bg-slate-200 dark:bg-slate-800"></div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ou</span>
+            <div class="flex-1 h-px bg-slate-200 dark:bg-slate-800"></div>
+          </div>
+
+          <!-- Chrome Extension Link -->
+          <a
+            href="/delicious-extension.zip"
+            download
+            class="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-purple-400 dark:hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 bg-white/50 dark:bg-slate-900/50 transition-all duration-200"
+          >
+            <span class="material-icons-round text-base">extension</span>
+            Baixar Extensão Chrome
+          </a>
+          <p class="text-[10px] text-slate-400 text-center">Extensão Manifest V3 • Carregue em chrome://extensions</p>
+        </div>
+
+        <!-- ABOUT CARD -->
+        <div class="glass-panel p-6 rounded-2xl text-xs text-slate-500 dark:text-slate-400 flex flex-col gap-2.5">
+          <h4 class="font-semibold text-slate-700 dark:text-slate-300">About delicious.modern</h4>
+          <p>This is a modern reimplementation of the classic bookmark archiving catalog.</p>
+          <p>&copy; 2026 Delicious Modern Inc.</p>
+        </div>
+
+      </aside>
+    </div>
+  </main>
+
+  <!-- ==========================================
+  MODAL DIALOGS (NATIVE <dialog> ELEMENTS)
+  ========================================== -->
+
+  <!-- AUTHENTICATION DIALOG (Login / Register) -->
+  <dialog id="auth-dialog" closedby="any" aria-labelledby="auth-dialog-title" class="glass-panel max-w-md w-full rounded-2xl p-6 shadow-2xl focus:outline-none dark:text-slate-200">
+    <div class="flex items-center justify-between mb-6">
+      <h3 id="auth-dialog-title" class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Welcome to Delicious
+      </h3>
+      <button 
+        id="auth-close-btn" 
+        class="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        <span class="material-icons-round text-xl">close</span>
+      </button>
+    </div>
+
+    <!-- Toggle Selector -->
+    <div class="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl mb-6">
+      <button 
+        id="tab-login" 
+        class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm transition-all"
+      >
+        Sign In
+      </button>
+      <button 
+        id="tab-register" 
+        class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all"
+      >
+        Register
+      </button>
+    </div>
+
+    <!-- Auth Error Alert Box -->
+    <div id="auth-error-alert" class="hidden mb-4 p-3.5 rounded-xl border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-medium flex items-center gap-2">
+      <span class="material-icons-round text-lg">error_outline</span>
+      <span id="auth-error-message">Invalid credentials.</span>
+    </div>
+
+    <!-- FORM -->
+    <form id="auth-form" class="flex flex-col gap-4">
+      <div>
+        <label for="auth-username" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Username</label>
+        <input 
+          type="text" 
+          id="auth-username" 
+          required 
+          autocomplete="username" 
+          placeholder="e.g. janesmith" 
+          class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white/50 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 dark:text-white form-input focus:outline-none"
+        >
+      </div>
+
+      <div>
+        <label for="auth-password" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+        <input 
+          type="password" 
+          id="auth-password" 
+          required 
+          autocomplete="current-password" 
+          placeholder="••••••••" 
+          class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white/50 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 dark:text-white form-input focus:outline-none"
+        >
+      </div>
+
+      <button 
+        type="submit" 
+        id="auth-submit-btn" 
+        class="w-full mt-2 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-xl shadow-lg shadow-purple-500/15 hover:shadow-purple-500/25 transition-transform duration-200 active:scale-95 btn-premium"
+      >
+        Sign In
+      </button>
+    </form>
+  </dialog>
+
+  <!-- ADD / EDIT BOOKMARK DIALOG -->
+  <dialog id="bookmark-dialog" closedby="any" aria-labelledby="bookmark-dialog-title" class="glass-panel max-w-lg w-full rounded-2xl p-6 shadow-2xl focus:outline-none dark:text-slate-200">
+    <div class="flex items-center justify-between mb-6">
+      <h3 id="bookmark-dialog-title" class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Add New Bookmark
+      </h3>
+      <button 
+        id="bookmark-close-btn" 
+        class="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      >
+        <span class="material-icons-round text-xl">close</span>
+      </button>
+    </div>
+
+    <!-- Bookmark Error Alert Box -->
+    <div id="bookmark-error-alert" class="hidden mb-4 p-3.5 rounded-xl border border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-medium flex items-center gap-2">
+      <span class="material-icons-round text-lg">error_outline</span>
+      <span id="bookmark-error-message">Failed to save bookmark.</span>
+    </div>
+
+    <!-- FORM -->
+    <form id="bookmark-form" class="flex flex-col gap-4">
+      <input type="hidden" id="bookmark-id">
+
+      <div>
+        <label for="bookmark-url" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Link URL</label>
+        <input 
+          type="url" 
+          id="bookmark-url" 
+          required 
+          placeholder="https://example.com/useful-article" 
+          class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white/50 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 dark:text-white form-input focus:outline-none"
+        >
+      </div>
+
+      <div>
+        <label for="bookmark-title" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Title</label>
+        <input 
+          type="text" 
+          id="bookmark-title" 
+          required 
+          placeholder="e.g. Mastering Javascript Closures" 
+          class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white/50 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 dark:text-white form-input focus:outline-none"
+        >
+      </div>
+
+      <div>
+        <label for="bookmark-desc" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Description (Optional)</label>
+        <textarea 
+          id="bookmark-desc" 
+          rows="3" 
+          placeholder="Add a brief summary or notes about why this resource is awesome..." 
+          class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white/50 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 dark:text-white form-input focus:outline-none"
+        ></textarea>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label for="bookmark-tags" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Tags (Comma-separated)</label>
+          <span class="text-[10px] text-slate-500 font-medium lowercase">e.g. tech, tutorial, webdev</span>
+        </div>
+        <input 
+          type="text" 
+          id="bookmark-tags" 
+          placeholder="javascript, learning, database" 
+          class="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white/50 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/50 dark:text-white form-input focus:outline-none"
+        >
+      </div>
+
+      <div class="flex items-center justify-end gap-3 mt-4">
+        <button 
+          type="button" 
+          id="bookmark-cancel-btn" 
+          class="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          id="bookmark-submit-btn" 
+          class="px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-xl shadow-lg shadow-purple-500/15 hover:shadow-purple-500/25 transition-transform duration-200 active:scale-95 btn-premium"
+        >
+          Save Bookmark
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- CLIENT SCRIPTS -->
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

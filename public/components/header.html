@@ -1,0 +1,49 @@
+<header class="header">
+  <div class="header-container">
+    <a href="/app" class="logo" id="logo-home">
+      <div class="logo-icon">🔗</div>
+      <span>only.link</span>
+    </a>
+
+    <div class="search-container">
+      <input
+        type="search"
+        class="search-input"
+        id="search-input"
+        placeholder="Search bookmarks, tags, or users..."
+      >
+    </div>
+
+    <nav class="nav">
+      <div id="guest-nav">
+        <button class="btn btn-ghost" id="login-btn">Sign in</button>
+        <button class="btn btn-primary" id="register-btn">Get started</button>
+      </div>
+
+      <div id="auth-nav">
+        <button class="btn btn-primary" id="new-bookmark-btn">+ New bookmark</button>
+
+        <div class="profile-dropdown">
+          <button class="profile-avatar-btn" id="profile-avatar-btn">
+            <span id="profile-avatar-initial">U</span>
+          </button>
+
+          <div class="profile-menu" id="profile-menu">
+            <div class="profile-menu-header">
+              <div class="profile-menu-username" id="profile-menu-username">@username</div>
+            </div>
+            <a href="/settings" class="profile-menu-item">
+              <span>⚙️</span>
+              <span>Settings</span>
+            </a>
+            <div class="profile-menu-separator"></div>
+            <button class="profile-menu-item" id="logout-btn">
+              <span>👋</span>
+              <span>Sign out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>

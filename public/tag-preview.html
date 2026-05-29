@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tag Design Options</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: oklch(98% 0.008 60);
+      --surface: oklch(99.5% 0.004 60);
+      --fg: oklch(18% 0.012 60);
+      --muted: oklch(52% 0.008 60);
+      --border: oklch(92% 0.006 60);
+      --accent: oklch(56% 0.18 250);
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --text-xs: 13px;
+      --text-sm: 14px;
+      --text-base: 16px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      padding: var(--space-8);
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: var(--space-8);
+      letter-spacing: -0.01em;
+    }
+
+    .option {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
+    }
+
+    .option-title {
+      font-size: var(--text-base);
+      font-weight: 600;
+      margin-bottom: var(--space-2);
+      color: var(--fg);
+    }
+
+    .option-desc {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      margin-bottom: var(--space-4);
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      padding: var(--space-4);
+      background: var(--bg);
+      border-radius: 8px;
+    }
+
+    /* Option 1: Pill minimalista */
+    .tag-option-1 {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--text-xs);
+      color: var(--fg);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .tag-option-1:hover {
+      color: var(--accent);
+    }
+
+    .tag-option-1:hover .tag-name {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .tag-option-1 .tag-name {
+      font-weight: 500;
+    }
+
+    .tag-option-1 .tag-count {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tag-option-1:hover .tag-count {
+      color: var(--accent);
+    }
+
+    /* Option 2: Compact list */
+    .tag-option-2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--text-sm);
+      color: var(--fg);
+      padding: 4px 0;
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .tag-option-2:hover {
+      color: var(--accent);
+    }
+
+    .tag-option-2 .tag-name {
+      font-weight: 500;
+    }
+
+    .tag-option-2 .separator {
+      color: var(--border);
+      font-weight: 300;
+    }
+
+    .tag-option-2 .tag-count {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: var(--text-xs);
+    }
+
+    /* Option 3: Badge minimal */
+    .tag-option-3 {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--text-xs);
+      color: var(--fg);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .tag-option-3:hover {
+      color: var(--accent);
+    }
+
+    .tag-option-3 .tag-name {
+      font-weight: 500;
+    }
+
+    .tag-option-3 .tag-name::before {
+      content: '[';
+      opacity: 0.5;
+    }
+
+    .tag-option-3 .tag-name::after {
+      content: ']';
+      opacity: 0.5;
+    }
+
+    .tag-option-3 .tag-count {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tag-option-3:hover .tag-count {
+      color: var(--accent);
+    }
+
+    /* Option 4: Cloud style */
+    .tag-option-4 {
+      display: inline-flex;
+      align-items: baseline;
+      font-size: var(--text-sm);
+      color: var(--fg);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .tag-option-4:hover {
+      color: var(--accent);
+    }
+
+    .tag-option-4 .tag-name {
+      font-weight: 500;
+    }
+
+    .tag-option-4 .tag-count {
+      font-size: 10px;
+      color: var(--muted);
+      vertical-align: super;
+      margin-left: 1px;
+    }
+
+    .tag-option-4:hover .tag-count {
+      color: var(--accent);
+    }
+
+    /* Option 5: Inline text */
+    .tag-option-5 {
+      display: inline-flex;
+      font-size: var(--text-sm);
+      color: var(--fg);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .tag-option-5:hover {
+      color: var(--accent);
+    }
+
+    .tag-option-5 .tag-name {
+      font-weight: 500;
+    }
+
+    .tag-option-5 .tag-count {
+      color: var(--muted);
+    }
+
+    .tag-option-5 .tag-count::before {
+      content: '(';
+    }
+
+    .tag-option-5 .tag-count::after {
+      content: ')';
+    }
+
+    .tag-option-5:hover .tag-count {
+      color: var(--accent);
+    }
+
+    /* Option 6: Pill with border */
+    .tag-option-6 {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: var(--text-xs);
+      color: var(--fg);
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+
+    .tag-option-6:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tag-option-6 .tag-name {
+      font-weight: 500;
+    }
+
+    .tag-option-6 .tag-count {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tag-option-6:hover .tag-count {
+      color: var(--accent);
+    }
+
+    /* List style for option 2 */
+    .tags-container.list-style {
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .note {
+      margin-top: var(--space-3);
+      padding: var(--space-3);
+      background: oklch(from var(--accent) l c h / 0.05);
+      border-radius: 6px;
+      font-size: var(--text-xs);
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <h1>Tag Design Options Preview</h1>
+
+  <div class="option">
+    <div class="option-title">Option 1: Pill minimalista</div>
+    <div class="option-desc">Sem border, só texto + contador. Hover com sublinhado.</div>
+    <div class="tags-container">
+      <span class="tag-option-1">
+        <span class="tag-name">#design</span>
+        <span class="tag-count">307</span>
+      </span>
+      <span class="tag-option-1">
+        <span class="tag-name">#tool</span>
+        <span class="tag-count">150</span>
+      </span>
+      <span class="tag-option-1">
+        <span class="tag-name">#resource</span>
+        <span class="tag-count">132</span>
+      </span>
+      <span class="tag-option-1">
+        <span class="tag-name">#ai</span>
+        <span class="tag-count">80</span>
+      </span>
+      <span class="tag-option-1">
+        <span class="tag-name">#research</span>
+        <span class="tag-count">48</span>
+      </span>
+    </div>
+    <div class="note">✨ Máximo minimalismo, editorial, não compete com conteúdo</div>
+  </div>
+
+  <div class="option">
+    <div class="option-title">Option 2: Compact list</div>
+    <div class="option-desc">Uma por linha com middle dot. Mais scannable verticalmente.</div>
+    <div class="tags-container list-style">
+      <span class="tag-option-2">
+        <span class="tag-name">design</span>
+        <span class="separator">·</span>
+        <span class="tag-count">307</span>
+      </span>
+      <span class="tag-option-2">
+        <span class="tag-name">tool</span>
+        <span class="separator">·</span>
+        <span class="tag-count">150</span>
+      </span>
+      <span class="tag-option-2">
+        <span class="tag-name">resource</span>
+        <span class="separator">·</span>
+        <span class="tag-count">132</span>
+      </span>
+      <span class="tag-option-2">
+        <span class="tag-name">ai</span>
+        <span class="separator">·</span>
+        <span class="tag-count">80</span>
+      </span>
+      <span class="tag-option-2">
+        <span class="tag-name">research</span>
+        <span class="separator">·</span>
+        <span class="tag-count">48</span>
+      </span>
+    </div>
+    <div class="note">📋 Tipo GitHub, fácil de escanear, ocupa mais altura</div>
+  </div>
+
+  <div class="option">
+    <div class="option-title">Option 3: Badge minimal</div>
+    <div class="option-desc">Colchetes indicam tag, número fora em muted.</div>
+    <div class="tags-container">
+      <span class="tag-option-3">
+        <span class="tag-name">design</span>
+        <span class="tag-count">307</span>
+      </span>
+      <span class="tag-option-3">
+        <span class="tag-name">tool</span>
+        <span class="tag-count">150</span>
+      </span>
+      <span class="tag-option-3">
+        <span class="tag-name">resource</span>
+        <span class="tag-count">132</span>
+      </span>
+      <span class="tag-option-3">
+        <span class="tag-name">ai</span>
+        <span class="tag-count">80</span>
+      </span>
+      <span class="tag-option-3">
+        <span class="tag-name">research</span>
+        <span class="tag-count">48</span>
+      </span>
+    </div>
+    <div class="note">🎯 Clean, editorial, colchetes dão identidade sem decoração</div>
+  </div>
+
+  <div class="option">
+    <div class="option-title">Option 4: Cloud style evolved</div>
+    <div class="option-desc">Contador em superscript, mais compacto.</div>
+    <div class="tags-container">
+      <span class="tag-option-4">
+        <span class="tag-name">#design</span><span class="tag-count">307</span>
+      </span>
+      <span class="tag-option-4">
+        <span class="tag-name">#tool</span><span class="tag-count">150</span>
+      </span>
+      <span class="tag-option-4">
+        <span class="tag-name">#resource</span><span class="tag-count">132</span>
+      </span>
+      <span class="tag-option-4">
+        <span class="tag-name">#ai</span><span class="tag-count">80</span>
+      </span>
+      <span class="tag-option-4">
+        <span class="tag-name">#research</span><span class="tag-count">48</span>
+      </span>
+    </div>
+    <div class="note">🌟 Diferente, talvez muito clever, compacto</div>
+  </div>
+
+  <div class="option">
+    <div class="option-title">Option 5: Inline text (Pinboard style)</div>
+    <div class="option-desc">Parênteses para count, máximo minimalismo.</div>
+    <div class="tags-container">
+      <span class="tag-option-5">
+        <span class="tag-name">design</span><span class="tag-count">307</span>
+      </span>
+      <span class="tag-option-5">
+        <span class="tag-name">tool</span><span class="tag-count">150</span>
+      </span>
+      <span class="tag-option-5">
+        <span class="tag-name">resource</span><span class="tag-count">132</span>
+      </span>
+      <span class="tag-option-5">
+        <span class="tag-name">ai</span><span class="tag-count">80</span>
+      </span>
+      <span class="tag-option-5">
+        <span class="tag-name">research</span><span class="tag-count">48</span>
+      </span>
+    </div>
+    <div class="note">⚡ Ultra minimal tipo Pinboard, zero decoração</div>
+  </div>
+
+  <div class="option">
+    <div class="option-title">Option 6: Pill with border (current)</div>
+    <div class="option-desc">Border de 1px, border-radius redondo.</div>
+    <div class="tags-container">
+      <span class="tag-option-6">
+        <span class="tag-name">#design</span>
+        <span class="tag-count">307</span>
+      </span>
+      <span class="tag-option-6">
+        <span class="tag-name">#tool</span>
+        <span class="tag-count">150</span>
+      </span>
+      <span class="tag-option-6">
+        <span class="tag-name">#resource</span>
+        <span class="tag-count">132</span>
+      </span>
+      <span class="tag-option-6">
+        <span class="tag-name">#ai</span>
+        <span class="tag-count">80</span>
+      </span>
+      <span class="tag-option-6">
+        <span class="tag-name">#research</span>
+        <span class="tag-count">48</span>
+      </span>
+    </div>
+    <div class="note">💊 Estilo atual, mais tradicional, container visível</div>
+  </div>
+
+</body>
+</html>
