@@ -1333,9 +1333,21 @@ app.get('/settings', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'settings.html'));
 });
 
-// Serve bookmarklet instructions
+// Serve static HTML pages
 app.get('/bookmarklet', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'bookmarklet.html'));
+});
+
+app.get('/extension', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'extension.html'));
+});
+
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
+
+app.get('/terms', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'terms.html'));
 });
 
 // Serve bookmarklet save popup
