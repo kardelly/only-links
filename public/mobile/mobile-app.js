@@ -54,12 +54,25 @@ class MobileApp {
    */
   async checkAuth() {
     try {
-      const data = await fetchWithError('/api/auth/me');
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include',
+        cache: 'no-cache'
+      });
+
+      if (!response.ok) {
+        console.log('[MobileApp] Auth request failed:', response.status);
+        sessionStorage.setItem('mobile_redirect_attempted', 'skip');
+        sessionStorage.clear(); // Clear any stale data
+        window.location.href = '/';
+        return false;
+      }
+
+      const data = await response.json();
 
       if (!data || !data.user) {
         console.log('[MobileApp] Not authenticated, redirecting to login');
-        // Prevent redirect loop by setting flag before redirecting
         sessionStorage.setItem('mobile_redirect_attempted', 'skip');
+        sessionStorage.clear(); // Clear any stale data
         window.location.href = '/';
         return false;
       }
@@ -69,8 +82,8 @@ class MobileApp {
       return true;
     } catch (err) {
       console.error('[MobileApp] Auth check failed:', err);
-      // Prevent redirect loop by setting flag before redirecting
       sessionStorage.setItem('mobile_redirect_attempted', 'skip');
+      sessionStorage.clear(); // Clear any stale data
       window.location.href = '/';
       return false;
     }
