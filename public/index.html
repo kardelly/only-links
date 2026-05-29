@@ -771,397 +771,45 @@
 
   <script src="/components/auth-modal.js"></script>
   <script>
-    console.log('Landing page script loaded');
-
+    // Landing page - use shared auth modal component
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM loaded, initializing auth controls');
-
-      // Landing page auth modal controls
-      const authModal = document.getElementById('auth-modal');
-      const authModalTitle = document.getElementById('auth-modal-title');
-      const authSubmitBtn = document.getElementById('auth-submit');
       const loginBtn = document.getElementById('login-btn');
       const registerBtn = document.getElementById('register-btn');
       const heroCTABtn = document.getElementById('hero-cta-btn');
-      const authModalClose = document.getElementById('auth-modal-close');
-
-      console.log('Elements found:', {
-        authModal: !!authModal,
-        loginBtn: !!loginBtn,
-        registerBtn: !!registerBtn,
-        heroCTABtn: !!heroCTABtn,
-        authForm: !!document.getElementById('auth-form')
-      });
-
-      let authMode = 'login'; // 'login' or 'register'
-
-      function openAuthModal(mode) {
-        console.log('Opening auth modal, mode:', mode);
-        authMode = mode;
-        authModalTitle.textContent = mode === 'login' ? 'Sign in' : 'Create account';
-        authSubmitBtn.textContent = mode === 'login' ? 'Sign in' : 'Create account';
-
-        // Update username field label and placeholder
-        const usernameLabel = document.getElementById('auth-username-label');
-        const usernameInput = document.getElementById('auth-username');
-        const usernameIcon = document.getElementById('username-icon');
-        const usernameHelper = document.getElementById('username-helper');
-
-        if (mode === 'login') {
-          usernameLabel.textContent = 'Username or Email';
-          usernameInput.placeholder = 'username or email';
-          // Clear validation indicators for login mode
-          usernameIcon.textContent = '';
-          usernameHelper.textContent = '';
-          usernameHelper.className = 'form-helper';
-        } else {
-          usernameLabel.textContent = 'Username';
-          usernameInput.placeholder = 'your-username';
-        }
-
-        // Show/hide registration-only fields
-        const emailGroup = document.getElementById('email-group');
-        const confirmPasswordGroup = document.getElementById('confirm-password-group');
-        const passwordHint = document.getElementById('password-hint');
-        const emailInput = document.getElementById('auth-email');
-        const confirmPasswordInput = document.getElementById('auth-confirm-password');
-
-        if (mode === 'register') {
-          emailGroup.style.display = 'block';
-          confirmPasswordGroup.style.display = 'block';
-          passwordHint.style.display = 'block';
-          emailInput.setAttribute('required', 'required');
-          confirmPasswordInput.setAttribute('required', 'required');
-        } else {
-          emailGroup.style.display = 'none';
-          confirmPasswordGroup.style.display = 'none';
-          passwordHint.style.display = 'none';
-          emailInput.removeAttribute('required');
-          confirmPasswordInput.removeAttribute('required');
-        }
-
-        authModal.classList.add('active');
-      }
-
-      function closeAuthModal() {
-        authModal.classList.remove('active');
-        document.getElementById('auth-form').reset();
-        const errorAlert = document.getElementById('auth-error-alert');
-        if (errorAlert) errorAlert.classList.add('visually-hidden');
-      }
-
-      if (loginBtn) {
-        loginBtn.addEventListener('click', () => openAuthModal('login'));
-        console.log('Login button listener attached');
-      }
-      if (registerBtn) {
-        registerBtn.addEventListener('click', () => openAuthModal('register'));
-        console.log('Register button listener attached');
-      }
-      if (heroCTABtn) {
-        heroCTABtn.addEventListener('click', () => openAuthModal('register'));
-        console.log('Hero CTA button listener attached');
-      }
-
       const finalCTABtn = document.getElementById('final-cta-btn');
-      if (finalCTABtn) {
-        finalCTABtn.addEventListener('click', () => openAuthModal('register'));
-      }
-      if (authModalClose) authModalClose.addEventListener('click', closeAuthModal);
 
-      // Close modal on backdrop click
-      if (authModal) {
-        authModal.addEventListener('click', (e) => {
-          if (e.target === authModal) closeAuthModal();
-        });
-      }
-
-      // Username availability check (only for register mode)
-      const usernameInput = document.getElementById('auth-username');
-      const usernameIcon = document.getElementById('username-icon');
-      const usernameHelper = document.getElementById('username-helper');
-      let usernameCheckTimeout;
-
-      if (usernameInput) {
-        usernameInput.addEventListener('input', () => {
-          // Only check in register mode
-          if (authMode !== 'register') {
-            usernameIcon.textContent = '';
-            usernameHelper.textContent = '';
-            usernameHelper.className = 'form-helper';
-            return;
-          }
-
-          const username = usernameInput.value.trim();
-
-          // Clear previous timeout
-          clearTimeout(usernameCheckTimeout);
-
-          // Reset if empty
-          if (!username) {
-            usernameIcon.textContent = '';
-            usernameHelper.textContent = '';
-            usernameHelper.className = 'form-helper';
-            return;
-          }
-
-          // Show checking state
-          usernameIcon.textContent = '⏳';
-          usernameHelper.textContent = 'Checking availability...';
-          usernameHelper.className = 'form-helper';
-
-          // Debounce API call
-          usernameCheckTimeout = setTimeout(async () => {
-            try {
-              const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username)}`);
-              const data = await response.json();
-
-              if (data.available) {
-                usernameIcon.textContent = '✅';
-                usernameHelper.textContent = 'Username available';
-                usernameHelper.className = 'form-helper success';
-              } else {
-                usernameIcon.textContent = '❌';
-                usernameHelper.textContent = data.error || 'Username not available';
-                usernameHelper.className = 'form-helper error';
-              }
-            } catch (err) {
-              usernameIcon.textContent = '';
-              usernameHelper.textContent = '';
-              usernameHelper.className = 'form-helper';
-            }
-          }, 500); // 500ms debounce
-        });
-      }
-
-      // Handle form submission
-      const authForm = document.getElementById('auth-form');
-      if (authForm) {
-        authForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          console.log('Form submitted, mode:', authMode);
-
-          const username = document.getElementById('auth-username').value;
-          const password = document.getElementById('auth-password').value;
-          const url = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
-
-          const payload = { username, password };
-
-          // Add register-only fields
-          if (authMode === 'register') {
-            const email = document.getElementById('auth-email').value;
-            const confirmPassword = document.getElementById('auth-confirm-password').value;
-            payload.email = email;
-            payload.confirmPassword = confirmPassword;
-          }
-
-          console.log('Submitting to:', url, { username, email: payload.email });
-
-          try {
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-            console.log('Response:', response.status, data);
-
-            if (!response.ok) {
-              throw new Error(data.error || 'Authentication failed');
-            }
-
-            // Success - redirect to app
-            console.log('Success! Redirecting to /app');
-            window.location.href = '/app';
-          } catch (err) {
-            console.error('Auth error:', err);
-            const errorAlert = document.getElementById('auth-error-alert');
-            const errorMessage = document.getElementById('auth-error-message');
-            if (errorMessage) errorMessage.textContent = err.message;
-            if (errorAlert) {
-              errorAlert.classList.remove('visually-hidden');
-              errorAlert.style.display = 'block';
-            }
-          }
-        });
-        console.log('Form submit listener attached');
-      }
-
-      // ==========================================
-      // PASSWORD STRENGTH INDICATOR
-      // ==========================================
-      const passwordInput = document.getElementById('auth-password');
-      const passwordStrength = document.getElementById('password-strength');
-      const forgotPasswordLink = document.getElementById('forgot-password-link');
-
-      function checkPasswordStrength(password) {
-        const requirements = {
-          length: password.length >= 8,
-          uppercase: /[A-Z]/.test(password),
-          lowercase: /[a-z]/.test(password),
-          number: /[0-9]/.test(password),
-          special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
-        };
-
-        document.getElementById('req-length').classList.toggle('met', requirements.length);
-        document.getElementById('req-uppercase').classList.toggle('met', requirements.uppercase);
-        document.getElementById('req-lowercase').classList.toggle('met', requirements.lowercase);
-        document.getElementById('req-number').classList.toggle('met', requirements.number);
-        document.getElementById('req-special').classList.toggle('met', requirements.special);
-
-        return requirements;
-      }
-
-      if (passwordInput) {
-        passwordInput.addEventListener('input', () => {
-          if (authMode === 'register' && passwordInput.value) {
-            passwordStrength.style.display = 'block';
-            checkPasswordStrength(passwordInput.value);
-          } else {
-            passwordStrength.style.display = 'none';
-          }
-        });
-      }
-
-      // ==========================================
-      // PASSWORD RESET MODAL
-      // ==========================================
-      const resetModal = document.getElementById('reset-password-modal');
-      const resetModalClose = document.getElementById('reset-modal-close');
-      const resetForm = document.getElementById('reset-password-form');
-      const resetStep1 = document.getElementById('reset-step-1');
-      const resetStep2 = document.getElementById('reset-step-2');
-      const resetBackBtn = document.getElementById('reset-back-btn');
-      const resetConfirmBtn = document.getElementById('reset-confirm-btn');
-      const resetNewPassword = document.getElementById('reset-new-password');
-
-      let currentResetToken = null;
-
-      if (forgotPasswordLink) {
-        forgotPasswordLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          closeAuthModal();
-          resetModal.classList.add('active');
-          resetStep1.style.display = 'block';
-          resetStep2.style.display = 'none';
-        });
-      }
-
-      if (resetModalClose) {
-        resetModalClose.addEventListener('click', () => {
-          resetModal.classList.remove('active');
-          resetForm.reset();
-        });
-      }
-
-      if (resetBackBtn) {
-        resetBackBtn.addEventListener('click', () => {
-          resetStep2.style.display = 'none';
-          resetStep1.style.display = 'block';
-        });
-      }
-
-      // Reset password strength indicator for reset modal
-      if (resetNewPassword) {
-        resetNewPassword.addEventListener('input', () => {
-          const password = resetNewPassword.value;
-          if (password) {
-            const requirements = {
-              length: password.length >= 8,
-              uppercase: /[A-Z]/.test(password),
-              lowercase: /[a-z]/.test(password),
-              number: /[0-9]/.test(password),
-              special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
-            };
-
-            document.getElementById('reset-req-length').classList.toggle('met', requirements.length);
-            document.getElementById('reset-req-uppercase').classList.toggle('met', requirements.uppercase);
-            document.getElementById('reset-req-lowercase').classList.toggle('met', requirements.lowercase);
-            document.getElementById('reset-req-number').classList.toggle('met', requirements.number);
-            document.getElementById('reset-req-special').classList.toggle('met', requirements.special);
-          }
-        });
-      }
-
-      // Step 1: Request reset token
-      if (resetForm) {
-        resetForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-
-          const usernameOrEmail = document.getElementById('reset-username').value;
-          const errorAlert = document.getElementById('reset-error-alert');
-          const errorMessage = document.getElementById('reset-error-message');
-
-          try {
-            const response = await fetch('/api/auth/request-password-reset', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ usernameOrEmail })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-              throw new Error(data.error || 'Failed to request reset');
-            }
-
-            if (data.resetToken) {
-              currentResetToken = data.resetToken;
-              document.getElementById('reset-token-display').value = data.resetToken;
-              resetStep1.style.display = 'none';
-              resetStep2.style.display = 'block';
-            }
-          } catch (err) {
-            if (errorMessage) errorMessage.textContent = err.message;
-            if (errorAlert) errorAlert.classList.remove('visually-hidden');
-          }
-        });
-      }
-
-      // Step 2: Confirm password reset
-      if (resetConfirmBtn) {
-        resetConfirmBtn.addEventListener('click', async () => {
-          const newPassword = resetNewPassword.value;
-          const errorAlert = document.getElementById('reset-confirm-error');
-          const errorMessage = document.getElementById('reset-confirm-error-message');
-
-          if (!newPassword) {
-            if (errorMessage) errorMessage.textContent = 'Please enter a new password';
-            if (errorAlert) errorAlert.classList.remove('visually-hidden');
-            return;
-          }
-
-          try {
-            const response = await fetch('/api/auth/reset-password', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ token: currentResetToken, newPassword })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-              throw new Error(data.error || 'Failed to reset password');
-            }
-
-            alert('Password reset successfully! You can now log in with your new password.');
-            resetModal.classList.remove('active');
-            resetForm.reset();
-            openAuthModal('login');
-          } catch (err) {
-            if (errorMessage) errorMessage.textContent = err.message;
-            if (errorAlert) errorAlert.classList.remove('visually-hidden');
-          }
-        });
-      }
-
-      // Show forgot password link only in login mode
-      if (forgotPasswordLink) {
-        const observer = new MutationObserver(() => {
-          forgotPasswordLink.style.display = authMode === 'login' ? 'inline-block' : 'none';
-        });
-      }
+      // Wait for auth modal component to load
+      window.addEventListener('headerReady', () => {
+        const authModal = document.getElementById('auth-modal');
+        
+        if (loginBtn) {
+          loginBtn.addEventListener('click', () => {
+            authModal?.classList.add('active');
+            if (typeof switchAuthTab === 'function') switchAuthTab('login');
+          });
+        }
+        
+        if (registerBtn) {
+          registerBtn.addEventListener('click', () => {
+            authModal?.classList.add('active');
+            if (typeof switchAuthTab === 'function') switchAuthTab('register');
+          });
+        }
+        
+        if (heroCTABtn) {
+          heroCTABtn.addEventListener('click', () => {
+            authModal?.classList.add('active');
+            if (typeof switchAuthTab === 'function') switchAuthTab('register');
+          });
+        }
+        
+        if (finalCTABtn) {
+          finalCTABtn.addEventListener('click', () => {
+            authModal?.classList.add('active');
+            if (typeof switchAuthTab === 'function') switchAuthTab('register');
+          });
+        }
+      });
     });
   </script>
 </body>
