@@ -10,6 +10,7 @@ export class ProfileView extends BaseView {
     super('profile-view');
     this.user = null;
     this.bookmarks = [];
+    this.totalBookmarks = 0;
   }
 
   /**
@@ -28,10 +29,11 @@ export class ProfileView extends BaseView {
 
       this.user = userData.user;
 
-      // Get user's bookmarks
-      const bookmarksData = await fetchWithError(`/api/bookmarks?user=${this.user.username}`);
+      // Get user's bookmarks (first page)
+      const bookmarksData = await fetchWithError(`/api/bookmarks?user=${this.user.username}&page=1&limit=20`);
       if (bookmarksData) {
         this.bookmarks = bookmarksData.items || [];
+        this.totalBookmarks = bookmarksData.pagination?.total || 0;
       }
 
       this.render();
@@ -64,7 +66,7 @@ export class ProfileView extends BaseView {
       <h2 class="profile-username">@${escapeHtml(this.user.username)}</h2>
       <div class="profile-stats">
         <div class="stat">
-          <span class="stat-value">${this.bookmarks.length}</span>
+          <span class="stat-value">${this.totalBookmarks}</span>
           <span class="stat-label">Bookmarks</span>
         </div>
       </div>
