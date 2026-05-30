@@ -62,20 +62,15 @@ class MobileApp {
 
       if (!response.ok) {
         console.log('[MobileApp] Auth request failed:', response.status);
-        sessionStorage.setItem('mobile_redirect_attempted', 'skip');
-        sessionStorage.clear(); // Clear any stale data
-        window.location.href = '/';
         return false;
       }
 
       const data = await response.json();
 
       if (!data || !data.user) {
-        console.log('[MobileApp] Not authenticated, redirecting to login');
-        sessionStorage.setItem('mobile_redirect_attempted', 'skip');
-        sessionStorage.clear(); // Clear any stale data
-        window.location.href = '/';
-        return false;
+        console.log('[MobileApp] Not authenticated - showing public feed');
+        this.user = null;
+        return true; // Continue with public feed
       }
 
       this.user = data.user;
@@ -83,9 +78,6 @@ class MobileApp {
       return true;
     } catch (err) {
       console.error('[MobileApp] Auth check failed:', err);
-      sessionStorage.setItem('mobile_redirect_attempted', 'skip');
-      sessionStorage.clear(); // Clear any stale data
-      window.location.href = '/';
       return false;
     }
   }
@@ -206,6 +198,18 @@ class MobileApp {
       searchBtn.addEventListener('click', () => {
         this.showView('search');
       });
+    }
+
+    // Login button - show if not authenticated
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+      if (!this.user) {
+        loginBtn.style.display = 'block';
+        loginBtn.addEventListener('click', () => {
+          sessionStorage.setItem('mobile_redirect_attempted', 'skip');
+          window.location.href = '/';
+        });
+      }
     }
   }
 
