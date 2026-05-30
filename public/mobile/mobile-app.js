@@ -156,9 +156,9 @@ class MobileApp {
    * Initialize all views
    */
   initializeViews() {
-    // Create view instances
+    // Create view instances - pass user to views that need it
     this.views = {
-      feed: new FeedView(),
+      feed: new FeedView(this.user),
       search: new SearchView(),
       add: new AddBookmarkView(),
       tags: new TagsView(),

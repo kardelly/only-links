@@ -6,14 +6,14 @@ import { escapeHtml, timeAgo, fetchWithError } from './utils.js';
  * Displays bookmark feed with pagination
  */
 export class FeedView extends BaseView {
-  constructor() {
+  constructor(user = null) {
     super('feed-view');
     this.page = 1;
     this.limit = 20;
     this.hasMore = true;
     this.bookmarks = [];
     this.loading = false;
-    this.user = null;
+    this.user = user;
   }
 
   /**
@@ -23,25 +23,22 @@ export class FeedView extends BaseView {
     this.showLoading();
 
     try {
-      // Get current user first
-      if (!this.user) {
-        const userData = await fetchWithError('/api/auth/me');
-        if (userData && userData.user) {
-          this.user = userData.user;
-        }
-      }
-
-      // Fetch user's bookmarks if logged in, otherwise public feed
+      // Fetch user's bookmarks
       const url = this.user
         ? `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=${this.limit}`
         : `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
 
+      console.log('[FeedView] Loading from:', url);
+
       const data = await fetchWithError(url);
+
+      console.log('[FeedView] Received data:', data);
 
       if (data) {
         // API returns { items: [], pagination: {} }
         this.bookmarks = data.items || [];
         this.hasMore = data.pagination && data.pagination.page < data.pagination.totalPages;
+        console.log('[FeedView] Loaded', this.bookmarks.length, 'bookmarks');
         this.render();
       }
     } catch (err) {
