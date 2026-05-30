@@ -58,8 +58,8 @@ export class ProfileView extends BaseView {
     header.className = 'profile-header';
     header.innerHTML = `
       <div class="profile-avatar">
-        ${this.user.avatar_url 
-          ? `<img src="${escapeHtml(this.user.avatar_url)}" alt="${escapeHtml(this.user.username)}">` 
+        ${(this.user.avatar || this.user.avatar_url)
+          ? `<img src="${escapeHtml(this.user.avatar || this.user.avatar_url)}" alt="${escapeHtml(this.user.username)}">`
           : `<div class="avatar-placeholder">${escapeHtml(this.user.username[0].toUpperCase())}</div>`
         }
       </div>
@@ -128,10 +128,13 @@ export class ProfileView extends BaseView {
 
     card.innerHTML = `
       <div class="card-thumbnail">
-        <img src="${bookmark.og_image || '/placeholder.png'}" 
-             alt="${escapeHtml(bookmark.title)}"
-             onerror="this.src='/placeholder.png'"
-             loading="lazy">
+        ${bookmark.og_image
+          ? `<img src="${bookmark.og_image}"
+                  alt="${escapeHtml(bookmark.title)}"
+                  onerror="this.style.display='none';this.parentElement.style.background='#E5E5E5'"
+                  loading="lazy">`
+          : `<div style="width:100%;height:100%;background:#E5E5E5;display:flex;align-items:center;justify-content:center;font-size:32px;color:#999">🔗</div>`
+        }
       </div>
       <div class="card-content">
         <h3 class="card-title">${escapeHtml(bookmark.title)}</h3>
