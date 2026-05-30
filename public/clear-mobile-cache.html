@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Mobile Cache - only.link</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 40px 20px;
+      text-align: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 28px;
+    }
+    p {
+      color: #666;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    button {
+      background: #4F6FE8;
+      color: white;
+      border: none;
+      padding: 18px 40px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #3D5AD6;
+      transform: translateY(-2px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .status {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f5f5f5;
+      border-radius: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      text-align: left;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+    }
+    .status.show {
+      display: block;
+    }
+    .emoji {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="emoji">🧹</div>
+    <h1>Clear Mobile Cache</h1>
+    <p>This will clear all cached data and reload the mobile app fresh. Use this if you're experiencing issues.</p>
+
+    <button onclick="clearEverything()">Clear Cache & Reload</button>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    async function clearEverything() {
+      const status = document.getElementById('status');
+      status.classList.add('show');
+      let log = '';
+
+      try {
+        // 1. Unregister service workers
+        log += '🔧 Unregistering service workers...\n';
+        status.textContent = log;
+
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (let registration of registrations) {
+            await registration.unregister();
+            log += `   ✓ Unregistered: ${registration.scope}\n`;
+            status.textContent = log;
+          }
+          if (registrations.length === 0) {
+            log += '   (none found)\n';
+            status.textContent = log;
+          }
+        }
+
+        // 2. Clear all caches
+        log += '\n🗑️  Clearing caches...\n';
+        status.textContent = log;
+
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          for (let cacheName of cacheNames) {
+            await caches.delete(cacheName);
+            log += `   ✓ Deleted: ${cacheName}\n`;
+            status.textContent = log;
+          }
+          if (cacheNames.length === 0) {
+            log += '   (none found)\n';
+            status.textContent = log;
+          }
+        }
+
+        // 3. Clear storage
+        log += '\n💾 Clearing storage...\n';
+        status.textContent = log;
+
+        try {
+          localStorage.clear();
+          log += '   ✓ localStorage cleared\n';
+        } catch (e) {
+          log += '   ⚠️  localStorage error: ' + e.message + '\n';
+        }
+        status.textContent = log;
+
+        try {
+          sessionStorage.clear();
+          log += '   ✓ sessionStorage cleared\n';
+        } catch (e) {
+          log += '   ⚠️  sessionStorage error: ' + e.message + '\n';
+        }
+        status.textContent = log;
+
+        // 4. Clear IndexedDB
+        log += '\n🗄️  Clearing databases...\n';
+        status.textContent = log;
+
+        if ('indexedDB' in window && indexedDB.databases) {
+          try {
+            const databases = await indexedDB.databases();
+            for (let db of databases) {
+              indexedDB.deleteDatabase(db.name);
+              log += `   ✓ Deleted: ${db.name}\n`;
+              status.textContent = log;
+            }
+            if (databases.length === 0) {
+              log += '   (none found)\n';
+              status.textContent = log;
+            }
+          } catch (e) {
+            log += '   ⚠️  IndexedDB error: ' + e.message + '\n';
+            status.textContent = log;
+          }
+        }
+
+        log += '\n✅ All clear!\n';
+        log += '🔄 Reloading mobile app in 2 seconds...\n';
+        status.textContent = log;
+
+        setTimeout(() => {
+          window.location.href = '/mobile/app';
+        }, 2000);
+
+      } catch (err) {
+        log += `\n❌ Error: ${err.message}\n`;
+        log += '\nTrying to reload anyway...\n';
+        status.textContent = log;
+
+        setTimeout(() => {
+          window.location.href = '/mobile/app';
+        }, 3000);
+      }
+    }
+
+    // Auto-run on load
+    setTimeout(() => {
+      const btn = document.querySelector('button');
+      btn.textContent = 'Auto-clearing in 3...';
+      setTimeout(() => {
+        btn.textContent = 'Auto-clearing in 2...';
+        setTimeout(() => {
+          btn.textContent = 'Auto-clearing in 1...';
+          setTimeout(() => {
+            clearEverything();
+          }, 1000);
+        }, 1000);
+      }, 1000);
+    }, 500);
+  </script>
+</body>
+</html>
