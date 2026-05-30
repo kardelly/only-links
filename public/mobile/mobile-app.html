@@ -18,6 +18,44 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
   <link rel="apple-touch-icon" href="/favicon-192.png">
 
+  <!-- Auto clear cache on ?clear=1 param -->
+  <script>
+    if (window.location.search.includes('clear=1')) {
+      (async function() {
+        console.log('[Clear] Clearing all caches...');
+
+        // Unregister service workers
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (let registration of registrations) {
+            await registration.unregister();
+            console.log('[Clear] Unregistered SW:', registration.scope);
+          }
+        }
+
+        // Clear caches
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          for (let cacheName of cacheNames) {
+            await caches.delete(cacheName);
+            console.log('[Clear] Deleted cache:', cacheName);
+          }
+        }
+
+        // Clear storage
+        localStorage.clear();
+        sessionStorage.clear();
+
+        console.log('[Clear] Done! Reloading...');
+
+        // Reload without the clear parameter
+        setTimeout(() => {
+          window.location.href = '/mobile/app';
+        }, 1000);
+      })();
+    }
+  </script>
+
   <!-- Styles -->
   <link rel="stylesheet" href="/mobile/mobile-styles.css">
 </head>
