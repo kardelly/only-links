@@ -27,6 +27,12 @@ export class FeedView extends BaseView {
     this.showLoading();
 
     try {
+      // If no user set, try to get from window.mobileApp
+      if (!this.user && window.mobileApp && window.mobileApp.user) {
+        console.log('[FeedView] Getting user from window.mobileApp');
+        this.user = window.mobileApp.user;
+      }
+
       // Fetch bookmarks - user's if authenticated, public feed otherwise
       const url = this.user
         ? `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=${this.limit}`
@@ -40,7 +46,7 @@ export class FeedView extends BaseView {
         hasData: !!data,
         itemsLength: data?.items?.length,
         pagination: data?.pagination,
-        firstItem: data?.items?.[0]
+        firstItem: data?.items?.[0]?.title
       });
 
       if (data && data.items) {
