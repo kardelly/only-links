@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Debug - only.link</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border-left: 4px solid #ccc;
+    }
+    .test.success {
+      border-color: #16A34A;
+    }
+    .test.error {
+      border-color: #DC2626;
+    }
+    .test h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+    }
+    .test pre {
+      margin: 5px 0;
+      padding: 10px;
+      background: #f9f9f9;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    button {
+      background: #4F6FE8;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mobile Debug</h1>
+  <button onclick="runTests()">Run All Tests</button>
+  <div id="results"></div>
+
+  <script>
+    async function runTests() {
+      const results = document.getElementById('results');
+      results.innerHTML = '<p>Running tests...</p>';
+
+      const tests = [];
+
+      // Test 1: Check user agent
+      tests.push({
+        name: 'User Agent Detection',
+        test: () => {
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          return {
+            success: true,
+            data: {
+              userAgent: navigator.userAgent,
+              isMobile: isMobile
+            }
+          };
+        }
+      });
+
+      // Test 2: Check authentication
+      tests.push({
+        name: 'Authentication Check',
+        test: async () => {
+          try {
+            const response = await fetch('/api/auth/me', {
+              credentials: 'include',
+              cache: 'no-cache'
+            });
+            const data = await response.json();
+            return {
+              success: response.ok,
+              data: {
+                status: response.status,
+                authenticated: !!(data && data.user),
+                user: data?.user || null
+              }
+            };
+          } catch (err) {
+            return {
+              success: false,
+              error: err.message
+            };
+          }
+        }
+      });
+
+      // Test 3: Check bookmarks API
+      tests.push({
+        name: 'Bookmarks API',
+        test: async () => {
+          try {
+            const response = await fetch('/api/bookmarks?page=1&limit=5', {
+              credentials: 'include',
+              cache: 'no-cache'
+            });
+            const data = await response.json();
+            return {
+              success: response.ok,
+              data: {
+                status: response.status,
+                itemCount: data?.items?.length || 0,
+                totalPages: data?.pagination?.totalPages || 0,
+                sample: data?.items?.[0] || null
+              }
+            };
+          } catch (err) {
+            return {
+              success: false,
+              error: err.message
+            };
+          }
+        }
+      });
+
+      // Test 4: Check user's bookmarks API
+      tests.push({
+        name: 'User Bookmarks API',
+        test: async () => {
+          try {
+            // First get user
+            const authResponse = await fetch('/api/auth/me', {
+              credentials: 'include',
+              cache: 'no-cache'
+            });
+            const authData = await authResponse.json();
+
+            if (!authData?.user) {
+              return {
+                success: false,
+                error: 'Not authenticated'
+              };
+            }
+
+            const response = await fetch(`/api/bookmarks?user=${authData.user.username}&page=1&limit=5`, {
+              credentials: 'include',
+              cache: 'no-cache'
+            });
+            const data = await response.json();
+            return {
+              success: response.ok,
+              data: {
+                status: response.status,
+                username: authData.user.username,
+                itemCount: data?.items?.length || 0,
+                totalPages: data?.pagination?.totalPages || 0,
+                sample: data?.items?.[0] || null
+              }
+            };
+          } catch (err) {
+            return {
+              success: false,
+              error: err.message
+            };
+          }
+        }
+      });
+
+      // Test 5: SessionStorage
+      tests.push({
+        name: 'SessionStorage',
+        test: () => {
+          return {
+            success: true,
+            data: {
+              mobile_redirect_attempted: sessionStorage.getItem('mobile_redirect_attempted'),
+              allKeys: Object.keys(sessionStorage)
+            }
+          };
+        }
+      });
+
+      // Run all tests
+      let html = '';
+      for (const test of tests) {
+        const result = await test.test();
+        const className = result.success ? 'success' : 'error';
+        html += `
+          <div class="test ${className}">
+            <h3>${test.name}</h3>
+            ${result.error ? `<p style="color: #DC2626">Error: ${result.error}</p>` : ''}
+            ${result.data ? `<pre>${JSON.stringify(result.data, null, 2)}</pre>` : ''}
+          </div>
+        `;
+      }
+
+      results.innerHTML = html;
+    }
+
+    // Auto-run on load
+    window.addEventListener('load', runTests);
+  </script>
+</body>
+</html>
