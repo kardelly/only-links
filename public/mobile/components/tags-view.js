@@ -67,7 +67,8 @@ export class TagsView extends BaseView {
   createTagElement(tag) {
     const el = document.createElement('button');
     el.className = 'tag-item';
-    el.dataset.tag = tag.tag;
+    const tagName = tag.name || tag.tag; // API returns 'name', fallback to 'tag'
+    el.dataset.tag = tagName;
 
     // Size based on count (simple scaling)
     const minSize = 14;
@@ -83,13 +84,13 @@ export class TagsView extends BaseView {
     el.style.fontSize = `${fontSize}px`;
 
     el.innerHTML = `
-      <span class="tag-name">${escapeHtml(tag.tag)}</span>
+      <span class="tag-name">${escapeHtml(tagName)}</span>
       <span class="tag-count">${tag.count}</span>
     `;
 
     // Click to search by tag
     el.addEventListener('click', () => {
-      this.searchByTag(tag.tag);
+      this.searchByTag(tagName);
     });
 
     return el;
@@ -99,8 +100,8 @@ export class TagsView extends BaseView {
    * Navigate to search with tag query
    */
   searchByTag(tag) {
-    if (window.app && window.app.showView) {
-      window.app.showView('search');
+    if (window.mobileApp && window.mobileApp.showView) {
+      window.mobileApp.showView('search');
 
       // Pre-fill search input after view loads
       setTimeout(() => {
