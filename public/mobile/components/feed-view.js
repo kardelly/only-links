@@ -145,21 +145,30 @@ export class FeedView extends BaseView {
   /**
    * Render tags HTML (max 3 visible)
    */
-  renderTags(tagsString) {
-    if (!tagsString) return '';
-    
-    const tags = tagsString.split(',').map(t => t.trim()).filter(t => t);
+  renderTags(tagsInput) {
+    if (!tagsInput) return '';
+
+    // Handle both array (from API) and string (legacy)
+    let tags;
+    if (Array.isArray(tagsInput)) {
+      tags = tagsInput;
+    } else if (typeof tagsInput === 'string') {
+      tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
+    } else {
+      return '';
+    }
+
     const visibleTags = tags.slice(0, 3);
     const remainingCount = tags.length - 3;
-    
+
     let html = visibleTags
       .map(tag => `<span class="tag">${escapeHtml(tag)}</span>`)
       .join('');
-    
+
     if (remainingCount > 0) {
       html += `<span class="tag tag-more">+${remainingCount}</span>`;
     }
-    
+
     return html;
   }
 
