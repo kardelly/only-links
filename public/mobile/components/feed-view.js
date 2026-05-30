@@ -13,6 +13,7 @@ export class FeedView extends BaseView {
     this.hasMore = true;
     this.bookmarks = [];
     this.loading = false;
+    this.user = null;
   }
 
   /**
@@ -22,7 +23,20 @@ export class FeedView extends BaseView {
     this.showLoading();
 
     try {
-      const data = await fetchWithError(`/api/bookmarks?page=${this.page}&limit=${this.limit}`);
+      // Get current user first
+      if (!this.user) {
+        const userData = await fetchWithError('/api/auth/me');
+        if (userData && userData.user) {
+          this.user = userData.user;
+        }
+      }
+
+      // Fetch user's bookmarks if logged in, otherwise public feed
+      const url = this.user
+        ? `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=${this.limit}`
+        : `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
+
+      const data = await fetchWithError(url);
 
       if (data) {
         // API returns { items: [], pagination: {} }
@@ -147,9 +161,13 @@ export class FeedView extends BaseView {
       btn.disabled = true;
       
       this.page++;
-      
+
       try {
-        const data = await fetchWithError(`/api/bookmarks?page=${this.page}&limit=${this.limit}`);
+        const url = this.user
+          ? `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=${this.limit}`
+          : `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
+
+        const data = await fetchWithError(url);
 
         if (data && data.items) {
           this.bookmarks.push(...data.items);
