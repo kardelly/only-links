@@ -20,30 +20,40 @@ export class FeedView extends BaseView {
    * Load bookmarks from API
    */
   async load() {
+    console.log('[FeedView] load() called');
+    console.log('[FeedView] this.user:', this.user);
+
     this.showLoading();
 
     try {
-      // Fetch user's bookmarks
+      // Fetch bookmarks - user's if authenticated, public feed otherwise
       const url = this.user
         ? `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=${this.limit}`
         : `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
 
-      console.log('[FeedView] Loading from:', url);
+      console.log('[FeedView] Fetching from URL:', url);
 
       const data = await fetchWithError(url);
 
-      console.log('[FeedView] Received data:', data);
+      console.log('[FeedView] Received data:', {
+        hasData: !!data,
+        itemsLength: data?.items?.length,
+        pagination: data?.pagination,
+        firstItem: data?.items?.[0]
+      });
 
-      if (data) {
-        // API returns { items: [], pagination: {} }
-        this.bookmarks = data.items || [];
+      if (data && data.items) {
+        this.bookmarks = data.items;
         this.hasMore = data.pagination && data.pagination.page < data.pagination.totalPages;
-        console.log('[FeedView] Loaded', this.bookmarks.length, 'bookmarks');
+        console.log('[FeedView] Setting bookmarks:', this.bookmarks.length, 'items');
         this.render();
+      } else {
+        console.error('[FeedView] No data.items in response');
+        this.showError('No bookmarks found');
       }
     } catch (err) {
-      console.error('Failed to load feed:', err);
-      this.showError('Failed to load bookmarks');
+      console.error('[FeedView] Failed to load feed:', err);
+      this.showError('Failed to load bookmarks: ' + err.message);
     } finally {
       this.hideLoading();
     }
