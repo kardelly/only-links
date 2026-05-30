@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Cache - only.link</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 40px 20px;
+      text-align: center;
+      background: #f5f5f5;
+    }
+    h1 { margin-bottom: 20px; }
+    button {
+      background: #4F6FE8;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Clear Cache & Reload</h1>
+  <p>Click to clear all caches and reload</p>
+
+  <button onclick="clearEverything()">Clear Everything & Reload</button>
+
+  <div class="status" id="status">Ready...</div>
+
+  <script>
+    async function clearEverything() {
+      const status = document.getElementById('status');
+      let log = '';
+
+      try {
+        // 1. Unregister service workers
+        log += '1. Unregistering service workers...\n';
+        status.textContent = log;
+
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (let registration of registrations) {
+            await registration.unregister();
+            log += `   ✓ Unregistered: ${registration.scope}\n`;
+            status.textContent = log;
+          }
+        }
+
+        // 2. Clear all caches
+        log += '\n2. Clearing caches...\n';
+        status.textContent = log;
+
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          for (let cacheName of cacheNames) {
+            await caches.delete(cacheName);
+            log += `   ✓ Deleted cache: ${cacheName}\n`;
+            status.textContent = log;
+          }
+        }
+
+        // 3. Clear storage
+        log += '\n3. Clearing storage...\n';
+        status.textContent = log;
+
+        localStorage.clear();
+        log += '   ✓ localStorage cleared\n';
+        status.textContent = log;
+
+        sessionStorage.clear();
+        log += '   ✓ sessionStorage cleared\n';
+        status.textContent = log;
+
+        // 4. Clear IndexedDB
+        if ('indexedDB' in window) {
+          const databases = await indexedDB.databases();
+          for (let db of databases) {
+            indexedDB.deleteDatabase(db.name);
+            log += `   ✓ Deleted database: ${db.name}\n`;
+            status.textContent = log;
+          }
+        }
+
+        log += '\n✅ All clear! Reloading in 2 seconds...\n';
+        status.textContent = log;
+
+        setTimeout(() => {
+          window.location.href = '/mobile/app';
+        }, 2000);
+
+      } catch (err) {
+        log += `\n❌ Error: ${err.message}\n`;
+        status.textContent = log;
+      }
+    }
+  </script>
+</body>
+</html>
