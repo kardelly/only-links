@@ -8,6 +8,7 @@ import { escapeHtml, timeAgo, fetchWithError } from './utils.js';
 export class FeedView extends BaseView {
   constructor(user = null) {
     super('feed-view');
+    console.log('[FeedView] constructor called with user:', user);
     this.page = 1;
     this.limit = 20;
     this.hasMore = true;
@@ -63,10 +64,14 @@ export class FeedView extends BaseView {
    * Render bookmark feed
    */
   render() {
+    console.log('[FeedView] render() called, bookmarks.length:', this.bookmarks.length);
+    console.log('[FeedView] First bookmark:', this.bookmarks[0]);
+
     this.clear();
-    
+
     // Empty state
     if (this.bookmarks.length === 0) {
+      console.log('[FeedView] Showing empty state');
       this.container.innerHTML = `
         <div class="empty-state">
           <h2>No bookmarks yet</h2>
@@ -75,6 +80,8 @@ export class FeedView extends BaseView {
       `;
       return;
     }
+
+    console.log('[FeedView] Rendering', this.bookmarks.length, 'bookmarks');
     
     // Create grid
     const grid = document.createElement('div');
