@@ -91,8 +91,20 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://www.googletagmanager.com"],
-      connectSrc: ["'self'"]
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://cdn.tailwindcss.com",
+        "https://www.googletagmanager.com",
+        "https://www.google-analytics.com"
+      ],
+      connectSrc: [
+        "'self'",
+        "https://www.google-analytics.com",
+        "https://analytics.google.com",
+        "https://stats.g.doubleclick.net",
+        "https://www.google.com"
+      ]
     }
   },
   hsts: {
