@@ -88,15 +88,16 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://use.typekit.net"],
+      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://use.typekit.net"],
       imgSrc: ["'self'", "data:", "https:"],
       scriptSrc: [
         "'self'",
         "'unsafe-inline'",
         "https://cdn.tailwindcss.com",
         "https://www.googletagmanager.com",
-        "https://www.google-analytics.com"
+        "https://www.google-analytics.com",
+        "https://use.typekit.net"
       ],
       connectSrc: [
         "'self'",
