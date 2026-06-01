@@ -272,24 +272,58 @@ export class AddBookmarkView {
       });
 
       if (data) {
-        showToast('Bookmark saved ✓');
-        this.close();
+        // Success animation: button transforms to checkmark
+        saveBtn.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4,10 8,14 16,6"></polyline>
+          </svg>
+        `;
+        saveBtn.style.background = 'oklch(54% 0.15 145)';
+        saveBtn.style.transform = 'scale(1.05)';
 
-        // Refresh feed if it exists
-        if (window.app && window.app.views && window.app.views.feed) {
-          window.app.views.feed.refresh();
+        // Haptic feedback (mobile only)
+        if ('vibrate' in navigator) {
+          navigator.vibrate(50);
         }
 
-        // Navigate to feed
-        if (window.app && window.app.showView) {
-          setTimeout(() => window.app.showView('feed'), 500);
-        }
+        // Wait for animation, then close with delight
+        setTimeout(() => {
+          showToast('Saved', 'success');
+
+          // Close with smooth transition
+          this.sheet.style.transition = 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms cubic-bezier(0.16, 1, 0.3, 1)';
+          this.backdrop.style.transition = 'opacity 400ms cubic-bezier(0.16, 1, 0.3, 1)';
+          this.close();
+
+          // Add pulse animation to the + button
+          const addButton = document.querySelector('.nav-item.nav-add');
+          if (addButton) {
+            addButton.classList.add('success-pulse');
+            setTimeout(() => {
+              addButton.classList.remove('success-pulse');
+            }, 800);
+          }
+
+          // Refresh feed
+          if (window.mobileApp && window.mobileApp.views && window.mobileApp.views.feed) {
+            window.mobileApp.views.feed.refresh();
+          }
+
+          // Navigate to feed after close animation
+          setTimeout(() => {
+            if (window.mobileApp && window.mobileApp.showView) {
+              window.mobileApp.showView('feed');
+            }
+          }, 200);
+        }, 600);
       }
     } catch (err) {
       console.error('Failed to save bookmark:', err);
-    } finally {
+
+      // Reset button on error
       saveBtn.disabled = false;
       saveBtn.textContent = 'Save';
+      saveBtn.style.transform = '';
     }
   }
 }

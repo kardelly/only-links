@@ -190,6 +190,7 @@ body {
   padding: 0 !important;
   overflow: hidden;
   aspect-ratio: 1 / 1;
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nav-item.nav-add span {
@@ -198,6 +199,25 @@ body {
 
 .nav-item.nav-add:active {
   transform: scale(0.95);
+}
+
+/* Success pulse animation */
+.nav-item.nav-add.success-pulse {
+  animation: successPulse 800ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes successPulse {
+  0% {
+    box-shadow: 0 4px 12px rgba(79, 111, 232, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(22, 163, 74, 0.3),
+                0 4px 12px rgba(79, 111, 232, 0.3);
+    background: oklch(54% 0.15 145);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(79, 111, 232, 0.3);
+  }
 }
 
 /* Bookmark Grid */
@@ -478,6 +498,11 @@ body {
   background: var(--primary);
   color: white;
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-primary:hover {
@@ -491,6 +516,24 @@ body {
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Success state animation */
+.btn-primary svg {
+  animation: checkmarkDraw 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes checkmarkDraw {
+  0% {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    opacity: 0;
+  }
+  100% {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
 }
 
 .btn-secondary {
@@ -727,21 +770,56 @@ body {
   position: fixed;
   top: calc(var(--top-bar-height) + var(--spacing-md));
   left: 50%;
-  transform: translateX(-50%) translateY(-100px);
-  background: rgba(26, 26, 26, 0.9);
+  transform: translateX(-50%) translateY(-80px);
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: var(--font-size-sm);
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
   z-index: var(--z-toast);
   opacity: 0;
-  transition: opacity 0.3s, transform 0.3s;
+  transition: opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
   max-width: calc(100% - var(--spacing-xl));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Toast variants */
+.toast-success {
+  background: oklch(54% 0.15 145 / 0.95);
+}
+
+.toast-error {
+  background: oklch(58% 0.18 25 / 0.95);
+}
+
+.toast svg {
+  animation: toastIconPop 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toastIconPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Settings View */

@@ -43,27 +43,51 @@ export function timeAgo(timestamp) {
 /**
  * Show toast notification
  * @param {string} message - Message to display
+ * @param {string} type - Toast type: 'default' | 'success' | 'error'
  * @param {number} duration - Duration in milliseconds (default 3000)
  */
-export function showToast(message, duration = 3000) {
+export function showToast(message, type = 'default', duration = 3000) {
   // Remove existing toasts
   const existing = document.querySelector('.toast');
   if (existing) existing.remove();
 
   const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
+  toast.className = `toast toast-${type}`;
+
+  // Add icon based on type
+  if (type === 'success') {
+    toast.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+        <polyline points="3,9 7,13 15,5"></polyline>
+      </svg>
+      <span>${escapeHtml(message)}</span>
+    `;
+  } else if (type === 'error') {
+    toast.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+        <circle cx="9" cy="9" r="7"></circle>
+        <line x1="9" y1="5" x2="9" y2="9"></line>
+        <line x1="9" y1="12" x2="9.01" y2="12"></line>
+      </svg>
+      <span>${escapeHtml(message)}</span>
+    `;
+  } else {
+    toast.textContent = message;
+  }
+
   document.body.appendChild(toast);
 
-  // Trigger animation
+  // Trigger animation with slight delay for smooth entrance
   requestAnimationFrame(() => {
-    toast.classList.add('show');
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+    });
   });
 
   // Remove after duration
   setTimeout(() => {
     toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
+    setTimeout(() => toast.remove(), 400);
   }, duration);
 }
 
