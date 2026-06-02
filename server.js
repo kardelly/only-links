@@ -10,6 +10,7 @@ import { rateLimit } from 'express-rate-limit';
 import cors from 'cors';
 import multer from 'multer';
 import fs from 'fs';
+import { sendWelcomeEmail, sendPasswordResetEmail } from './email.js';
 
 import {
   dbPromise,
@@ -482,6 +483,13 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
       message: 'Registration successful',
       user: { id: userId, username: usernameValidation.value }
     });
+
+    // Send welcome email in background (non-blocking)
+    sendWelcomeEmail({
+      to: emailValidation.value,
+      username: usernameValidation.value
+    }).catch(err => console.error('Welcome email error:', err.message));
+
   } catch (err) {
     console.error('Registration Error:', err);
     res.status(500).json({ error: 'Failed to register user due to database error' });
@@ -597,11 +605,15 @@ app.post('/api/auth/request-password-reset', authLimiter, async (req, res) => {
     // Store token in database (expires in 1 hour)
     await createPasswordResetToken(user.id, resetToken, 60);
 
-    // In a real app, this would be emailed. For now, return it in response (development only)
+    // Send reset email (non-blocking — always return same message to prevent enumeration)
+    sendPasswordResetEmail({
+      to: user.email,
+      username: user.username,
+      resetToken
+    }).catch(err => console.error('Reset email error:', err.message));
+
     res.json({
-      message: 'Password reset token generated successfully',
-      resetToken: resetToken,
-      username: user.username
+      message: 'If an account exists with that username/email, a password reset link has been sent.'
     });
   } catch (err) {
     console.error('Request Password Reset Error:', err);
@@ -1408,6 +1420,10 @@ app.get('/privacy', (req, res) => {
 
 app.get('/terms', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'terms.html'));
+});
+
+app.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
 });
 
 // Serve bookmarklet save popup

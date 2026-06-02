@@ -1,5 +1,12 @@
 /* ===== SHARED COMPONENT STYLES ===== */
 
+/* Semantic color tokens (used by auth modal and form components) */
+:root {
+  --success: oklch(54% 0.15 145);
+  --danger:  oklch(58% 0.18 25);
+  --warning: oklch(68% 0.16 85);
+}
+
 /* Footer */
 .footer {
   padding: var(--space-12, 48px) var(--space-8, 32px);

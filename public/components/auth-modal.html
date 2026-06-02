@@ -1,89 +1,126 @@
 <div id="auth-modal" class="modal">
   <div class="modal-backdrop"></div>
-  <div class="modal-content">
-    <button class="modal-close" id="auth-modal-close">✕</button>
+  <div class="modal-content am-modal-content">
+    <button class="am-close" id="auth-modal-close" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
+    </button>
 
-    <div class="auth-tabs">
-      <button class="auth-tab active" data-tab="login">Login</button>
-      <button class="auth-tab" data-tab="register">Sign up</button>
+    <div class="am-tabs" role="tablist">
+      <button class="am-tab active" data-tab="login" role="tab" aria-selected="true">Sign in</button>
+      <button class="am-tab" data-tab="register" role="tab" aria-selected="false">Create account</button>
     </div>
 
-    <div id="auth-error" class="alert alert-error" style="display: none;"></div>
-
     <!-- LOGIN FORM -->
-    <form id="login-form" class="auth-form active">
-      <div class="form-group">
-        <label for="login-username">Username</label>
-        <input type="text" id="login-username" required autofocus>
+    <form id="login-form" class="auth-form active" novalidate>
+      <div class="am-field" id="lf-username-group">
+        <label class="am-label" for="login-username">Username</label>
+        <input class="am-input" type="text" id="login-username" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+        <span class="am-field-error" id="lf-username-error"></span>
       </div>
 
-      <div class="form-group">
-        <label for="login-password">Password</label>
-        <input type="password" id="login-password" required>
+      <div class="am-field" id="lf-password-group">
+        <label class="am-label" for="login-password">
+          Password
+          <button type="button" class="am-forgot" id="forgot-password-link">Forgot?</button>
+        </label>
+        <div class="am-input-wrap">
+          <input class="am-input" type="password" id="login-password" autocomplete="current-password" required>
+          <button type="button" class="am-eye" id="login-toggle-pw" aria-label="Show password">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" id="login-eye-icon">
+              <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.4"/>
+              <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/>
+            </svg>
+          </button>
+        </div>
+        <span class="am-field-error" id="lf-password-error"></span>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-block">
-        Login
+      <div class="am-form-error" id="login-global-error" role="alert" aria-live="polite"></div>
+
+      <button type="submit" class="am-submit" id="login-submit">
+        <span class="am-submit-label">Sign in</span>
+        <span class="am-submit-spinner" aria-hidden="true"></span>
       </button>
-
-      <div class="form-footer">
-        <button type="button" class="link-btn" id="forgot-password-link">Forgot password?</button>
-      </div>
     </form>
 
     <!-- SIGNUP FORM -->
-    <form id="signup-form" class="auth-form">
-      <div class="form-group">
-        <label for="signup-username">Username</label>
-        <input type="text" id="signup-username" required pattern="[a-zA-Z0-9_-]{3,20}">
-        <small>3-20 characters: letters, numbers, underscore, hyphen</small>
-      </div>
-
-      <div class="form-group">
-        <label for="signup-email">Email (optional)</label>
-        <input type="email" id="signup-email" placeholder="your@email.com">
-        <small>For password recovery</small>
-      </div>
-
-      <div class="form-group">
-        <label for="signup-password">Password</label>
-        <input type="password" id="signup-password" required>
-        <div id="password-strength" class="password-strength" style="display: none;">
-          <ul class="password-requirements">
-            <li id="req-length">At least 8 characters</li>
-            <li id="req-uppercase">One uppercase letter</li>
-            <li id="req-lowercase">One lowercase letter</li>
-            <li id="req-number">One number</li>
-            <li id="req-special">One special character (!@#$%^&*)</li>
-          </ul>
+    <form id="signup-form" class="auth-form" novalidate>
+      <div class="am-field" id="sf-username-group">
+        <label class="am-label" for="signup-username">Username</label>
+        <div class="am-input-wrap">
+          <input class="am-input" type="text" id="signup-username" autocomplete="username" autocapitalize="off" spellcheck="false"
+            pattern="[a-zA-Z0-9_-]{3,20}" required>
+          <span class="am-field-status" id="sf-username-status" aria-hidden="true"></span>
         </div>
+        <span class="am-field-hint">3-20 chars: letters, numbers, _ or -</span>
+        <span class="am-field-error" id="sf-username-error"></span>
       </div>
 
-      <div class="form-group">
-        <label for="signup-confirm-password">Confirm Password</label>
-        <input type="password" id="signup-confirm-password" required>
+      <div class="am-field" id="sf-email-group">
+        <label class="am-label" for="signup-email">Email</label>
+        <input class="am-input" type="email" id="signup-email" autocomplete="email" placeholder="your@email.com" required>
+        <span class="am-field-error" id="sf-email-error"></span>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-block">
-        Sign up
+      <div class="am-field" id="sf-password-group">
+        <label class="am-label" for="signup-password">Password</label>
+        <div class="am-input-wrap">
+          <input class="am-input" type="password" id="signup-password" autocomplete="new-password" required>
+          <button type="button" class="am-eye" id="signup-toggle-pw" aria-label="Show password">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.4"/>
+              <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/>
+            </svg>
+          </button>
+        </div>
+        <!-- Password requirements checklist -->
+        <ul class="am-reqs" id="sf-reqs" aria-label="Password requirements">
+          <li class="am-req" id="req-length">At least 8 characters</li>
+          <li class="am-req" id="req-uppercase">One uppercase letter</li>
+          <li class="am-req" id="req-lowercase">One lowercase letter</li>
+          <li class="am-req" id="req-number">One number</li>
+          <li class="am-req" id="req-special">One special character</li>
+        </ul>
+        <span class="am-field-error" id="sf-password-error"></span>
+      </div>
+
+      <div class="am-field" id="sf-confirm-group">
+        <label class="am-label" for="signup-confirm-password">Confirm password</label>
+        <input class="am-input" type="password" id="signup-confirm-password" autocomplete="new-password" required>
+        <span class="am-field-error" id="sf-confirm-error"></span>
+      </div>
+
+      <div class="am-form-error" id="signup-global-error" role="alert" aria-live="polite"></div>
+
+      <button type="submit" class="am-submit" id="signup-submit">
+        <span class="am-submit-label">Create account</span>
+        <span class="am-submit-spinner" aria-hidden="true"></span>
       </button>
     </form>
 
     <!-- PASSWORD RESET FORM -->
-    <form id="reset-form" class="auth-form" style="display: none;">
-      <p class="reset-description">Enter your username to receive a password reset link.</p>
-
-      <div class="form-group">
-        <label for="reset-username">Username</label>
-        <input type="text" id="reset-username" required>
+    <form id="reset-form" class="auth-form" style="display:none;" novalidate>
+      <p class="am-reset-desc">Enter your username or email and we'll send reset instructions.</p>
+      <div class="am-field" id="rf-username-group">
+        <label class="am-label" for="reset-username">Username or email</label>
+        <input class="am-input" type="text" id="reset-username" autocomplete="email" autocapitalize="off" required>
+        <span class="am-field-error" id="rf-username-error"></span>
       </div>
-
-      <button type="submit" class="btn btn-primary btn-block">
-        Send reset link
+      <div class="am-form-error" id="reset-global-error" role="alert" aria-live="polite"></div>
+      <div class="am-form-success" id="reset-success" role="status" aria-live="polite" style="display:none;"></div>
+      <button type="submit" class="am-submit" id="reset-submit">
+        <span class="am-submit-label">Send instructions</span>
+        <span class="am-submit-spinner" aria-hidden="true"></span>
       </button>
-
-      <div class="form-footer">
-        <button type="button" class="link-btn" id="back-to-login">Back to login</button>
+      <div class="am-back-row">
+        <button type="button" class="am-back" id="back-to-login">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M8 2L4 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Back to sign in
+        </button>
       </div>
     </form>
   </div>
