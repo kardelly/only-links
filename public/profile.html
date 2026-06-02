@@ -155,6 +155,22 @@
       background: var(--surface);
     }
 
+    .btn-danger {
+      background: oklch(54% 0.2 25);
+      color: white;
+      border: none;
+      box-shadow: 0 1px 3px oklch(54% 0.2 25 / 0.25);
+    }
+
+    .btn-danger:hover {
+      background: oklch(49% 0.22 25);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
     .btn-sm {
       height: 32px;
       padding: 0 var(--space-4);
@@ -989,6 +1005,25 @@
       </aside>
     </div>
   </main>
+
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div class="modal" id="delete-confirmation-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Delete bookmark?</h2>
+      </div>
+      <div class="modal-body" style="padding-top: var(--space-4); padding-bottom: var(--space-4);">
+        <p style="font-size: var(--text-sm); color: var(--muted); line-height: 1.6;">
+          This will permanently delete this bookmark. This action cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm delete-cancel" id="delete-cancel-btn">Cancel</button>
+        <button class="btn btn-danger btn-sm" id="delete-confirm-btn">Delete</button>
+      </div>
+    </div>
+  </div>
 
   <!-- AUTH MODAL -->
   <div class="modal" id="auth-modal">
