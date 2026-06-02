@@ -496,21 +496,19 @@
     .btn-share {
       display: flex;
       align-items: center;
-      justify-content: center;
-      width: 28px;
+      gap: 5px;
       height: 28px;
+      padding: 0 10px;
       border-radius: 7px;
       border: none;
       background: transparent;
       color: var(--muted);
       cursor: pointer;
-      opacity: 0;
-      transition: opacity 150ms ease, background 150ms ease, color 150ms ease;
+      font-size: 13px;
+      font-weight: 510;
+      font-family: var(--font-sans);
+      transition: background 150ms ease, color 150ms ease;
       flex-shrink: 0;
-    }
-
-    .bookmark-item:hover .btn-share {
-      opacity: 1;
     }
 
     .btn-share:hover {
