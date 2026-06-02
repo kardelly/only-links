@@ -40,11 +40,14 @@ export class AddBookmarkView {
         <form id="add-bookmark-form">
           <div class="form-group">
             <label for="bookmark-url">URL *</label>
-            <input 
-              type="url" 
-              id="bookmark-url" 
-              name="url" 
+            <input
+              type="text"
+              id="bookmark-url"
+              name="url"
               placeholder="https://example.com"
+              inputmode="url"
+              autocorrect="off"
+              autocapitalize="none"
               required>
             <span class="form-error"></span>
           </div>
@@ -242,9 +245,16 @@ export class AddBookmarkView {
     const form = document.getElementById('add-bookmark-form');
     const saveBtn = document.getElementById('save-btn');
 
+    // Normalize URL — add https:// if no protocol given
+    let rawUrl = form.url.value.trim();
+    if (rawUrl && !/^https?:\/\//i.test(rawUrl)) {
+      rawUrl = 'https://' + rawUrl;
+      form.url.value = rawUrl;
+    }
+
     // Get form data
     const formData = {
-      url: form.url.value.trim(),
+      url: rawUrl,
       title: form.title.value.trim(),
       description: form.description.value.trim(),
       tags: form.tags.value.trim(),
