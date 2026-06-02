@@ -66,15 +66,18 @@
 
         <!-- Tags -->
         <div class="bm-field">
-          <label class="bm-label" for="bookmark-tags">Tags <span class="bm-optional">comma-separated</span></label>
-          <div class="bm-tags-wrap">
+          <label class="bm-label" for="bookmark-tag-input">Tags</label>
+          <div class="bm-tag-field" id="bm-tag-field">
+            <div class="bm-tag-pills" id="bm-tag-pills"></div>
             <input
               type="text"
-              class="bm-input"
-              id="bookmark-tags"
-              placeholder="design, tools, reference"
+              class="bm-tag-input"
+              id="bookmark-tag-input"
+              placeholder="add a tag..."
               autocomplete="off"
+              autocapitalize="none"
             >
+            <input type="hidden" id="bookmark-tags">
             <ul class="bm-tags-dropdown" id="bm-tags-dropdown" role="listbox" aria-label="Tag suggestions"></ul>
           </div>
         </div>

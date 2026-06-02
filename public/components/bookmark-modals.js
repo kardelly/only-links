@@ -68,42 +68,58 @@ function setupBookmarkModalsListeners() {
   });
 }
 
+// Tag pill input — shared instance, re-initialized when modal opens
+let _tagPillState = { tags: [] };
+
 function setupTagsAutocomplete() {
-  const input = document.getElementById('bookmark-tags');
-  const dropdown = document.getElementById('bm-tags-dropdown');
-  if (!input || !dropdown) return;
+  const textInput  = document.getElementById('bookmark-tag-input');
+  const hidden     = document.getElementById('bookmark-tags');
+  const pillsEl    = document.getElementById('bm-tag-pills');
+  const dropdown   = document.getElementById('bm-tags-dropdown');
+  const field      = document.getElementById('bm-tag-field');
+  if (!textInput || !hidden || !pillsEl || !dropdown || !field) return;
 
   let activeIndex = -1;
 
-  function getTypingToken() {
-    const val = input.value;
-    const pos = input.selectionStart;
-    const before = val.slice(0, pos);
-    const parts = before.split(',');
-    return parts[parts.length - 1].trim().toLowerCase();
+  // Click on container focuses the text input
+  field.addEventListener('click', (e) => {
+    if (!e.target.closest('.bm-tag-pill')) textInput.focus();
+  });
+
+  function syncHidden() {
+    hidden.value = _tagPillState.tags.join(', ');
   }
 
-  function getAlreadyUsed() {
-    return input.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-  }
-
-  function renderDropdown(tags) {
-    activeIndex = -1;
-    if (!tags.length) { closeDropdown(); return; }
-    dropdown.innerHTML = tags.map((t, i) =>
-      `<li role="option" aria-selected="false" data-tag="${t.name}">
-        <span>${t.name}</span>
-        <span class="bm-tag-count">${t.count}</span>
-      </li>`
-    ).join('');
-    dropdown.classList.add('open');
-
-    dropdown.querySelectorAll('li').forEach(li => {
-      li.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        pickTag(li.dataset.tag);
-      });
+  function renderPills() {
+    pillsEl.innerHTML = _tagPillState.tags.map(tag => `
+      <span class="bm-tag-pill">
+        ${tag}
+        <button type="button" class="bm-tag-pill-remove" data-tag="${tag}" aria-label="Remove ${tag}">×</button>
+      </span>
+    `).join('');
+    pillsEl.querySelectorAll('.bm-tag-pill-remove').forEach(btn => {
+      btn.addEventListener('click', () => removeTag(btn.dataset.tag));
     });
+    // Update placeholder visibility
+    textInput.placeholder = _tagPillState.tags.length ? '' : 'add a tag...';
+  }
+
+  function addTag(tag) {
+    tag = tag.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
+    if (!tag || _tagPillState.tags.includes(tag)) return;
+    _tagPillState.tags.push(tag);
+    renderPills();
+    syncHidden();
+    textInput.value = '';
+    closeDropdown();
+    _userTagsCache = null;
+  }
+
+  function removeTag(tag) {
+    _tagPillState.tags = _tagPillState.tags.filter(t => t !== tag);
+    renderPills();
+    syncHidden();
+    textInput.focus();
   }
 
   function closeDropdown() {
@@ -112,16 +128,19 @@ function setupTagsAutocomplete() {
     activeIndex = -1;
   }
 
-  function pickTag(tag) {
-    const parts = input.value.split(',');
-    parts[parts.length - 1] = ' ' + tag;
-    // trim leading space only on first token
-    const joined = parts.map((p, i) => i === 0 ? p.trimStart() : p).join(',');
-    input.value = joined + ', ';
-    input.focus();
-    closeDropdown();
-    // invalidate cache so next open reflects new tag if it's new
-    _userTagsCache = null;
+  function renderDropdown(tags) {
+    activeIndex = -1;
+    if (!tags.length) { closeDropdown(); return; }
+    dropdown.innerHTML = tags.map(t =>
+      `<li role="option" aria-selected="false" data-tag="${t.name}">
+        <span>${t.name}</span>
+        <span class="bm-tag-count">${t.count}</span>
+      </li>`
+    ).join('');
+    dropdown.classList.add('open');
+    dropdown.querySelectorAll('li').forEach(li => {
+      li.addEventListener('mousedown', (e) => { e.preventDefault(); addTag(li.dataset.tag); });
+    });
   }
 
   function setActive(index) {
@@ -134,40 +153,76 @@ function setupTagsAutocomplete() {
     activeIndex = index;
   }
 
-  input.addEventListener('input', async () => {
-    const token = getTypingToken();
+  textInput.addEventListener('input', async () => {
+    const token = textInput.value.trim().toLowerCase();
     if (!token) { closeDropdown(); return; }
     const allTags = await loadUserTags();
-    const used = getAlreadyUsed();
-    const matches = allTags.filter(t =>
-      t.name.toLowerCase().startsWith(token) && !used.includes(t.name.toLowerCase())
-    ).slice(0, 8);
+    const matches = allTags
+      .filter(t => t.name.toLowerCase().startsWith(token) && !_tagPillState.tags.includes(t.name.toLowerCase()))
+      .slice(0, 8);
     renderDropdown(matches);
   });
 
-  input.addEventListener('keydown', (e) => {
+  textInput.addEventListener('keydown', (e) => {
     const items = dropdown.querySelectorAll('li');
-    if (!dropdown.classList.contains('open')) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActive(Math.min(activeIndex + 1, items.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActive(Math.max(activeIndex - 1, 0));
-    } else if (e.key === 'Enter' || e.key === 'Tab') {
-      if (activeIndex >= 0 && items[activeIndex]) {
-        e.preventDefault();
-        pickTag(items[activeIndex].dataset.tag);
+    if (dropdown.classList.contains('open')) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActive(Math.min(activeIndex + 1, items.length - 1)); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setActive(Math.max(activeIndex - 1, 0)); return; }
+      if ((e.key === 'Enter' || e.key === 'Tab') && activeIndex >= 0) {
+        e.preventDefault(); addTag(items[activeIndex].dataset.tag); return;
       }
-    } else if (e.key === 'Escape') {
-      closeDropdown();
+      if (e.key === 'Escape') { closeDropdown(); return; }
+    }
+    // Confirm current input as tag on Enter, comma, Tab
+    if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab') {
+      const val = textInput.value.replace(/,$/, '').trim();
+      if (val) { e.preventDefault(); addTag(val); }
+    }
+    // Backspace on empty input removes last pill
+    if (e.key === 'Backspace' && !textInput.value && _tagPillState.tags.length) {
+      removeTag(_tagPillState.tags[_tagPillState.tags.length - 1]);
     }
   });
 
-  input.addEventListener('blur', () => {
-    // Small delay so mousedown on dropdown fires first
-    setTimeout(closeDropdown, 150);
+  textInput.addEventListener('blur', () => {
+    setTimeout(() => {
+      // Confirm any remaining typed text as tag
+      const val = textInput.value.trim();
+      if (val) addTag(val);
+      closeDropdown();
+    }, 150);
   });
+}
+
+// Expose for external code that needs to seed/read tags (edit mode)
+function setModalTags(tags) {
+  _tagPillState.tags = [...tags];
+  const pillsEl = document.getElementById('bm-tag-pills');
+  const hidden  = document.getElementById('bookmark-tags');
+  if (pillsEl) {
+    // re-render by re-running setup render logic inline
+    pillsEl.innerHTML = _tagPillState.tags.map(tag => `
+      <span class="bm-tag-pill">
+        ${tag}
+        <button type="button" class="bm-tag-pill-remove" data-tag="${tag}" aria-label="Remove ${tag}">×</button>
+      </span>
+    `).join('');
+    pillsEl.querySelectorAll('.bm-tag-pill-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _tagPillState.tags = _tagPillState.tags.filter(t => t !== btn.dataset.tag);
+        setModalTags(_tagPillState.tags);
+        if (hidden) hidden.value = _tagPillState.tags.join(', ');
+      });
+    });
+    const textInput = document.getElementById('bookmark-tag-input');
+    if (textInput) textInput.placeholder = _tagPillState.tags.length ? '' : 'add a tag...';
+  }
+  if (hidden) hidden.value = _tagPillState.tags.join(', ');
+}
+
+function resetModalTags() {
+  _tagPillState.tags = [];
+  setModalTags([]);
 }
 
 // Initialize on DOM ready

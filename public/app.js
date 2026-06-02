@@ -874,6 +874,7 @@ function openBookmarkModal() {
   hideBookmarkError();
   const form = document.getElementById('bookmark-form');
   if (form) form.reset();
+  if (typeof resetModalTags === 'function') resetModalTags();
 
   delete modal.dataset.editingId;
   delete modal.dataset.ogImage;
@@ -916,7 +917,8 @@ async function openEditBookmarkModal(bookmarkId) {
   if (urlInput) urlInput.value = bookmark.url;
   if (titleInput) titleInput.value = bookmark.title;
   if (descInput) descInput.value = bookmark.description || '';
-  if (tagsInput) tagsInput.value = bookmark.tags.join(', ');
+  if (typeof setModalTags === 'function') setModalTags(bookmark.tags);
+  else if (tagsInput) tagsInput.value = bookmark.tags.join(', ');
 
   modal.dataset.editingId = bookmark.id;
 
