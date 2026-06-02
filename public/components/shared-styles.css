@@ -1,7 +1,36 @@
 /* ===== SHARED COMPONENT STYLES ===== */
 
-/* Semantic color tokens (used by auth modal and form components) */
+/* Base design tokens — fallbacks for pages that define their own :root block.
+   These ensure header-styles.css and other shared components always have values. */
 :root {
+  --bg:      oklch(98% 0.008 60);
+  --surface: oklch(99.5% 0.004 60);
+  --fg:      oklch(18% 0.012 60);
+  --muted:   oklch(52% 0.008 60);
+  --border:  oklch(90% 0.006 60);
+  --accent:  oklch(56% 0.18 250);
+  --accent-subtle: oklch(97% 0.02 250);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+
+  --space-1: 4px;  --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-6: 24px; --space-8: 32px;  --space-10: 40px; --space-12: 48px;
+
+  --text-xs:   12px;
+  --text-sm:   14px;
+  --text-base: 16px;
+  --text-lg:   18px;
+  --text-xl:   20px;
+
+  --duration-fast:   150ms;
+  --duration-normal: 250ms;
+  --transition: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --shadow-sm: 0 1px 3px oklch(18% 0.012 60 / 0.08);
+  --shadow-md: 0 4px 12px oklch(18% 0.012 60 / 0.10);
+  --shadow-lg: 0 8px 24px oklch(18% 0.012 60 / 0.12);
+
+  /* Semantic color tokens */
   --success: oklch(54% 0.15 145);
   --danger:  oklch(58% 0.18 25);
   --warning: oklch(68% 0.16 85);

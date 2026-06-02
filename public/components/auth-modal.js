@@ -386,7 +386,17 @@ function setupAuthModal() {
 
       // Show success inline — same message regardless (prevent enumeration)
       document.getElementById('reset-submit').style.display = 'none';
-      showSuccess('reset-success', 'If an account exists with that username or email, reset instructions are on their way.');
+
+      if (data.devResetUrl) {
+        // Dev mode without SMTP: show clickable link directly
+        const el = document.getElementById('reset-success');
+        if (el) {
+          el.innerHTML = `Dev mode: <a href="${data.devResetUrl}" style="color:var(--accent);word-break:break-all;">click here to reset password</a>`;
+          el.classList.add('visible');
+        }
+      } else {
+        showSuccess('reset-success', 'If an account exists with that username or email, reset instructions are on their way.');
+      }
     } catch {
       showGlobalError('reset-global-error', 'Connection error. Please try again.');
     } finally {

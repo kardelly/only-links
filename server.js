@@ -605,16 +605,32 @@ app.post('/api/auth/request-password-reset', authLimiter, async (req, res) => {
     // Store token in database (expires in 1 hour)
     await createPasswordResetToken(user.id, resetToken, 60);
 
-    // Send reset email (non-blocking — always return same message to prevent enumeration)
-    sendPasswordResetEmail({
-      to: user.email,
-      username: user.username,
-      resetToken
-    }).catch(err => console.error('Reset email error:', err.message));
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+    const smtpConfigured = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 
-    res.json({
+    // Send reset email only if user has an email address and SMTP is configured
+    if (user.email && smtpConfigured) {
+      sendPasswordResetEmail({
+        to: user.email,
+        username: user.username,
+        resetToken
+      }).catch(err => console.error('Reset email error:', err.message));
+    } else {
+      // Dev/no-email fallback: log the link so it's accessible
+      console.log(`\n🔑 PASSWORD RESET LINK for @${user.username}:\n   ${resetUrl}\n`);
+    }
+
+    // In development without SMTP, return the reset URL directly so it's testable
+    const isDev = process.env.NODE_ENV !== 'production';
+    const response = {
       message: 'If an account exists with that username/email, a password reset link has been sent.'
-    });
+    };
+    if (isDev && (!smtpConfigured || !user.email)) {
+      response.devResetUrl = resetUrl;
+    }
+
+    res.json(response);
   } catch (err) {
     console.error('Request Password Reset Error:', err);
     res.status(500).json({ error: 'Failed to process password reset request' });
