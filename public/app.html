@@ -256,33 +256,33 @@
 
     .filter-tabs {
       display: flex;
-      gap: var(--space-2);
-      padding: var(--space-1);
-      background: var(--surface);
-      border-radius: 12px;
-      border: 1px solid var(--border);
+      gap: var(--space-1);
+      padding: 3px;
+      background: var(--border);
+      border-radius: 10px;
     }
 
     .filter-tab {
-      padding: var(--space-2) var(--space-4);
+      padding: 5px var(--space-4);
       font-size: var(--text-sm);
-      font-weight: 600;
+      font-weight: 400;
       background: transparent;
       border: none;
-      border-radius: 8px;
+      border-radius: 7px;
       color: var(--muted);
       cursor: pointer;
-      transition: all var(--duration-fast) var(--transition);
+      transition: color var(--duration-fast) var(--transition),
+                  background var(--duration-fast) var(--transition);
     }
 
     .filter-tab:hover {
-      color: var(--fg);
+      color: oklch(35% 0.01 60);
     }
 
     .filter-tab.active {
-      background: white;
-      color: var(--accent);
-      box-shadow: var(--shadow-sm);
+      background: var(--surface);
+      color: var(--fg);
+      font-weight: 510;
     }
 
     /* ===== BOOKMARK ITEMS ===== */
