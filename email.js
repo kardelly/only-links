@@ -20,9 +20,9 @@ function createTransport() {
   });
 }
 
-const FROM_NAME    = process.env.EMAIL_FROM_NAME || 'OnlyLinks';
-const FROM_ADDRESS = process.env.SMTP_USER       || 'noreply@onlylinks.id';
-const BASE_URL     = process.env.BASE_URL         || 'https://onlylinks.id';
+const FROM_NAME    = process.env.EMAIL_FROM_NAME    || 'OnlyLinks';
+const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || 'noreply@onlylinks.id';
+const BASE_URL     = process.env.BASE_URL            || 'https://onlylinks.id';
 
 // ── Send helper ───────────────────────────────────────────
 
