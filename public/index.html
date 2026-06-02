@@ -1568,18 +1568,8 @@
 
       if (user) {
         window.location.replace(isMobile ? '/mobile/app' : '/app');
-        return;
       }
-
-      if (isMobile) {
-        const flag = sessionStorage.getItem('mobile_redirect_attempted');
-        if (flag === 'skip') {
-          sessionStorage.removeItem('mobile_redirect_attempted');
-        } else {
-          sessionStorage.setItem('mobile_redirect_attempted', 'true');
-          window.location.replace('/mobile/app');
-        }
-      }
+      // Not logged in: show landing page regardless of device
     })();
   </script>
 </body>
