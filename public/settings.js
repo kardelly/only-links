@@ -254,16 +254,58 @@ function setupEventListeners() {
   const exportBtn = document.getElementById('export-bookmarks-btn');
   const importBtn = document.getElementById('import-bookmarks-btn');
   const importFileInput = document.getElementById('import-file-input');
+  const fetchImagesBtn = document.getElementById('fetch-images-btn');
 
   if (exportBtn) {
     exportBtn.addEventListener('click', handleExportBookmarks);
   }
 
   if (importBtn && importFileInput) {
-    importBtn.addEventListener('click', () => {
-      importFileInput.click();
-    });
+    importBtn.addEventListener('click', () => importFileInput.click());
     importFileInput.addEventListener('change', handleImportBookmarks);
+  }
+
+  if (fetchImagesBtn) {
+    fetchImagesBtn.addEventListener('click', handleFetchImages);
+  }
+}
+
+async function handleFetchImages() {
+  const btn = document.getElementById('fetch-images-btn');
+  const status = document.getElementById('fetch-images-status');
+
+  btn.disabled = true;
+  btn.textContent = 'Starting…';
+  status.textContent = '';
+
+  try {
+    const res = await fetch('/api/bookmarks/fetch-images', { method: 'POST' });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Failed');
+
+    if (data.count === 0) {
+      status.textContent = 'All bookmarks already have images.';
+      status.style.color = 'var(--success)';
+      btn.disabled = false;
+      btn.textContent = 'Fetch images';
+      return;
+    }
+
+    btn.textContent = 'Running in background…';
+    status.textContent = `Fetching images for ${data.count} bookmark${data.count !== 1 ? 's' : ''}. This may take a few minutes.`;
+    status.style.color = 'var(--muted)';
+
+    // Re-enable after 10s so user can trigger again if needed
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = 'Fetch images';
+    }, 10000);
+  } catch (err) {
+    status.textContent = err.message;
+    status.style.color = 'var(--danger)';
+    btn.disabled = false;
+    btn.textContent = 'Fetch images';
   }
 }
 

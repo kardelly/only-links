@@ -745,44 +745,39 @@ app.get('/api/bookmarks', optionalAuthenticate, async (req, res) => {
   }
 });
 
-// POST /api/bookmarks/fetch-images - Fetch images for bookmarks without og_image (background task)
+// POST /api/bookmarks/fetch-images - Backfill og_image for bookmarks that don't have one
 app.post('/api/bookmarks/fetch-images', authenticate, async (req, res) => {
   try {
-    // Get all user's bookmarks without og_image
     const db = await dbPromise;
     const bookmarks = await db.all(
       'SELECT id, url FROM bookmarks WHERE user_id = ? AND (og_image IS NULL OR og_image = "")',
       [req.user.id]
     );
 
-    // Return immediately - processing will happen in background
-    res.json({
-      message: 'Image fetching started in background',
-      count: bookmarks.length
-    });
+    res.json({ message: 'Image fetching started in background', count: bookmarks.length });
 
-    // Process in background (don't await)
-    (async () => {
-      let updated = 0;
-      for (const bookmark of bookmarks) {
+    // Process in parallel batches of 5 to stay fast without hammering servers
+    const BATCH = 5;
+    let updated = 0;
+    for (let i = 0; i < bookmarks.length; i += BATCH) {
+      const batch = bookmarks.slice(i, i + BATCH);
+      await Promise.allSettled(batch.map(async bookmark => {
         try {
           const metadata = await fetchUrlMetadata(bookmark.url);
           if (metadata.og_image) {
-            await db.run(
-              'UPDATE bookmarks SET og_image = ? WHERE id = ?',
-              [metadata.og_image, bookmark.id]
-            );
+            await db.run('UPDATE bookmarks SET og_image = ? WHERE id = ?', [metadata.og_image, bookmark.id]);
             updated++;
           }
-        } catch (err) {
-          console.log(`Failed to fetch image for bookmark ${bookmark.id}:`, err.message);
+        } catch {
+          // non-critical — skip silently
         }
-        // Small delay to avoid hammering servers
-        await new Promise(resolve => setTimeout(resolve, 100));
+      }));
+      // Brief pause between batches to be polite to remote servers
+      if (i + BATCH < bookmarks.length) {
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
-      console.log(`Background image fetch complete: ${updated}/${bookmarks.length} updated`);
-    })();
-
+    }
+    console.log(`Image backfill complete: ${updated}/${bookmarks.length} updated for user ${req.user.id}`);
   } catch (err) {
     console.error('Fetch images error:', err);
     res.status(500).json({ error: 'Failed to start image fetching' });
