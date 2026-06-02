@@ -626,10 +626,8 @@ function setupEventListeners() {
   
   // Search input handler — shared logic for desktop + mobile
   function handleSearchInput(query, mirrorId) {
-    // Extract #tag tokens only when the token is followed by a space or comma
-    // (user finished typing). Mid-word tokens like "#ace" while typing "#acessibilidade" are ignored.
+    // Extract #tag tokens only when followed by space or comma (token is complete)
     const completedTags = [...query.matchAll(/#(\w+)(?=[\s,])/g)];
-
     if (completedTags.length > 0) {
       completedTags.forEach(m => {
         const name = m[1];
@@ -642,33 +640,29 @@ function setupEventListeners() {
       if (mirrorEl) mirrorEl.value = query;
       renderActiveTagPills();
       window.sidebarTags.setActiveTags(state.activeTags);
-      state.searchQuery = query;
-      refreshFeed();
-      return;
     }
 
     state.searchQuery = query;
     const mirror = document.getElementById(mirrorId);
     if (mirror) mirror.value = query;
-
-    // Pure text search: filter client-side instantly, no server round-trip
-    applyClientFilter();
   }
 
-  // Desktop Search Input — instant, no debounce needed (client-side filter)
+  // Desktop Search Input — debounced server fetch (searches full dataset, not just loaded page)
   const searchInput = document.getElementById('search-input');
   if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
+    searchInput.addEventListener('input', debounce((e) => {
       handleSearchInput(e.target.value.trim(), 'search-input-mobile');
-    });
+      refreshFeed();
+    }, 300));
   }
 
   // Mobile Search Input
   const mobileInput = document.getElementById('search-input-mobile');
   if (mobileInput) {
-    mobileInput.addEventListener('input', (e) => {
+    mobileInput.addEventListener('input', debounce((e) => {
       handleSearchInput(e.target.value.trim(), 'search-input');
-    });
+      refreshFeed();
+    }, 300));
   }
   
   // Feed filters buttons
