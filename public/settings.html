@@ -431,6 +431,7 @@
 
     .form-input {
       width: 100%;
+      max-width: 480px;
       height: 44px;
       padding: var(--space-3) var(--space-4);
       background: var(--bg);
@@ -439,7 +440,8 @@
       font-size: var(--text-base);
       font-family: var(--font-sans);
       color: var(--fg);
-      transition: all var(--duration-fast) var(--transition);
+      transition: border-color var(--duration-fast) var(--transition),
+                  box-shadow var(--duration-fast) var(--transition);
     }
 
     .form-input:focus {
@@ -452,12 +454,35 @@
       color: var(--muted);
     }
 
+    /* Inline field + button row */
+    .form-inline {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+    }
+
+    .form-inline .form-input {
+      flex: 1;
+      min-width: 200px;
+      max-width: 380px;
+    }
+
+    .form-inline .form-input-with-icon {
+      flex: 1;
+      min-width: 200px;
+      max-width: 380px;
+    }
+
+    .form-inline .form-input-with-icon .form-input {
+      max-width: 100%;
+      width: 100%;
+    }
+
     .form-actions {
       display: flex;
       gap: var(--space-3);
-      justify-content: flex-end;
-      padding-top: var(--space-4);
-      border-top: 1px solid var(--border);
+      margin-top: var(--space-4);
     }
 
     /* ===== TOGGLE SWITCH ===== */
@@ -889,20 +914,20 @@
       <form id="username-form">
         <div class="form-group">
           <label class="form-label" for="username-field">Username</label>
-          <div class="form-input-with-icon">
-            <input
-              type="text"
-              class="form-input"
-              id="username-field"
-              placeholder="your-username"
-              required
-            >
-            <span class="form-input-icon" id="username-icon"></span>
+          <div class="form-inline">
+            <div class="form-input-with-icon">
+              <input
+                type="text"
+                class="form-input"
+                id="username-field"
+                placeholder="your-username"
+                required
+              >
+              <span class="form-input-icon" id="username-icon"></span>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm" style="margin-top: 0; flex-shrink: 0;">Save</button>
           </div>
           <p class="form-helper" id="username-helper"></p>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">Update username</button>
         </div>
       </form>
 
@@ -911,16 +936,16 @@
       <form id="email-form">
         <div class="form-group">
           <label class="form-label" for="email">Email</label>
-          <input
-            type="email"
-            class="form-input"
-            id="email"
-            placeholder="you@example.com"
-            required
-          >
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">Update email</button>
+          <div class="form-inline">
+            <input
+              type="email"
+              class="form-input"
+              id="email"
+              placeholder="you@example.com"
+              required
+            >
+            <button type="submit" class="btn btn-primary btn-sm" style="flex-shrink: 0;">Save</button>
+          </div>
         </div>
       </form>
     </section>
@@ -955,9 +980,7 @@
             minlength="8"
             required
           >
-          <p style="font-size: var(--text-xs); color: var(--muted); margin-top: var(--space-2);">
-            Min. 8 characters with letters, numbers, and special characters (!@#$%...)
-          </p>
+          <p class="form-helper" style="margin-top: var(--space-2);">Min. 8 characters — letters, numbers, and special characters.</p>
         </div>
         <div class="form-group">
           <label class="form-label" for="confirm-password">Confirm new password</label>
@@ -970,7 +993,7 @@
           >
         </div>
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary">Update password</button>
+          <button type="submit" class="btn btn-primary btn-sm">Update password</button>
         </div>
       </form>
     </section>
