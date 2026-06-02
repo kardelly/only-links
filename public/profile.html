@@ -711,7 +711,163 @@
       box-shadow: 0 0 0 3px oklch(from var(--accent) l c h / 0.1);
     }
 
-    /* ===== STAT LINKS ===== */
+    /* ===== PROFILE HEADER ===== */
+    .profile-header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-6);
+      padding: var(--space-8) 0 var(--space-10);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: var(--space-10);
+    }
+
+    .profile-avatar-wrap {
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .profile-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: oklch(92% 0.02 250);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px var(--border), 0 2px 8px oklch(18% 0.012 60 / 0.08);
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-avatar-initial {
+      font-size: 36px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .profile-info {
+      flex: 1;
+      min-width: 0;
+      padding-top: 4px;
+    }
+
+    .profile-identity {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-4);
+      margin-bottom: var(--space-3);
+      flex-wrap: wrap;
+    }
+
+    .profile-username {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--fg);
+      line-height: 1.15;
+      margin: 0;
+    }
+
+    .profile-stats {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0;
+      margin-bottom: var(--space-2);
+    }
+
+    .profile-stat {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      padding-right: var(--space-4);
+      margin-right: var(--space-4);
+      border-right: 1px solid var(--border);
+      color: var(--muted);
+      font-size: var(--text-sm);
+      white-space: nowrap;
+    }
+
+    .profile-stat:last-child {
+      border-right: none;
+      padding-right: 0;
+      margin-right: 0;
+    }
+
+    .profile-stat-value {
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--fg);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+    }
+
+    .profile-stat-link {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color var(--duration-fast) var(--transition);
+    }
+
+    .profile-stat-link:hover {
+      color: var(--accent);
+    }
+
+    .profile-stat-link:hover .profile-stat-value {
+      color: var(--accent);
+    }
+
+    .profile-joined {
+      font-size: var(--text-sm);
+      color: oklch(62% 0.006 60);
+      margin-top: var(--space-2);
+    }
+
+    .profile-joined strong {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    @media (max-width: 600px) {
+      .profile-header {
+        gap: var(--space-4);
+        padding: var(--space-6) 0 var(--space-8);
+      }
+
+      .profile-avatar {
+        width: 72px;
+        height: 72px;
+      }
+
+      .profile-avatar-initial {
+        font-size: 28px;
+      }
+
+      .profile-username {
+        font-size: var(--text-lg);
+      }
+
+      .profile-stat {
+        padding-right: var(--space-3);
+        margin-right: var(--space-3);
+        font-size: 12px;
+      }
+
+      .profile-stat-value {
+        font-size: var(--text-sm);
+      }
+    }
+
+    /* ===== STAT LINKS (legacy) ===== */
     .stat-link {
       color: inherit;
       text-decoration: none;
@@ -748,28 +904,39 @@
   <!-- MAIN CONTENT -->
   <main class="container">
     <!-- PROFILE HEADER -->
-    <div class="profile-header" style="margin-bottom: var(--space-12);">
-      <div style="display: flex; align-items: center; gap: var(--space-8); margin-bottom: var(--space-6);">
-        <div class="profile-avatar" id="user-profile-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent) 0%, oklch(from var(--accent) calc(l * 0.9) c calc(h + 20)) 100%); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: white; overflow: hidden; border: 3px solid var(--border); flex-shrink: 0;">
-          <span id="user-profile-avatar-initial">U</span>
+    <div class="profile-header">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar" id="user-profile-avatar">
+          <span class="profile-avatar-initial" id="user-profile-avatar-initial">U</span>
         </div>
-        <div style="flex: 1;">
-          <div style="display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-2);">
-            <h1 id="profile-username" style="font-size: var(--text-3xl); font-weight: 700; letter-spacing: -0.02em; margin: 0;">Loading...</h1>
-            <button id="follow-btn" class="btn btn-primary" style="display: none;">Follow</button>
-          </div>
-          <div id="profile-stats" style="display: flex; gap: var(--space-6); font-size: var(--text-base); color: var(--muted);">
-            <span><strong id="stats-bookmarks">0</strong> bookmarks</span>
-            <span><strong id="stats-tags">0</strong> tags</span>
-            <a href="#" id="followers-link" class="stat-link">
-              <strong id="stats-followers">0</strong> followers
-            </a>
-            <a href="#" id="following-link" class="stat-link">
-              <strong id="stats-following">0</strong> following
-            </a>
-            <span>Joined <strong id="stats-joined">...</strong></span>
-          </div>
+      </div>
+
+      <div class="profile-info">
+        <div class="profile-identity">
+          <h1 class="profile-username" id="profile-username">Loading...</h1>
+          <button id="follow-btn" class="btn btn-primary" style="display: none;">Follow</button>
         </div>
+
+        <div class="profile-stats" id="profile-stats">
+          <div class="profile-stat">
+            <span class="profile-stat-value" id="stats-bookmarks">0</span>
+            <span>bookmarks</span>
+          </div>
+          <div class="profile-stat">
+            <span class="profile-stat-value" id="stats-tags">0</span>
+            <span>tags</span>
+          </div>
+          <a href="#" id="followers-link" class="profile-stat profile-stat-link">
+            <span class="profile-stat-value" id="stats-followers">0</span>
+            <span>followers</span>
+          </a>
+          <a href="#" id="following-link" class="profile-stat profile-stat-link">
+            <span class="profile-stat-value" id="stats-following">0</span>
+            <span>following</span>
+          </a>
+        </div>
+
+        <p class="profile-joined">Joined <strong id="stats-joined">...</strong></p>
       </div>
     </div>
 

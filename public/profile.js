@@ -87,24 +87,17 @@ function updateProfileHeader() {
   const userProfileAvatarInitial = document.getElementById('user-profile-avatar-initial');
 
   if (user.avatar) {
-    // Show avatar image
     userProfileAvatarInitial.style.display = 'none';
     let img = userProfileAvatar.querySelector('img');
     if (!img) {
       img = document.createElement('img');
-      img.style.width = '100%';
-      img.style.height = '100%';
-      img.style.objectFit = 'cover';
       userProfileAvatar.appendChild(img);
     }
     img.src = user.avatar;
   } else {
-    // Show initial
     const img = userProfileAvatar.querySelector('img');
-    if (img) {
-      img.remove();
-    }
-    userProfileAvatarInitial.style.display = 'flex';
+    if (img) img.remove();
+    userProfileAvatarInitial.style.display = '';
     userProfileAvatarInitial.textContent = user.username.charAt(0).toUpperCase();
   }
 
