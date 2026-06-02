@@ -20,24 +20,8 @@ export function escapeHtml(text) {
  * @returns {string} Relative time string
  */
 export function timeAgo(timestamp) {
-  const now = Date.now();
-  const then = new Date(timestamp).getTime();
-  const diff = now - then;
-
-  const minute = 60 * 1000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-  const week = 7 * day;
-  const month = 30 * day;
-  const year = 365 * day;
-
-  if (diff < minute) return 'just now';
-  if (diff < hour) return `${Math.floor(diff / minute)}m ago`;
-  if (diff < day) return `${Math.floor(diff / hour)}h ago`;
-  if (diff < week) return `${Math.floor(diff / day)}d ago`;
-  if (diff < month) return `${Math.floor(diff / week)}w ago`;
-  if (diff < year) return `${Math.floor(diff / month)}mo ago`;
-  return `${Math.floor(diff / year)}y ago`;
+  const date = new Date(timestamp);
+  return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 /**
