@@ -95,25 +95,20 @@ function initTheme() {
   document.documentElement.classList.remove('dark');
 }
 
-// Check active session via API
+// Check active session — reuses header.js result to avoid a second fetch
 async function checkSession() {
-  try {
-    const response = await fetch('/api/auth/me');
-    const data = await response.json();
-    state.currentUser = data.user;
-
-    // If logged in, start with "My bookmarks"
-    if (state.currentUser) {
-      state.feedType = 'mine';
-    }
-
-    // Header UI is managed by header.js component
-    updateFeedTabsVisibility();
-  } catch (err) {
-    console.error('Error fetching session:', err);
-    state.currentUser = null;
-    updateFeedTabsVisibility();
+  // header.js publishes window.__session after its /api/auth/me call
+  // Wait for headerReady if it hasn't fired yet
+  if (!window.__session) {
+    await new Promise(resolve => window.addEventListener('headerReady', resolve, { once: true }));
   }
+  state.currentUser = window.__session?.user || null;
+
+  if (state.currentUser) {
+    state.feedType = 'mine';
+  }
+
+  updateFeedTabsVisibility();
 }
 
 // Refresh Feed and popular tags

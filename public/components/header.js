@@ -37,18 +37,18 @@ async function initHeader() {
   }
 }
 
-// Check current user session
+// Check current user session — result is published to window.__session
+// so other scripts (app.js) can reuse it without a second fetch
 async function checkHeaderSession() {
   try {
     const response = await fetch('/api/auth/me');
     const data = await response.json();
-    headerState.currentUser = data.user;
-    updateHeaderUI();
-  } catch (err) {
-    console.error('Error fetching session:', err);
+    headerState.currentUser = data.user || null;
+  } catch {
     headerState.currentUser = null;
-    updateHeaderUI();
   }
+  window.__session = { user: headerState.currentUser };
+  updateHeaderUI();
 }
 
 // Update header UI based on login state
