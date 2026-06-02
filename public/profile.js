@@ -167,6 +167,28 @@ async function loadBookmarks() {
   }
 }
 
+async function shareBookmark(btn) {
+  const url = btn.dataset.url;
+  if (!url) return;
+
+  if (navigator.share) {
+    try { await navigator.share({ url }); } catch {}
+    return;
+  }
+
+  const iconShare = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 2.5l-7 7M13.5 2.5H9M13.5 2.5V7"/><path d="M6.5 3.5H3a1 1 0 0 0-1 1v8.5a1 1 0 0 0 1 1h8.5a1 1 0 0 0 1-1V10"/></svg>`;
+  try {
+    await navigator.clipboard.writeText(url);
+    btn.classList.add('share-done');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>`;
+    setTimeout(() => { btn.classList.remove('share-done'); btn.innerHTML = iconShare; }, 1500);
+  } catch {
+    btn.classList.add('share-error');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>`;
+    setTimeout(() => { btn.classList.remove('share-error'); btn.innerHTML = iconShare; }, 1000);
+  }
+}
+
 // Render bookmarks (reuse function from app.js)
 function renderBookmarks() {
   const container = document.getElementById('bookmark-list');
@@ -259,12 +281,20 @@ function renderBookmarks() {
           <span>${timeAgo(item.created_at)}</span>
         </div>
 
-        ${isOwner ? `
-          <div class="bookmark-actions">
-            <button class="btn btn-ghost btn-sm edit-bookmark-btn" data-id="${item.id}" title="Edit">Edit</button>
-            <button class="btn btn-ghost btn-sm delete-bookmark-btn" data-id="${item.id}" title="Delete">Delete</button>
-          </div>
-        ` : ''}
+        <div class="bookmark-actions">
+          ${isOwner ? `
+            <div class="bookmark-actions-owner">
+              <button class="btn btn-ghost btn-sm edit-bookmark-btn" data-id="${item.id}" title="Edit">Edit</button>
+              <button class="btn btn-ghost btn-sm delete-bookmark-btn" data-id="${item.id}" title="Delete">Delete</button>
+            </div>
+          ` : '<div></div>'}
+          <button class="btn-share share-btn" data-url="${escapeHTML(item.url)}" aria-label="Compartilhar link" title="Compartilhar link">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13.5 2.5l-7 7M13.5 2.5H9M13.5 2.5V7"/>
+              <path d="M6.5 3.5H3a1 1 0 0 0-1 1v8.5a1 1 0 0 0 1 1h8.5a1 1 0 0 0 1-1V10"/>
+            </svg>
+          </button>
+        </div>
       </div>
     `;
 
@@ -289,6 +319,10 @@ function renderBookmarks() {
       const id = parseInt(btn.getAttribute('data-id'));
       performDeleteBookmark(id);
     };
+  });
+
+  container.querySelectorAll('.share-btn').forEach(btn => {
+    btn.onclick = () => shareBookmark(btn);
   });
 }
 
