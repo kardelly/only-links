@@ -29,16 +29,10 @@ const profileState = {
   hasMore: true
 };
 
-// Check current user session (currentUser state only, header UI managed by header.js)
+// Check current user session — delegates to session.js singleton
 async function checkSession() {
-  try {
-    const response = await fetch('/api/auth/me');
-    const data = await response.json();
-    profileState.currentUser = data.user;
-  } catch (err) {
-    console.error('Error fetching session:', err);
-    profileState.currentUser = null;
-  }
+  const { user } = await window.getSession();
+  profileState.currentUser = user || null;
 }
 
 // Load profile data

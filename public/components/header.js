@@ -37,17 +37,10 @@ async function initHeader() {
   }
 }
 
-// Check current user session — result is published to window.__session
-// so other scripts (app.js) can reuse it without a second fetch
+// Check current user session — delegates to session.js singleton
 async function checkHeaderSession() {
-  try {
-    const response = await fetch('/api/auth/me');
-    const data = await response.json();
-    headerState.currentUser = data.user || null;
-  } catch {
-    headerState.currentUser = null;
-  }
-  window.__session = { user: headerState.currentUser };
+  const { user } = await window.getSession();
+  headerState.currentUser = user;
   updateHeaderUI();
 }
 

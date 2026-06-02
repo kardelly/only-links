@@ -13,42 +13,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
   <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png">
 
-  <!-- Mobile Redirect -->
-  <script>
-    (async function() {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html';
-
-      if (!isHomePage) return;
-
-      try {
-        const response = await fetch('/api/auth/me', {
-          credentials: 'include',
-          cache: 'no-cache'
-        });
-        const data = await response.json();
-
-        if (data && data.user) {
-          // Logged in: send to the right app
-          window.location.replace(isMobile ? '/mobile/app' : '/app');
-          return;
-        }
-
-        // Not logged in — only redirect mobile to PWA landing
-        if (isMobile) {
-          const redirectFlag = sessionStorage.getItem('mobile_redirect_attempted');
-          if (redirectFlag === 'skip') {
-            sessionStorage.removeItem('mobile_redirect_attempted');
-          } else {
-            sessionStorage.setItem('mobile_redirect_attempted', 'true');
-            window.location.replace('/mobile/app');
-          }
-        }
-      } catch (err) {
-        console.error('[Redirect] Error:', err);
-      }
-    })();
-  </script>
+  <!-- session.js: fetch /api/auth/me once, publish to window.__session + getSession() -->
+  <script src="/components/session.js"></script>
 
   <!-- Cookie Consent (must load BEFORE gtag) -->
   <link rel="stylesheet" href="/components/cookie-consent.css">
@@ -1472,6 +1438,29 @@
         document.getElementById('final-cta-btn')?.addEventListener('click', openRegister);
       });
     });
+  </script>
+
+  <!-- Auth redirect — runs after session.js has already started the fetch -->
+  <script>
+    (async function () {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const { user } = await window.getSession();
+
+      if (user) {
+        window.location.replace(isMobile ? '/mobile/app' : '/app');
+        return;
+      }
+
+      if (isMobile) {
+        const flag = sessionStorage.getItem('mobile_redirect_attempted');
+        if (flag === 'skip') {
+          sessionStorage.removeItem('mobile_redirect_attempted');
+        } else {
+          sessionStorage.setItem('mobile_redirect_attempted', 'true');
+          window.location.replace('/mobile/app');
+        }
+      }
+    })();
   </script>
 </body>
 </html>

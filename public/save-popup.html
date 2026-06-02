@@ -186,6 +186,7 @@
       margin-bottom: 24px;
     }
   </style>
+  <script src="/components/session.js"></script>
 </head>
 <body>
   <div class="container">
@@ -252,25 +253,15 @@
     document.getElementById('title').value = title;
     document.getElementById('description').value = description;
 
-    // Check authentication
+    // Check authentication — delegates to session.js singleton
     async function checkAuth() {
-      try {
-        const response = await fetch('/api/auth/me', {
-          credentials: 'include'
-        });
-
-        if (!response.ok) {
-          // Not logged in
-          document.getElementById('save-form-container').classList.add('hidden');
-          document.getElementById('login-prompt').classList.remove('hidden');
-          return false;
-        }
-
-        return true;
-      } catch (err) {
-        console.error('Auth check failed:', err);
+      const { user } = await window.getSession();
+      if (!user) {
+        document.getElementById('save-form-container').classList.add('hidden');
+        document.getElementById('login-prompt').classList.remove('hidden');
         return false;
       }
+      return true;
     }
 
     // Save bookmark

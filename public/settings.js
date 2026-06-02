@@ -13,20 +13,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
 });
 
-// Check user session
+// Check user session — delegates to session.js singleton
 async function checkSession() {
-  try {
-    const response = await fetch('/api/auth/me');
-    const data = await response.json();
+  const { user } = await window.getSession();
 
-    if (!data.user) {
-      // Not logged in, redirect to home
-      window.location.href = '/';
-      return;
-    }
+  if (!user) {
+    window.location.href = '/';
+    return;
+  }
 
-    settingsState.currentUser = data.user;
-    console.log('Current user:', data.user);
+  const data = { user };
+  settingsState.currentUser = user;
 
     // Update username in dropdown and link
     const profileMenuUsername = document.getElementById('profile-menu-username');

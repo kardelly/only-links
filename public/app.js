@@ -95,14 +95,10 @@ function initTheme() {
   document.documentElement.classList.remove('dark');
 }
 
-// Check active session — reuses header.js result to avoid a second fetch
+// Check active session — delegates to session.js singleton (no extra fetch)
 async function checkSession() {
-  // header.js publishes window.__session after its /api/auth/me call
-  // Wait for headerReady if it hasn't fired yet
-  if (!window.__session) {
-    await new Promise(resolve => window.addEventListener('headerReady', resolve, { once: true }));
-  }
-  state.currentUser = window.__session?.user || null;
+  const { user } = await window.getSession();
+  state.currentUser = user || null;
 
   if (state.currentUser) {
     state.feedType = 'mine';
