@@ -55,7 +55,6 @@ async function checkHeaderSession() {
 function updateHeaderUI() {
   const authNav = document.getElementById('auth-nav');
   const guestNav = document.getElementById('guest-nav');
-  const profileMenuUsername = document.getElementById('profile-menu-username');
   const profileAvatarInitial = document.getElementById('profile-avatar-initial');
   const profileAvatarBtn = document.getElementById('profile-avatar-btn');
 
@@ -69,10 +68,6 @@ function updateHeaderUI() {
     if (headerSearch) headerSearch.style.display = 'flex';
     if (logoLink) logoLink.href = '/app';
 
-    // Set username display in dropdown and link
-    if (profileMenuUsername) {
-      profileMenuUsername.textContent = `@${headerState.currentUser.username}`;
-    }
     const profileHeaderLink = document.getElementById('profile-menu-header-link');
     if (profileHeaderLink) {
       profileHeaderLink.href = `/user/${headerState.currentUser.username}`;
