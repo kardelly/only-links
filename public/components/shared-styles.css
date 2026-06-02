@@ -95,60 +95,84 @@
 .tag-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: var(--space-2);
+  padding: 5px 10px;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 20px;
-  font-size: var(--text-xs);
+  border-radius: 980px;
+  font-size: 13px;
+  font-family: var(--font-sans);
   color: var(--fg);
   cursor: pointer;
-  transition: all 150ms ease;
   white-space: nowrap;
+  transition: background var(--duration-fast) var(--transition),
+              border-color var(--duration-fast) var(--transition),
+              color var(--duration-fast) var(--transition);
 }
 
 .tag-item:hover {
-  border-color: var(--accent);
+  background: oklch(from var(--accent) 97% 0.02 h);
+  border-color: oklch(from var(--accent) 80% 0.08 h);
   color: var(--accent);
 }
 
+.tag-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .tag-item.selected {
+  background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent);
+  color: oklch(99% 0.004 250);
 }
 
 .tag-item-name {
   font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .tag-item-count {
-  color: var(--muted);
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-weight: 400;
+  transition: color var(--duration-fast) var(--transition);
 }
 
-.tag-item:hover .tag-item-count,
+.tag-item:hover .tag-item-count {
+  color: oklch(from var(--accent) 60% 0.12 h);
+}
+
 .tag-item.selected .tag-item-count {
-  color: var(--accent);
+  color: oklch(99% 0.004 250 / 0.7);
 }
 
 .show-more-tags-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: var(--space-1);
+  padding: 5px 10px;
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  font-size: var(--text-xs);
+  border: 1px dashed var(--border);
+  border-radius: 980px;
+  font-size: 13px;
+  font-family: var(--font-sans);
   font-weight: 500;
   color: var(--muted);
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: color var(--duration-fast) var(--transition),
+              border-color var(--duration-fast) var(--transition);
 }
 
 .show-more-tags-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  color: var(--fg);
+  border-color: var(--fg);
+}
+
+.show-more-tags-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Active tag pills (filter display) */

@@ -27,17 +27,14 @@ async function initSidebarTags(options = {}) {
     const html = await response.text();
     placeholder.innerHTML = html;
 
-    // Set callback if provided
     if (options.onTagClick && typeof options.onTagClick === 'function') {
       tagsState.onTagClick = options.onTagClick;
     }
 
-    // Load initial tags
     await fetchPopularTags();
-
     tagsState.isInitialized = true;
-  } catch (err) {
-    console.error('Error loading sidebar tags:', err);
+  } catch {
+    // non-critical — sidebar degrades silently
   }
 }
 
@@ -49,8 +46,8 @@ async function fetchPopularTags() {
     const data = await response.json();
     tagsState.popularTags = data.tags;
     renderPopularTags();
-  } catch (err) {
-    console.error('Fetch Tags Error:', err);
+  } catch {
+    // non-critical
   }
 }
 
@@ -79,16 +76,15 @@ function renderPopularTags() {
     const isSelected = tagsState.activeTags.includes(tag.name);
     const button = document.createElement('button');
     button.className = 'tag-item' + (isSelected ? ' selected' : '');
+    button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    button.setAttribute('aria-label', `Filter by #${tag.name}, ${tag.count} bookmarks`);
 
     button.innerHTML = `
       <span class="tag-item-name">#${escapeTagHTML(tag.name)}</span>
-      <span class="tag-item-count">${tag.count}</span>
+      <span class="tag-item-count" aria-hidden="true">${tag.count}</span>
     `;
 
-    button.onclick = () => {
-      handleTagClick(tag.name);
-    };
-
+    button.onclick = () => handleTagClick(tag.name);
     container.appendChild(button);
   });
 
