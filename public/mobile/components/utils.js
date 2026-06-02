@@ -131,7 +131,7 @@ export function isValidUrl(url) {
  */
 export async function fetchWithError(url, options = {}) {
   try {
-    const response = await fetch(url, options);
+    const response = await fetch(url, { credentials: 'include', ...options });
 
     if (!response.ok) {
       if (response.status === 401) {
