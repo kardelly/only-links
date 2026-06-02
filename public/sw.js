@@ -1,7 +1,7 @@
 // Service Worker for only.link PWA
 // Implements cache-first for static assets, network-first for API calls
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.1.0';
 const CACHE_NAME = `onlylinks-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [

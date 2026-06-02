@@ -26,9 +26,12 @@ const state = {
 // 1. INITIALIZE FRONTEND APPLICATION
 // ==========================================
 async function initApp() {
-  // Wait for header to be ready
-  if (!document.getElementById('profile-avatar-btn')) {
+  // Wait for header to be ready.
+  // window.__headerReady is set by header.js before it fires 'headerReady',
+  // so we never miss the event if it already fired before this code runs.
+  if (!window.__headerReady) {
     await new Promise(resolve => {
+      if (window.__headerReady) { resolve(); return; }
       window.addEventListener('headerReady', resolve, { once: true });
     });
   }
@@ -146,7 +149,7 @@ async function fetchBookmarks(append = false) {
       params.append('feedType', state.feedType);
     }
 
-    const response = await fetch(`/api/bookmarks?${params.toString()}`);
+    const response = await fetch(`/api/bookmarks?${params.toString()}`, { credentials: 'include' });
     if (!response.ok) {
       throw new Error('Failed to load bookmarks');
     }
@@ -202,6 +205,7 @@ async function saveBookmark(payload) {
   try {
     const response = await fetch(url, {
       method,
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -260,7 +264,7 @@ async function performDeleteBookmark(id) {
   if (!confirmed) return;
 
   try {
-    const response = await fetch(`/api/bookmarks/${id}`, { method: 'DELETE' });
+    const response = await fetch(`/api/bookmarks/${id}`, { method: 'DELETE', credentials: 'include' });
     const data = await response.json();
 
     if (!response.ok) {
@@ -319,6 +323,7 @@ async function authenticateUser(payload) {
   try {
     const response = await fetch(url, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -1208,7 +1213,7 @@ async function fetchMetadata(url) {
   if (checkEl) checkEl.classList.remove('active');
 
   try {
-    const response = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
+    const response = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`, { credentials: 'include' });
     if (!response.ok) throw new Error();
     const data = await response.json();
 

@@ -187,7 +187,9 @@ function setupHeaderListeners() {
 // Initialize header immediately (synchronously load HTML)
 async function loadHeaderSync() {
   await initHeader();
-  // Dispatch event when header is ready
+  // Set flag BEFORE dispatching — any code that checks __headerReady after this
+  // point will see it as true, even if the 'headerReady' event already fired.
+  window.__headerReady = true;
   window.dispatchEvent(new CustomEvent('headerReady'));
 }
 

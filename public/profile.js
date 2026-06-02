@@ -38,7 +38,7 @@ async function checkSession() {
 // Load profile data
 async function loadProfile() {
   try {
-    const response = await fetch(`/api/users/${username}`);
+    const response = await fetch(`/api/users/${username}`, { credentials: 'include' });
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -157,7 +157,7 @@ async function loadBookmarks() {
     }
 
     // We're viewing someone else's profile, so we need to filter by user
-    const response = await fetch(`/api/bookmarks?${params.toString()}`);
+    const response = await fetch(`/api/bookmarks?${params.toString()}`, { credentials: 'include' });
 
     if (!response.ok) {
       throw new Error('Failed to load bookmarks');
@@ -456,9 +456,10 @@ function timeAgo(dateString) {
 
 // Setup pagination buttons
 async function initProfile() {
-  // Wait for header to be ready
-  if (!document.getElementById('profile-avatar-btn')) {
+  // Wait for header to be ready — use flag to avoid missing an already-fired event
+  if (!window.__headerReady) {
     await new Promise(resolve => {
+      if (window.__headerReady) { resolve(); return; }
       window.addEventListener('headerReady', resolve, { once: true });
     });
   }
@@ -623,7 +624,7 @@ async function showUsersModal(type) {
   modal.classList.add('active');
 
   try {
-    const response = await fetch(`/api/users/${profileState.username}/${type}`);
+    const response = await fetch(`/api/users/${profileState.username}/${type}`, { credentials: 'include' });
     if (!response.ok) throw new Error('Failed to load users');
 
     const data = await response.json();
