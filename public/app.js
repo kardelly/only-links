@@ -11,6 +11,7 @@ const state = {
   currentPage: 1,
   limit: 20, // Increased for load more
   bookmarks: [],
+  allBookmarks: [], // full page cache for instant client-side text search
   popularTags: [],
   pagination: {
     total: 0,
@@ -158,8 +159,10 @@ async function fetchBookmarks(append = false) {
 
     if (append) {
       state.bookmarks = [...state.bookmarks, ...data.items];
+      state.allBookmarks = [...state.allBookmarks, ...data.items];
     } else {
       state.bookmarks = data.items;
+      state.allBookmarks = data.items;
     }
 
     state.pagination = data.pagination;
@@ -483,6 +486,7 @@ function renderBookmarks() {
 
     const article = document.createElement('article');
     article.className = 'bookmark-item';
+    article.style.setProperty('--i', index);
 
     // Add celebration class for first bookmark on "mine" feed
     if (state.feedType === 'mine' && state.bookmarks.length === 1 && index === 0) {
@@ -494,6 +498,9 @@ function renderBookmarks() {
       <span class="tag" data-tag="${escapeHTML(tag)}">${escapeHTML(tag)}</span>
     `).join('');
 
+    const q = state.searchQuery;
+    const hl = (str) => q ? highlightText(str, q) : escapeHTML(str);
+
     article.innerHTML = `
       ${item.og_image ? `
         <div class="bookmark-thumbnail">
@@ -504,13 +511,13 @@ function renderBookmarks() {
       <div class="bookmark-content">
         <div class="bookmark-header">
           <a href="${escapeHTML(item.url)}" target="_blank" rel="noopener noreferrer" class="bookmark-url">
-            ${escapeHTML(item.title)}
+            ${hl(item.title)}
           </a>
           <span class="bookmark-domain">${escapeHTML(host)}</span>
         </div>
 
         ${item.description ? `
-          <p class="bookmark-description">${escapeHTML(item.description)}</p>
+          <p class="bookmark-description">${hl(item.description)}</p>
         ` : ''}
 
         ${item.tags.length > 0 ? `
@@ -617,84 +624,51 @@ function setupEventListeners() {
     });
   }
   
-  // Desktop Debounced Search Input
-  const searchInput = document.getElementById('search-input');
-
-  if (searchInput) {
-    searchInput.addEventListener('input', debounce(async (e) => {
-      let query = e.target.value.trim();
-
-      // Check for tags in the query (words starting with #)
-      const tagMatches = query.match(/#(\w+)/g);
-
-      if (tagMatches) {
-        // Extract and add tags
-        tagMatches.forEach(tagMatch => {
-          const tagName = tagMatch.substring(1); // Remove #
-          if (!state.activeTags.includes(tagName)) {
-            state.activeTags.push(tagName);
-          }
-        });
-
-        // Remove tags from query
-        query = query.replace(/#\w+/g, '').trim();
-
-        // Update input value without tags
-        searchInput.value = query;
-
-        // Render pills and sync sidebar
-        renderActiveTagPills();
-        window.sidebarTags.setActiveTags(state.activeTags);
-      }
-
+  // Search input handler — shared logic for desktop + mobile
+  function handleSearchInput(query, mirrorId) {
+    // Extract #tag tokens and convert to active tag filters
+    const tagMatches = query.match(/#(\w+)/g);
+    if (tagMatches) {
+      tagMatches.forEach(t => {
+        const name = t.substring(1);
+        if (!state.activeTags.includes(name)) state.activeTags.push(name);
+      });
+      query = query.replace(/#\w+/g, '').trim();
+      const inputEl = document.getElementById(mirrorId === 'search-input-mobile' ? 'search-input' : 'search-input-mobile');
+      const selfEl  = document.getElementById(mirrorId === 'search-input-mobile' ? 'search-input-mobile' : 'search-input');
+      if (selfEl) selfEl.value = query;
+      renderActiveTagPills();
+      window.sidebarTags.setActiveTags(state.activeTags);
+      // Tag changes require a server fetch (different dataset)
       state.searchQuery = query;
+      const mirror = document.getElementById(mirrorId);
+      if (mirror) mirror.value = query;
+      refreshFeed();
+      return;
+    }
 
-      // Mirror desktop query to mobile input if visible
-      const mobileInput = document.getElementById('search-input-mobile');
-      if (mobileInput) mobileInput.value = state.searchQuery;
+    state.searchQuery = query;
+    const mirror = document.getElementById(mirrorId);
+    if (mirror) mirror.value = query;
 
-      await refreshFeed();
-    }, 300));
+    // Pure text search: filter client-side instantly, no server round-trip
+    applyClientFilter();
   }
 
-  // Mobile Search Debounce
+  // Desktop Search Input — instant, no debounce needed (client-side filter)
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      handleSearchInput(e.target.value.trim(), 'search-input-mobile');
+    });
+  }
+
+  // Mobile Search Input
   const mobileInput = document.getElementById('search-input-mobile');
-
   if (mobileInput) {
-    mobileInput.addEventListener('input', debounce(async (e) => {
-      let query = e.target.value.trim();
-
-      // Check for tags in the query (words starting with #)
-      const tagMatches = query.match(/#(\w+)/g);
-
-      if (tagMatches) {
-        // Extract and add tags
-        tagMatches.forEach(tagMatch => {
-          const tagName = tagMatch.substring(1); // Remove #
-          if (!state.activeTags.includes(tagName)) {
-            state.activeTags.push(tagName);
-          }
-        });
-
-        // Remove tags from query
-        query = query.replace(/#\w+/g, '').trim();
-
-        // Update input value without tags
-        mobileInput.value = query;
-
-        // Render pills and sync sidebar
-        renderActiveTagPills();
-        window.sidebarTags.setActiveTags(state.activeTags);
-      }
-
-      state.searchQuery = query;
-
-      // Mirror mobile to desktop search
-      const desktopInput = document.getElementById('search-input');
-      if (desktopInput) desktopInput.value = state.searchQuery;
-
-      await refreshFeed();
-    }, 300));
+    mobileInput.addEventListener('input', (e) => {
+      handleSearchInput(e.target.value.trim(), 'search-input');
+    });
   }
   
   // Feed filters buttons
@@ -1020,6 +994,37 @@ function renderActiveTagPills() {
 }
 
 // Filter feed by specific tag (called from bookmark items)
+// Escape special regex chars in a query string
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Wrap matching text with <mark> — safe: escapes str first, then re-inserts tags
+function highlightText(str, query) {
+  if (!str || !query) return escapeHTML(str || '');
+  const escaped = escapeHTML(str);
+  const pattern = new RegExp(`(${escapeRegex(escapeHTML(query))})`, 'gi');
+  return escaped.replace(pattern, '<mark>$1</mark>');
+}
+
+// Filter allBookmarks client-side by searchQuery — zero latency, no server round-trip
+function applyClientFilter() {
+  const q = state.searchQuery.toLowerCase();
+  if (!q) {
+    state.bookmarks = state.allBookmarks;
+  } else {
+    state.bookmarks = state.allBookmarks.filter(item => {
+      return (
+        item.title?.toLowerCase().includes(q) ||
+        item.description?.toLowerCase().includes(q) ||
+        item.url?.toLowerCase().includes(q) ||
+        item.tags?.some(t => t.toLowerCase().includes(q))
+      );
+    });
+  }
+  renderBookmarks();
+}
+
 async function filterByTag(tagName) {
   // Toggle tag in activeTags array
   const index = state.activeTags.indexOf(tagName);
@@ -1049,10 +1054,15 @@ async function clearFilters() {
   if (searchInput) searchInput.value = '';
   if (mobileInput) mobileInput.value = '';
 
-  // Clear active tag pills
   renderActiveTagPills();
 
-  await refreshFeed();
+  // If we have a cached set, restore instantly; otherwise fetch
+  if (state.allBookmarks.length > 0) {
+    state.bookmarks = state.allBookmarks;
+    renderBookmarks();
+  } else {
+    await refreshFeed();
+  }
 }
 
 // ==========================================
