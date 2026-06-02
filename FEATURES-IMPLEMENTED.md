@@ -1,11 +1,32 @@
-# Features Implementadas — delicious.modern
+# Features Implementadas — only.link
 
-**Data**: 2026-05-28  
-**Status**: Em progresso
+**Última atualização**: 2026-06-02  
+**Status**: Mobile PWA completo com animações de delícia
 
 ## ✅ Completo
 
-### 1. Design System Apple-Style (Task #6)
+### 1. Mobile PWA Completo (2026-06-02)
+- ✅ Progressive Web App instalável
+- ✅ Service Worker com cache-first strategy
+- ✅ Share Target API (receber links de outros apps)
+- ✅ Bottom navigation com 5 tabs
+- ✅ Bottom sheet modal para adicionar bookmarks
+- ✅ Component-based architecture (ES6 modules)
+- ✅ Redirect automático para mobile devices
+- ✅ Cookie consent GDPR-compliant
+- ✅ Google Analytics com Consent Mode v2
+- ✅ Settings view completa
+- ✅ Offline support
+
+### 2. Animações de Delícia (2026-06-02)
+- ✅ Botão Save → Checkmark com animação verde
+- ✅ Toast aprimorado com ícones e tipos (success/error)
+- ✅ Haptic feedback ao salvar (vibração 50ms)
+- ✅ Pulse animation no botão + após salvar
+- ✅ Transições suaves com ease-out-expo
+- ✅ Filosofia "tool-first" respeitada (sutis mas memoráveis)
+
+### 3. Design System Apple-Style (Task #6)
 - ✅ Home page landing (`index-apple-evolution.html`)
 - ✅ App completo redesenhado (`index-apple-complete.html` → `index.html`)
 - ✅ Documentação completa (`APPLE-DESIGN-SYSTEM.md`)
@@ -16,7 +37,7 @@
 - ✅ Sequential fade-in animations
 - ✅ Glass header sutil com backdrop-filter
 
-### 2. Flag Público/Privado nos Bookmarks (Task #8)
+### 4. Flag Público/Privado nos Bookmarks (Task #8)
 - ✅ Campo `is_public` no schema (migration automática)
 - ✅ Toggle switch no form de criação/edição
 - ✅ Filtro backend: bookmarks privados não aparecem em feeds públicos
@@ -39,14 +60,14 @@ PUT /api/bookmarks/:id
 { is_public: false }
 ```
 
-### 3. Correções de Fluxos (Task #11)
+### 5. Correções de Fluxos (Task #11)
 - ✅ Modais funcionando com `.modal.active` pattern
 - ✅ `app.js` sincronizado com IDs corretos
 - ✅ Forms de auth e bookmark funcionais
 - ✅ Skeleton loading com classes corretas
 - ✅ `saveBookmark()` usando `dataset.editingId`
 
-### 4. Preview de Imagem dos Links (Task #10)
+### 6. Preview de Imagem dos Links (Task #10)
 - ✅ Campo `og_image` no schema (migration automática)
 - ✅ Endpoint `/api/metadata` para scrape de og:image, og:title, og:description, keywords
 - ✅ Scraping automático no blur do campo URL (apenas em criação, não em edição)
@@ -150,12 +171,15 @@ if (item.og_image) {
 
 ## 🐛 Bugs Conhecidos
 
+**Desktop:**
 - ⚠️ **Edit bookmark** - Precisa preencher toggle com valor atual
 - ⚠️ **Filter tabs** - "My links" não aparece quando deslogado
 - ⚠️ **Search** - Clear button não atualiza feed
-- ⚠️ **Tags** - Click na tag não filtra (falta evento)
 - ⚠️ **Pagination** - Info não atualiza corretamente
 - ⚠️ **Empty state** - Botão "Add first link" precisa evento
+
+**Mobile:**
+- ✅ Todos os bugs conhecidos foram corrigidos na implementação do PWA
 
 ## 📊 Schema Atual
 
