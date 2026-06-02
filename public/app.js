@@ -771,58 +771,52 @@ function setupEventListeners() {
     });
   }
 
-  // Fetch metadata on URL change/blur
-  const urlInput = document.getElementById('bookmark-url');
-  if (urlInput) {
-    urlInput.addEventListener('blur', async () => {
-      const url = urlInput.value.trim();
-      if (!url) return;
-
-      // Only scrape when adding, not editing
-      const modal = document.getElementById('bookmark-modal');
-      if (modal && modal.dataset.editingId) return;
-
-      await fetchMetadata(url);
-    });
-  }
+  // Fetch metadata on URL blur — use delegation because the modal HTML is
+  // injected asynchronously by bookmark-modals.js after this listener runs.
+  document.addEventListener('blur', async (e) => {
+    if (e.target.id !== 'bookmark-url') return;
+    const url = e.target.value.trim();
+    if (!url) return;
+    const modal = document.getElementById('bookmark-modal');
+    if (modal && modal.dataset.editingId) return;
+    await fetchMetadata(url);
+  }, true); // capture phase so blur (non-bubbling) reaches document
 
   // Bookmark Submit Event (corrected description ID)
-  const bookmarkForm = document.getElementById('bookmark-form');
-  if (bookmarkForm) {
-    bookmarkForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  // Bookmark form submit — delegation because the form is injected async by bookmark-modals.js
+  document.addEventListener('submit', async (e) => {
+    const form = e.target.closest('#bookmark-form');
+    if (!form) return;
+    e.preventDefault();
 
-      const url = document.getElementById('bookmark-url')?.value;
-      const title = document.getElementById('bookmark-title')?.value;
-      const description = document.getElementById('bookmark-description')?.value;
-      const tags = document.getElementById('bookmark-tags')?.value;
-      const isPublic = document.getElementById('bookmark-is-public')?.checked ?? true;
+    const url = document.getElementById('bookmark-url')?.value;
+    const title = document.getElementById('bookmark-title')?.value;
+    const description = document.getElementById('bookmark-description')?.value;
+    const tags = document.getElementById('bookmark-tags')?.value;
+    const isPublic = document.getElementById('bookmark-is-public')?.checked ?? true;
 
-      console.log('Form values:', { url, title, description, tags, isPublic });
+    if (!url || !title) {
+      showBookmarkError('URL and title are required');
+      return;
+    }
 
-      if (!url || !title) {
-        showBookmarkError('URL and title are required');
-        return;
-      }
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.classList.add('saving');
+      submitBtn.disabled = true;
+    }
 
-      const submitBtn = bookmarkForm.querySelector('button[type="submit"]');
+    try {
+      const modal = document.getElementById('bookmark-modal');
+      const og_image = modal?.dataset.ogImage || null;
+      await saveBookmark({ url, title, description, tags, is_public: isPublic, og_image });
+    } catch (err) {
       if (submitBtn) {
-        submitBtn.classList.add('saving');
-        submitBtn.disabled = true;
+        submitBtn.classList.remove('saving');
+        submitBtn.disabled = false;
       }
-
-      try {
-        const modal = document.getElementById('bookmark-modal');
-        const og_image = modal?.dataset.ogImage || null;
-        await saveBookmark({ url, title, description, tags, is_public: isPublic, og_image });
-      } catch (err) {
-        if (submitBtn) {
-          submitBtn.classList.remove('saving');
-          submitBtn.disabled = false;
-        }
-      }
-    });
-  }
+    }
+  });
 
   // Load more button
   const loadMoreBtn = document.getElementById('load-more-btn');
