@@ -272,29 +272,27 @@
     .bookmark-list {
       display: flex;
       flex-direction: column;
-      gap: 1px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      background: var(--border);
+      gap: var(--space-4);
     }
 
     .bookmark-item {
       position: relative;
       padding: var(--space-5, 20px) var(--space-6);
       background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
       display: flex;
       gap: var(--space-4);
-      transition: background var(--duration-fast) var(--transition);
+      transition: box-shadow var(--duration-fast) var(--transition),
+                  border-color var(--duration-fast) var(--transition),
+                  transform var(--duration-fast) var(--transition);
     }
 
     .bookmark-item:hover {
-      background: oklch(from var(--surface) calc(l - 0.005) c h);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+      border-color: oklch(86% 0.008 60);
     }
-
-    .bookmark-item:first-child { border-radius: 15px 15px 0 0; }
-    .bookmark-item:last-child  { border-radius: 0 0 15px 15px; }
-    .bookmark-item:only-child  { border-radius: 15px; }
 
     .bookmark-thumbnail {
       flex-shrink: 0;
