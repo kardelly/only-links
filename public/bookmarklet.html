@@ -179,7 +179,7 @@
 
     <div class="bookmarklet-box">
       <h2 style="margin-top: 0;">📌 Drag this button to your bookmarks bar:</h2>
-      <a href="javascript:(function(){var%20d=document,w=window,l=location,t=d.title,u=l.href,s=d.getSelection?d.getSelection().toString():d.selection?d.selection.createRange().text:'',api='https://onlylinks.id';if(!w.__onlyLinkSaving){w.__onlyLinkSaving=true;var%20popup=w.open(api+'/api/bookmarklet?url='+encodeURIComponent(u)+'&title='+encodeURIComponent(t)+'&description='+encodeURIComponent(s),'onlyLinkSave','width=600,height=700,scrollbars=yes');if(popup){var%20check=setInterval(function(){if(popup.closed){clearInterval(check);delete%20w.__onlyLinkSaving;}},500);}else{alert('Please allow popups for onlylinks.id');delete%20w.__onlyLinkSaving;}}else{alert('Already saving...');}})();" class="bookmarklet-button">+ only.link</a>
+      <a href="javascript:(function(){var%20d=document,w=window,l=location,t=d.title,u=l.href,s=d.getSelection?d.getSelection().toString():(d.selection?d.selection.createRange().text:''),api='https://onlylinks.id',dest=api+'/api/bookmarklet?url='+encodeURIComponent(u)+'&title='+encodeURIComponent(t)+'&description='+encodeURIComponent(s);if(!w.__onlyLinkSaving){w.__onlyLinkSaving=true;var%20popup=w.open(dest,'onlyLinkSave','width=600,height=700,scrollbars=yes,noopener=0');if(popup){popup.focus();var%20check=setInterval(function(){if(popup.closed){clearInterval(check);delete%20w.__onlyLinkSaving;}},500);}else{w.__onlyLinkSaving=false;w.location.href=dest;}}else{w.__onlyLinkSaving=false;}})();" class="bookmarklet-button">+ only.link</a>
 
       <div class="instruction">
         <strong>👆 Drag the button above to your bookmarks bar</strong><br>
