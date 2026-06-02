@@ -222,22 +222,38 @@ async function saveBookmark(payload) {
       throw new Error(data.error || 'Failed to save bookmark');
     }
 
-    // Success - close modal with animation, reset form, reload feed
+    // Animate save button to checkmark, then close
+    const submitBtn = document.getElementById('bookmark-submit');
+    if (submitBtn) {
+      submitBtn.classList.remove('saving');
+      submitBtn.classList.add('done');
+    }
+
+    await new Promise(r => setTimeout(r, 480));
+
     if (modal) {
       modal.classList.add('exit');
       setTimeout(() => {
         modal.classList.remove('active', 'exit');
+        if (submitBtn) submitBtn.classList.remove('done');
         delete modal.dataset.editingId;
         delete modal.dataset.ogImage;
+        // Reset OG thumbnail
+        const thumb = document.getElementById('bm-og-thumb');
+        if (thumb) thumb.classList.remove('visible');
+        const img = document.getElementById('bm-og-img');
+        if (img) img.src = '';
+        // Reset URL indicators
+        const spinner = document.getElementById('bm-url-spinner');
+        const checkEl = document.getElementById('bm-url-check');
+        if (spinner) spinner.classList.remove('active');
+        if (checkEl) checkEl.classList.remove('active');
       }, 200);
     }
 
     const form = document.getElementById('bookmark-form');
-    if (form) {
-      setTimeout(() => form.reset(), 200);
-    }
+    if (form) setTimeout(() => form.reset(), 200);
 
-    // Show success toast with contextual message
     const toastMessage = isEdit ? 'Link updated' : 'Link saved';
     showSuccessToast(toastMessage);
 
@@ -450,15 +466,15 @@ function renderBookmarks() {
       console.log(`Bookmark "${item.title}" has og_image:`, item.og_image);
 
       // Convert relative URLs to absolute
-      if (item.og_image.startsWith('/')) {
+      if (item.og_image.startsWith('//')) {
+        item.og_image = `https:${item.og_image}`;
+      } else if (item.og_image.startsWith('/')) {
         try {
           const baseUrl = new URL(item.url);
           item.og_image = `${baseUrl.protocol}//${baseUrl.host}${item.og_image}`;
-          console.log('Converted to absolute:', item.og_image);
-        } catch (e) {
-          console.error('Failed to convert relative URL:', e);
-        }
+        } catch (e) {}
       }
+      item.og_image = item.og_image.replace(/^http:\/\//, 'https://');
     }
 
     // Generate clean hostname
@@ -766,10 +782,9 @@ function setupEventListeners() {
       const url = urlInput.value.trim();
       if (!url) return;
 
-      // Only scrape if we are ADDING a bookmark (bookmark-id is empty)
-      const bookmarkIdInput = document.getElementById('bookmark-id');
-      const isEdit = bookmarkIdInput && !!bookmarkIdInput.value;
-      if (isEdit) return;
+      // Only scrape when adding, not editing
+      const modal = document.getElementById('bookmark-modal');
+      if (modal && modal.dataset.editingId) return;
 
       await fetchMetadata(url);
     });
@@ -794,23 +809,19 @@ function setupEventListeners() {
         return;
       }
 
-      // Get submit button and add loading state
       const submitBtn = bookmarkForm.querySelector('button[type="submit"]');
       if (submitBtn) {
-        submitBtn.classList.add('loading');
+        submitBtn.classList.add('saving');
         submitBtn.disabled = true;
       }
 
       try {
-        // Get og_image from modal dataset if available
         const modal = document.getElementById('bookmark-modal');
         const og_image = modal?.dataset.ogImage || null;
-
         await saveBookmark({ url, title, description, tags, is_public: isPublic, og_image });
-      } finally {
-        // Remove loading state
+      } catch (err) {
         if (submitBtn) {
-          submitBtn.classList.remove('loading');
+          submitBtn.classList.remove('saving');
           submitBtn.disabled = false;
         }
       }
@@ -906,9 +917,24 @@ function openBookmarkModal() {
   const form = document.getElementById('bookmark-form');
   if (form) form.reset();
 
-  // Clear cached metadata
   delete modal.dataset.editingId;
   delete modal.dataset.ogImage;
+
+  // Reset delight elements
+  const thumb = document.getElementById('bm-og-thumb');
+  if (thumb) thumb.classList.remove('visible');
+  const img = document.getElementById('bm-og-img');
+  if (img) img.src = '';
+  const spinner = document.getElementById('bm-url-spinner');
+  if (spinner) spinner.classList.remove('active');
+  const checkEl = document.getElementById('bm-url-check');
+  if (checkEl) checkEl.classList.remove('active');
+  const saveBtn = document.getElementById('bookmark-submit');
+  if (saveBtn) { saveBtn.classList.remove('saving', 'done'); saveBtn.disabled = false; }
+
+  // Update modal title
+  const titleEl = document.getElementById('bookmark-modal-title');
+  if (titleEl) titleEl.textContent = 'Add bookmark';
 
   modal.classList.add('active');
 }
@@ -934,13 +960,35 @@ async function openEditBookmarkModal(bookmarkId) {
   if (descInput) descInput.value = bookmark.description || '';
   if (tagsInput) tagsInput.value = bookmark.tags.join(', ');
 
-  // Store bookmark ID and og_image for update
   modal.dataset.editingId = bookmark.id;
+
+  // Reset delight elements
+  const saveBtn = document.getElementById('bookmark-submit');
+  if (saveBtn) { saveBtn.classList.remove('saving', 'done'); saveBtn.disabled = false; }
+  const spinner = document.getElementById('bm-url-spinner');
+  if (spinner) spinner.classList.remove('active');
+  const checkEl = document.getElementById('bm-url-check');
+  if (checkEl) checkEl.classList.remove('active');
+
+  // OG thumbnail
+  const thumb = document.getElementById('bm-og-thumb');
+  const ogImg = document.getElementById('bm-og-img');
   if (bookmark.og_image) {
     modal.dataset.ogImage = bookmark.og_image;
+    if (thumb && ogImg) {
+      ogImg.src = bookmark.og_image.replace(/^http:\/\//, 'https://');
+      ogImg.onload = () => thumb.classList.add('visible');
+      ogImg.onerror = () => thumb.classList.remove('visible');
+    }
   } else {
     delete modal.dataset.ogImage;
+    if (thumb) thumb.classList.remove('visible');
+    if (ogImg) ogImg.src = '';
   }
+
+  // Update modal title
+  const titleEl = document.getElementById('bookmark-modal-title');
+  if (titleEl) titleEl.textContent = 'Edit bookmark';
 
   modal.classList.add('active');
 }
@@ -1162,43 +1210,38 @@ async function fetchMetadata(url) {
 
   if (!titleInput || !descInput || !tagsInput) return;
 
-  // Show subtle fetching indicator inside placeholders
-  const originalTitle = titleInput.placeholder;
-  const originalDesc = descInput.placeholder;
-  const originalTags = tagsInput.placeholder;
+  const spinner = document.getElementById('bm-url-spinner');
+  const checkEl = document.getElementById('bm-url-check');
 
-  titleInput.placeholder = 'Fetching site title...';
-  descInput.placeholder = 'Fetching site description...';
-  tagsInput.placeholder = 'Fetching site keywords...';
+  if (spinner) spinner.classList.add('active');
+  if (checkEl) checkEl.classList.remove('active');
 
   try {
     const response = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
     if (!response.ok) throw new Error();
     const data = await response.json();
 
-    console.log('Metadata fetched:', data);
+    if (data.title && !titleInput.value.trim()) titleInput.value = data.title;
+    if (data.description && !descInput.value.trim()) descInput.value = data.description;
 
-    // Prefill inputs only if the user hasn't already typed in them
-    if (data.title && !titleInput.value.trim()) {
-      titleInput.value = data.title;
-    }
-    if (data.description && !descInput.value.trim()) {
-      descInput.value = data.description;
-    }
-    // Don't auto-fill tags - let user add them manually
-
-    // Store og_image for later use
+    const modal = document.getElementById('bookmark-modal');
     if (data.og_image) {
-      const modal = document.getElementById('bookmark-modal');
       if (modal) modal.dataset.ogImage = data.og_image;
+      const thumb = document.getElementById('bm-og-thumb');
+      const img = document.getElementById('bm-og-img');
+      if (thumb && img) {
+        const httpsUrl = data.og_image.replace(/^http:\/\//, 'https://');
+        img.src = httpsUrl;
+        img.onload = () => thumb.classList.add('visible');
+        img.onerror = () => { thumb.classList.remove('visible'); };
+      }
     }
+
+    if (spinner) spinner.classList.remove('active');
+    if (checkEl) checkEl.classList.add('active');
   } catch (err) {
+    if (spinner) spinner.classList.remove('active');
     console.warn('Could not load site metadata. Safe to ignore.', err);
-  } finally {
-    // Restore placeholders
-    titleInput.placeholder = originalTitle;
-    descInput.placeholder = originalDesc;
-    tagsInput.placeholder = originalTags;
   }
 }
 
@@ -1224,21 +1267,11 @@ function handleUrlParameters() {
   }
 }
 
-// Open Add Bookmark dialogue with pre-filled inputs
+// Open Add Bookmark modal with pre-filled inputs (used by bookmarklet/extension)
 function openBookmarkModalPrefilled({ url, title, description }) {
-  const dialog = document.getElementById('bookmark-dialog');
-  hideBookmarkError();
-  document.getElementById('bookmark-form').reset();
-  document.getElementById('bookmark-id').value = '';
-  
-  document.getElementById('bookmark-url').value = url;
-  document.getElementById('bookmark-title').value = title;
-  document.getElementById('bookmark-desc').value = description;
-  
-  document.getElementById('bookmark-dialog-title').textContent = 'Add New Bookmark';
-  
-  // Also fetch tags/keywords from the page automatically!
-  fetchMetadata(url);
-  
-  dialog.showModal();
+  openBookmarkModal();
+  if (url) document.getElementById('bookmark-url').value = url;
+  if (title) document.getElementById('bookmark-title').value = title;
+  if (description) document.getElementById('bookmark-description').value = description;
+  if (url) fetchMetadata(url);
 }

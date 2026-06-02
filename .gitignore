@@ -41,3 +41,7 @@ public/uploads/avatars/*
 # Backups
 backups/
 .superpowers/
+
+# Internal AI session docs
+docs/superpowers/
+*.backup

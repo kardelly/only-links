@@ -15,17 +15,12 @@
 
   <!-- Mobile Redirect -->
   <script>
-    // Redirect mobile devices to mobile PWA
     (async function() {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html';
 
-      if (!isMobile || !isHomePage) return;
+      if (!isHomePage) return;
 
-      // Small delay to allow authentication to complete if just logged in
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Check if user is authenticated
       try {
         const response = await fetch('/api/auth/me', {
           credentials: 'include',
@@ -33,31 +28,24 @@
         });
         const data = await response.json();
 
-        console.log('[Mobile Redirect] Auth check:', data);
-
         if (data && data.user) {
-          // User is authenticated - always redirect to mobile
-          console.log('[Mobile Redirect] User authenticated, redirecting to mobile');
-          sessionStorage.removeItem('mobile_redirect_attempted');
-          window.location.replace('/mobile/app');
-        } else {
-          // User is NOT authenticated
-          console.log('[Mobile Redirect] Not authenticated');
-          const redirectFlag = sessionStorage.getItem('mobile_redirect_attempted');
+          // Logged in: send to the right app
+          window.location.replace(isMobile ? '/mobile/app' : '/app');
+          return;
+        }
 
+        // Not logged in — only redirect mobile to PWA landing
+        if (isMobile) {
+          const redirectFlag = sessionStorage.getItem('mobile_redirect_attempted');
           if (redirectFlag === 'skip') {
-            // User came back from mobile - stay on desktop for login
-            console.log('[Mobile Redirect] Skip flag set, staying on desktop');
             sessionStorage.removeItem('mobile_redirect_attempted');
           } else {
-            // First visit - redirect to mobile (will bounce back if needs login)
-            console.log('[Mobile Redirect] First visit, redirecting to mobile');
             sessionStorage.setItem('mobile_redirect_attempted', 'true');
             window.location.replace('/mobile/app');
           }
         }
       } catch (err) {
-        console.error('[Mobile Redirect] Error:', err);
+        console.error('[Redirect] Error:', err);
       }
     })();
   </script>

@@ -1,5 +1,43 @@
 /* ===== SHARED COMPONENT STYLES ===== */
 
+/* Footer */
+.footer {
+  padding: var(--space-12, 48px) var(--space-8, 32px);
+  border-top: 0.5px solid oklch(from var(--border, oklch(90% 0.006 60)) l c h / 0.3);
+  background: var(--bg, oklch(98% 0.008 60));
+}
+
+.footer-container {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-8, 32px);
+}
+
+.footer-text {
+  font-size: 13px;
+  color: var(--muted, oklch(52% 0.008 60));
+}
+
+.footer-links {
+  display: flex;
+  gap: var(--space-6, 24px);
+}
+
+.footer-link {
+  font-size: 13px;
+  color: var(--muted, oklch(52% 0.008 60));
+  text-decoration: none;
+  transition: color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.footer-link:hover {
+  color: var(--fg, oklch(18% 0.012 60));
+}
+
 /* Username links */
 .username-link {
   color: inherit;

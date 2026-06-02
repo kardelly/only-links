@@ -120,7 +120,7 @@ export class FeedView extends BaseView {
     card.innerHTML = `
       <div class="card-thumbnail">
         ${bookmark.og_image
-          ? `<img src="${bookmark.og_image}"
+          ? `<img src="${bookmark.og_image.replace(/^http:\/\//, 'https://')}"
                   alt="${escapeHtml(bookmark.title)}"
                   onerror="this.style.display='none';this.parentElement.style.background='#E5E5E5'"
                   loading="lazy">`

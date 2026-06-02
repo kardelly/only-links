@@ -778,6 +778,21 @@ app.post('/api/bookmarks', authenticate, async (req, res) => {
       message: 'Bookmark created successfully',
       bookmarkId
     });
+
+    // If no og_image was provided, fetch it in the background
+    if (!og_image) {
+      (async () => {
+        try {
+          const metadata = await fetchUrlMetadata(urlValidation.value);
+          if (metadata.og_image) {
+            const db = await dbPromise;
+            await db.run('UPDATE bookmarks SET og_image = ? WHERE id = ?', [metadata.og_image, bookmarkId]);
+          }
+        } catch (err) {
+          // Non-critical — silent fail
+        }
+      })();
+    }
   } catch (err) {
     console.error('Create Bookmark Error:', err);
     res.status(500).json({ error: 'Failed to create bookmark due to database error' });
@@ -1091,8 +1106,11 @@ app.get('/api/metadata', authenticate, async (req, res) => {
         const baseUrl = new URL(urlValidation.value);
         og_image = `${baseUrl.protocol}//${baseUrl.host}${og_image}`;
       } else if (og_image.startsWith('//')) {
-        const baseUrl = new URL(urlValidation.value);
-        og_image = `${baseUrl.protocol}${og_image}`;
+        og_image = `https:${og_image}`;
+      }
+      // Upgrade http to https to avoid mixed-content blocking
+      if (og_image.startsWith('http://')) {
+        og_image = og_image.replace('http://', 'https://');
       }
     }
 

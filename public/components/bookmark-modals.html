@@ -1,66 +1,102 @@
 <!-- BOOKMARK MODAL -->
 <div class="modal" id="bookmark-modal">
   <div class="modal-backdrop"></div>
-  <div class="modal-content" style="max-width: 600px;">
-    <button class="modal-close" id="bookmark-modal-close">✕</button>
-    <div class="modal-header">
-      <h2 class="modal-title">Add new bookmark</h2>
+  <div class="modal-content bm-modal-content">
+    <div class="bm-header">
+      <h2 class="bm-title" id="bookmark-modal-title">Add bookmark</h2>
+      <button class="bm-close" id="bookmark-modal-close" aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
-    <div class="modal-body">
-      <form id="bookmark-form">
-        <div class="form-group">
-          <label class="form-label" for="bookmark-url">URL</label>
-          <input
-            type="text"
-            class="form-input"
-            id="bookmark-url"
-            placeholder="example.com or https://example.com"
-            required
-          >
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="bookmark-title">Title</label>
-          <input
-            type="text"
-            class="form-input"
-            id="bookmark-title"
-            placeholder="A great article"
-            required
-          >
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="bookmark-description">Description</label>
-          <textarea
-            class="form-textarea"
-            id="bookmark-description"
-            placeholder="What's this about?"
-          ></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="bookmark-tags">Tags</label>
-          <input
-            type="text"
-            class="form-input"
-            id="bookmark-tags"
-            placeholder="design, frontend, inspiration (comma-separated)"
-          >
-        </div>
-        <div class="form-group">
-          <div class="toggle-container">
-            <div>
-              <div class="toggle-label">Public link</div>
-              <div class="toggle-description">Anyone can see this bookmark</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="bookmark-is-public" checked>
-              <span class="toggle-slider"></span>
-            </label>
+
+    <div class="bm-body">
+      <form id="bookmark-form" autocomplete="off">
+
+        <!-- URL row with inline fetch state -->
+        <div class="bm-field">
+          <label class="bm-label" for="bookmark-url">URL</label>
+          <div class="bm-url-wrap">
+            <input
+              type="text"
+              class="bm-input"
+              id="bookmark-url"
+              placeholder="paste a link..."
+              autocomplete="off"
+              spellcheck="false"
+              required
+            >
+            <span class="bm-url-spinner" id="bm-url-spinner" aria-hidden="true"></span>
+            <span class="bm-url-check" id="bm-url-check" aria-hidden="true">
+              <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+                <path d="M1 5l4 4L12 1" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary bookmark-cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="bookmark-submit">Save bookmark</button>
+
+        <!-- Title + OG thumbnail side by side -->
+        <div class="bm-title-row">
+          <div class="bm-field bm-field-grow">
+            <label class="bm-label" for="bookmark-title">Title</label>
+            <input
+              type="text"
+              class="bm-input"
+              id="bookmark-title"
+              placeholder="What's this link?"
+              required
+            >
+          </div>
+          <div class="bm-og-thumb" id="bm-og-thumb" aria-hidden="true">
+            <img id="bm-og-img" src="" alt="" loading="lazy">
+          </div>
         </div>
+
+        <!-- Description -->
+        <div class="bm-field">
+          <label class="bm-label" for="bookmark-description">Description <span class="bm-optional">optional</span></label>
+          <textarea
+            class="bm-textarea"
+            id="bookmark-description"
+            placeholder="One line about why this matters"
+            rows="2"
+          ></textarea>
+        </div>
+
+        <!-- Tags -->
+        <div class="bm-field">
+          <label class="bm-label" for="bookmark-tags">Tags <span class="bm-optional">comma-separated</span></label>
+          <input
+            type="text"
+            class="bm-input"
+            id="bookmark-tags"
+            placeholder="design, tools, reference"
+          >
+        </div>
+
+        <!-- Footer: public toggle + actions -->
+        <div class="bm-footer">
+          <label class="bm-toggle-row" title="Anyone can see this bookmark">
+            <input type="checkbox" id="bookmark-is-public" checked class="bm-toggle-input">
+            <span class="bm-toggle-track">
+              <span class="bm-toggle-thumb"></span>
+            </span>
+            <span class="bm-toggle-text">Public</span>
+          </label>
+          <div class="bm-actions">
+            <button type="button" class="bm-btn-cancel bookmark-cancel">Cancel</button>
+            <button type="submit" class="bm-btn-save" id="bookmark-submit">
+              <span class="bm-save-label">Save</span>
+              <span class="bm-save-check" aria-hidden="true">
+                <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+                  <path d="M1 5l4 4L12 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+
       </form>
     </div>
   </div>
@@ -69,7 +105,7 @@
 <!-- DELETE CONFIRMATION MODAL -->
 <div class="modal" id="delete-confirmation-modal">
   <div class="modal-backdrop"></div>
-  <div class="modal-content" style="max-width: 440px;">
+  <div class="modal-content" style="max-width: 420px;">
     <button class="modal-close delete-cancel">✕</button>
     <div class="modal-header">
       <h2 class="modal-title">Delete bookmark?</h2>
@@ -85,3 +121,5 @@
     </div>
   </div>
 </div>
+
+<!-- styles live in app.html -->

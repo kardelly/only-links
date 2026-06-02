@@ -54,15 +54,18 @@ window.bookmarkRenderer = {
     const article = document.createElement('article');
     article.className = 'bookmark-item';
 
-    // Convert relative og_image URLs to absolute
+    // Convert relative og_image URLs to absolute and upgrade to https
     let ogImage = item.og_image;
-    if (ogImage && ogImage.startsWith('/')) {
-      try {
-        const baseUrl = new URL(item.url);
-        ogImage = `${baseUrl.protocol}//${baseUrl.host}${ogImage}`;
-      } catch (e) {
-        console.error('Failed to convert relative URL:', e);
+    if (ogImage) {
+      if (ogImage.startsWith('/')) {
+        try {
+          const baseUrl = new URL(item.url);
+          ogImage = `${baseUrl.protocol}//${baseUrl.host}${ogImage}`;
+        } catch (e) {}
+      } else if (ogImage.startsWith('//')) {
+        ogImage = `https:${ogImage}`;
       }
+      ogImage = ogImage.replace(/^http:\/\//, 'https://');
     }
 
     // Render tags
@@ -73,7 +76,7 @@ window.bookmarkRenderer = {
     article.innerHTML = `
       ${ogImage ? `
         <div class="bookmark-thumbnail">
-          <img src="${this.escapeHTML(ogImage)}" alt="${this.escapeHTML(item.title)}" loading="lazy" class="bookmark-img">
+          <img src="${this.escapeHTML(ogImage)}" alt="${this.escapeHTML(item.title)}" loading="lazy" class="bookmark-img" onerror="this.parentElement.style.display='none'">
         </div>
       ` : ''}
 

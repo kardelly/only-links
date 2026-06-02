@@ -59,10 +59,13 @@ function updateHeaderUI() {
   const profileAvatarInitial = document.getElementById('profile-avatar-initial');
   const profileAvatarBtn = document.getElementById('profile-avatar-btn');
 
+  const logoLink = document.getElementById('logo-home');
+
   if (headerState.currentUser) {
     // Show logged-in elements
     if (authNav) authNav.style.display = 'flex';
     if (guestNav) guestNav.style.display = 'none';
+    if (logoLink) logoLink.href = '/app';
 
     // Set username display in dropdown and link
     if (profileMenuUsername) {
@@ -102,6 +105,7 @@ function updateHeaderUI() {
     // Hide logged-in elements, show guest
     if (authNav) authNav.style.display = 'none';
     if (guestNav) guestNav.style.display = 'flex';
+    if (logoLink) logoLink.href = '/';
   }
 }
 
