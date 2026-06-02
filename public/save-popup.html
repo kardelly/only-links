@@ -208,9 +208,14 @@
           <input type="url" class="form-input" id="url" required readonly>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="title">Title</label>
-          <input type="text" class="form-input" id="title" required>
+        <div class="form-group" style="display: flex; gap: 12px; align-items: flex-start;">
+          <div style="flex: 1;">
+            <label class="form-label" for="title">Title</label>
+            <input type="text" class="form-input" id="title" required>
+          </div>
+          <div id="og-thumb" style="width: 52px; height: 52px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: var(--border); margin-top: 22px; display: none;">
+            <img id="og-img" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+          </div>
         </div>
 
         <div class="form-group">
@@ -253,6 +258,36 @@
     document.getElementById('title').value = title;
     document.getElementById('description').value = description;
 
+    // og_image collected during metadata fetch — sent on save
+    let ogImage = null;
+
+    // Fetch OG metadata to fill description + image
+    async function fetchMetadata() {
+      if (!url) return;
+      try {
+        const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const titleEl = document.getElementById('title');
+        const descEl  = document.getElementById('description');
+
+        if (data.title && !titleEl.value.trim()) titleEl.value = data.title;
+        if (data.description && !descEl.value.trim()) descEl.value = data.description;
+
+        if (data.og_image) {
+          ogImage = data.og_image;
+          const thumb = document.getElementById('og-thumb');
+          const img   = document.getElementById('og-img');
+          img.src = data.og_image.replace(/^http:\/\//, 'https://');
+          img.onload = () => { thumb.style.display = 'block'; };
+          img.onerror = () => { thumb.style.display = 'none'; };
+        }
+      } catch (err) {
+        // non-fatal — user can fill manually
+      }
+    }
+
     // Check authentication — delegates to session.js singleton
     async function checkAuth() {
       const { user } = await window.getSession();
@@ -285,7 +320,8 @@
         title: document.getElementById('title').value,
         description: document.getElementById('description').value || '',
         tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean),
-        is_public: document.getElementById('is-public').checked
+        is_public: document.getElementById('is-public').checked,
+        og_image: ogImage || undefined
       };
 
       try {
@@ -323,8 +359,8 @@
 
     document.getElementById('cancel-btn').addEventListener('click', () => window.close());
 
-    // Check auth on load
-    checkAuth();
+    // Check auth then fetch metadata in parallel
+    checkAuth().then(authed => { if (authed) fetchMetadata(); });
   </script>
 </body>
 </html>
