@@ -113,18 +113,34 @@ export class FeedView extends BaseView {
     const card = document.createElement('div');
     card.className = 'bookmark-card';
     card.dataset.id = bookmark.id;
-    
+
+    // Normalize og_image URL (same logic as app.js)
+    let ogImage = bookmark.og_image || '';
+    if (ogImage) {
+      if (ogImage.startsWith('//')) {
+        ogImage = 'https:' + ogImage;
+      } else if (ogImage.startsWith('/')) {
+        try {
+          const base = new URL(bookmark.url);
+          ogImage = `${base.protocol}//${base.host}${ogImage}`;
+        } catch (e) { ogImage = ''; }
+      }
+      ogImage = ogImage.replace(/^http:\/\//, 'https://');
+      // Sanity check — must start with https://
+      if (!ogImage.startsWith('https://')) ogImage = '';
+    }
+
     // Render tags (max 3)
     const tagsHtml = this.renderTags(bookmark.tags);
-    
+
     card.innerHTML = `
       <div class="card-thumbnail">
-        ${bookmark.og_image
-          ? `<img src="${bookmark.og_image.replace(/^http:\/\//, 'https://')}"
-                  alt="${escapeHtml(bookmark.title)}"
-                  onerror="this.style.display='none';this.parentElement.style.background='#E5E5E5'"
+        ${ogImage
+          ? `<img src="${escapeHtml(ogImage)}"
+                  alt=""
+                  onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;background:#E5E5E5;display:flex;align-items:center;justify-content:center;font-size:28px\'>🔗</div>'"
                   loading="lazy">`
-          : `<div style="width:100%;height:100%;background:#E5E5E5;display:flex;align-items:center;justify-content:center;font-size:32px;color:#999">🔗</div>`
+          : `<div style="width:100%;height:100%;background:#E5E5E5;display:flex;align-items:center;justify-content:center;font-size:28px">🔗</div>`
         }
       </div>
       <div class="card-content">
