@@ -445,14 +445,13 @@
       animation: modalFadeIn var(--duration-slow) var(--transition);
     }
 
-    /* backdrop blur on ::before avoids blurring modal children (inputs, textareas) */
-    .modal::before {
-      content: '';
+    /* backdrop is a sibling element — backdrop-filter on a parent bleeds into child inputs */
+    .modal-backdrop {
       position: fixed;
       inset: 0;
       background: oklch(18% 0.012 60 / 0.4);
       backdrop-filter: blur(10px);
-      z-index: -1;
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .modal.active {
@@ -482,6 +481,7 @@
     }
 
     .modal-content {
+      position: relative;
       width: 100%;
       max-width: 520px;
       max-height: 90vh;
