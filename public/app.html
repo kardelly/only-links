@@ -445,9 +445,9 @@
       animation: modalFadeIn var(--duration-slow) var(--transition);
     }
 
-    /* backdrop is a sibling element — backdrop-filter on a parent bleeds into child inputs */
+    /* backdrop is a sibling — backdrop-filter on a parent bleeds into child inputs/textareas */
     .modal-backdrop {
-      position: fixed;
+      position: absolute;
       inset: 0;
       background: oklch(18% 0.012 60 / 0.4);
       backdrop-filter: blur(10px);
