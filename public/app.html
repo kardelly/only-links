@@ -22,9 +22,6 @@
     gtag('config', 'G-4ZHDLY53QX');
   </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/components/header-styles.css">
   <link rel="stylesheet" href="/components/auth-modal-styles.css">
   <link rel="stylesheet" href="/components/shared-styles.css">
@@ -52,7 +49,7 @@
       --accent-subtle: oklch(96% 0.02 250);
 
       /* Typography */
-      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Helvetica Neue", sans-serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
       /* Spacing (4px base) */
       --space-1:  4px;
@@ -808,7 +805,7 @@
     .empty-state-kbd {
       display: inline-block;
       padding: 2px 6px;
-      font-family: 'SF Mono', 'Menlo', monospace;
+      font-family: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
       font-size: 12px;
       background: var(--surface);
       border: 1px solid var(--border);

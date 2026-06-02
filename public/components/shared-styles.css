@@ -1,3 +1,8 @@
+/* ===== TYPOGRAPHY ===== */
+/* Single font family across the entire product: Inter.
+   Loaded here once — applies to every page via shared-styles.css. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;510;600;700&display=swap');
+
 /* ===== SHARED COMPONENT STYLES ===== */
 
 /* Base design tokens — fallbacks for pages that define their own :root block.
@@ -11,7 +16,7 @@
   --accent:  oklch(56% 0.18 250);
   --accent-subtle: oklch(97% 0.02 250);
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   --space-1: 4px;  --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
   --space-6: 24px; --space-8: 32px;  --space-10: 40px; --space-12: 48px;
