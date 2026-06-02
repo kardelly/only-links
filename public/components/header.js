@@ -121,6 +121,7 @@ function setupHeaderListeners() {
     logoutBtn.addEventListener('click', async () => {
       try {
         await fetch('/api/auth/logout', { method: 'POST' });
+        if (window.clearSession) window.clearSession();
         window.location.href = '/';
       } catch (err) {
         console.error('Logout error:', err);

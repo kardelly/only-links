@@ -47,4 +47,13 @@
   window.getSessionSync = function () {
     return window.__session || { user: null };
   };
+
+  /**
+   * Clears the session cache and forces a fresh fetch on next getSession() call.
+   * Call before navigating away on logout so the destination page sees no user.
+   */
+  window.clearSession = function () {
+    window.__session = { user: null };
+    _promise = Promise.resolve(null);
+  };
 })();
