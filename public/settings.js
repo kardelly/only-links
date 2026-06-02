@@ -22,40 +22,16 @@ async function checkSession() {
     return;
   }
 
-  const data = { user };
   settingsState.currentUser = user;
 
-    // Update username in dropdown and link
-    const profileMenuUsername = document.getElementById('profile-menu-username');
-    if (profileMenuUsername) {
-      profileMenuUsername.textContent = `@${data.user.username}`;
-    }
-    const profileHeaderLink = document.getElementById('profile-menu-header-link');
-    if (profileHeaderLink) {
-      profileHeaderLink.href = `/user/${data.user.username}`;
-    }
-    const profileLink = document.getElementById('profile-link');
-    if (profileLink) {
-      profileLink.href = `/user/${data.user.username}`;
-    }
-
-    // Update avatar initial and preview
-    const profileAvatarInitial = document.getElementById('profile-avatar-initial');
+    // Populate settings-page avatar preview (separate from header avatar managed by header.js)
     const avatarPreviewInitial = document.getElementById('avatar-preview-initial');
-
-    if (profileAvatarInitial) {
-      profileAvatarInitial.textContent = data.user.username.charAt(0).toUpperCase();
-    }
-
     if (avatarPreviewInitial) {
-      avatarPreviewInitial.textContent = data.user.username.charAt(0).toUpperCase();
+      avatarPreviewInitial.textContent = user.username.charAt(0).toUpperCase();
     }
 
-    // Load avatar if exists
-    if (data.user.avatar) {
-      updateAvatarDisplay(data.user.avatar);
-
-      // Update preview
+    if (user.avatar) {
+      // Update the settings page preview widget only
       const avatarPreview = document.getElementById('avatar-preview');
       if (avatarPreview && avatarPreviewInitial) {
         avatarPreviewInitial.style.display = 'none';
@@ -64,7 +40,7 @@ async function checkSession() {
           img = document.createElement('img');
           avatarPreview.appendChild(img);
         }
-        img.src = data.user.avatar;
+        img.src = user.avatar;
       }
 
       // Show remove button
