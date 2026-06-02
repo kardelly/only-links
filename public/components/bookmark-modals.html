@@ -67,12 +67,16 @@
         <!-- Tags -->
         <div class="bm-field">
           <label class="bm-label" for="bookmark-tags">Tags <span class="bm-optional">comma-separated</span></label>
-          <input
-            type="text"
-            class="bm-input"
-            id="bookmark-tags"
-            placeholder="design, tools, reference"
-          >
+          <div class="bm-tags-wrap">
+            <input
+              type="text"
+              class="bm-input"
+              id="bookmark-tags"
+              placeholder="design, tools, reference"
+              autocomplete="off"
+            >
+            <ul class="bm-tags-dropdown" id="bm-tags-dropdown" role="listbox" aria-label="Tag suggestions"></ul>
+          </div>
         </div>
 
         <!-- Footer: public toggle + actions -->

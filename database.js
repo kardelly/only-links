@@ -424,6 +424,20 @@ export async function getPopularTags(limit = 30) {
   `, [limit]);
 }
 
+export async function getUserTags(userId, limit = 100) {
+  const db = await dbPromise;
+  return db.all(`
+    SELECT t.name, COUNT(bt.bookmark_id) as count
+    FROM tags t
+    JOIN bookmark_tags bt ON t.id = bt.tag_id
+    JOIN bookmarks b ON bt.bookmark_id = b.id
+    WHERE b.user_id = ?
+    GROUP BY t.id
+    ORDER BY count DESC, t.name ASC
+    LIMIT ?
+  `, [userId, limit]);
+}
+
 // Helper: Get user preferences
 export async function getUserPreferences(userId) {
   const db = await dbPromise;

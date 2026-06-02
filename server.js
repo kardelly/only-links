@@ -24,6 +24,7 @@ import {
   deleteBookmark,
   getBookmarks,
   getPopularTags,
+  getUserTags,
   getUserPreferences,
   updateUserPreferences,
   updateUserPassword,
@@ -932,6 +933,17 @@ app.get('/api/tags', async (req, res) => {
   } catch (err) {
     console.error('Fetch Tags Error:', err);
     res.status(500).json({ error: 'Failed to load popular tags' });
+  }
+});
+
+// GET /api/tags/mine - Get current user's tags
+app.get('/api/tags/mine', authenticate, async (req, res) => {
+  try {
+    const tags = await getUserTags(req.user.id);
+    res.json({ tags });
+  } catch (err) {
+    console.error('Fetch User Tags Error:', err);
+    res.status(500).json({ error: 'Failed to load tags' });
   }
 });
 
