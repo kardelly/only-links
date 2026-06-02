@@ -412,7 +412,7 @@ export async function getBookmarks({ userId, search, tag, page = 1, limit = 10, 
 }
 
 // Helper: Get list of popular tags with bookmark counts
-export async function getPopularTags(limit = 30) {
+export async function getPopularTags(limit = 30, offset = 0) {
   const db = await dbPromise;
   return db.all(`
     SELECT t.name, COUNT(bt.bookmark_id) as count
@@ -420,8 +420,18 @@ export async function getPopularTags(limit = 30) {
     JOIN bookmark_tags bt ON t.id = bt.tag_id
     GROUP BY t.id
     ORDER BY count DESC, t.name ASC
-    LIMIT ?
-  `, [limit]);
+    LIMIT ? OFFSET ?
+  `, [limit, offset]);
+}
+
+export async function countAllTags() {
+  const db = await dbPromise;
+  const row = await db.get(`
+    SELECT COUNT(DISTINCT t.id) as total
+    FROM tags t
+    JOIN bookmark_tags bt ON t.id = bt.tag_id
+  `);
+  return row?.total || 0;
 }
 
 export async function getUserTags(userId, limit = 100) {

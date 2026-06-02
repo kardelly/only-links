@@ -24,6 +24,7 @@ import {
   deleteBookmark,
   getBookmarks,
   getPopularTags,
+  countAllTags,
   getUserTags,
   getUserPreferences,
   updateUserPreferences,
@@ -924,12 +925,13 @@ app.delete('/api/bookmarks/:id', authenticate, async (req, res) => {
 // 3. TAGS API ENDPOINTS
 // ==========================================
 
-// GET /api/tags - Get all popular tags with counts
+// GET /api/tags - Get popular tags with pagination
 app.get('/api/tags', async (req, res) => {
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 30));
+  const offset = Math.max(0, parseInt(req.query.offset) || 0);
   try {
-    const tags = await getPopularTags(limit);
-    res.json({ tags });
+    const [tags, total] = await Promise.all([getPopularTags(limit, offset), countAllTags()]);
+    res.json({ tags, total, hasMore: offset + tags.length < total });
   } catch (err) {
     console.error('Fetch Tags Error:', err);
     res.status(500).json({ error: 'Failed to load popular tags' });
