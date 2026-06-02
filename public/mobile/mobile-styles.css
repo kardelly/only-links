@@ -299,10 +299,44 @@ body {
 
 .card-meta {
   display: flex;
+  align-items: center;
   gap: var(--spacing-sm);
   font-size: 12px;
   color: var(--text-secondary);
   margin-top: auto;
+}
+
+.card-meta .username,
+.card-meta .date {
+  flex-shrink: 0;
+}
+
+.card-share-btn {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 980px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 510;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 150ms, color 150ms, border-color 150ms;
+  flex-shrink: 0;
+}
+
+.card-share-btn:active {
+  background: var(--border);
+}
+
+.card-share-btn.share-done {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
+.card-share-btn.share-error {
+  color: #dc2626;
+  border-color: #dc2626;
 }
 
 /* Loading Spinner */

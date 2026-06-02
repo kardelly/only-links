@@ -149,11 +149,33 @@ export class FeedView extends BaseView {
         <div class="card-meta">
           <span class="username">@${escapeHtml(bookmark.username)}</span>
           <span class="date">${timeAgo(bookmark.created_at)}</span>
+          <button class="card-share-btn" aria-label="Compartilhar link">Share</button>
         </div>
       </div>
     `;
-    
-    // Click to open bookmark
+
+    // Share button — stops propagation so card click doesn't also fire
+    card.querySelector('.card-share-btn').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const btn = e.currentTarget;
+      const url = bookmark.url;
+      if (navigator.share) {
+        try { await navigator.share({ url }); } catch {}
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.textContent = 'Copied!';
+        btn.classList.add('share-done');
+        setTimeout(() => { btn.textContent = 'Share'; btn.classList.remove('share-done'); }, 1500);
+      } catch {
+        btn.textContent = 'Error';
+        btn.classList.add('share-error');
+        setTimeout(() => { btn.textContent = 'Share'; btn.classList.remove('share-error'); }, 1000);
+      }
+    });
+
+    // Click card to open bookmark (not on share btn)
     card.addEventListener('click', () => {
       window.open(bookmark.url, '_blank');
     });
