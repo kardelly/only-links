@@ -858,8 +858,10 @@ function showDeleteAccountModal() {
 
 // Export bookmarks
 async function handleExportBookmarks() {
+  const exportBtn = document.getElementById('export-bookmarks-btn');
+  if (exportBtn) { exportBtn.disabled = true; exportBtn.textContent = 'Exporting…'; }
   try {
-    const response = await fetch('/api/bookmarks?mine=true&limit=10000');
+    const response = await fetch('/api/bookmarks?feedType=mine&limit=10000', { credentials: 'include' });
     const data = await response.json();
 
     if (!response.ok) {
@@ -891,13 +893,12 @@ async function handleExportBookmarks() {
     URL.revokeObjectURL(url);
 
     showAlert('data-alert', 'success', `Successfully exported ${exportData.bookmarks.length} bookmarks`);
-
-    setTimeout(() => {
-      hideAlert('data-alert');
-    }, 3000);
+    setTimeout(() => hideAlert('data-alert'), 3000);
   } catch (err) {
     console.error('Export error:', err);
     showAlert('data-alert', 'error', err.message);
+  } finally {
+    if (exportBtn) { exportBtn.disabled = false; exportBtn.textContent = 'Export as JSON'; }
   }
 }
 
