@@ -429,8 +429,6 @@
       right: 0;
       bottom: 0;
       z-index: 200;
-      background: oklch(18% 0.012 60 / 0.4);
-      backdrop-filter: blur(10px);
       align-items: center;
       justify-content: center;
       padding: var(--space-6);
@@ -439,6 +437,14 @@
 
     .modal.active {
       display: flex;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: oklch(18% 0.012 60 / 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     @keyframes modalFadeIn {
@@ -451,6 +457,7 @@
     }
 
     .modal-content {
+      position: relative;
       width: 100%;
       max-width: 520px;
       max-height: 90vh;

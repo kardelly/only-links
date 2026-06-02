@@ -612,8 +612,6 @@
       right: 0;
       bottom: 0;
       z-index: 200;
-      background: oklch(18% 0.012 60 / 0.4);
-      backdrop-filter: blur(10px);
       align-items: center;
       justify-content: center;
       padding: var(--space-6);
@@ -624,12 +622,21 @@
       display: flex;
     }
 
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: oklch(18% 0.012 60 / 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
     @keyframes modalFadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
     }
 
     .modal-content {
+      position: relative;
       width: 100%;
       max-width: 520px;
       max-height: 90vh;
@@ -943,6 +950,7 @@
 
   <!-- CONFIRMATION MODAL -->
   <div class="modal" id="confirmation-modal">
+    <div class="modal-backdrop"></div>
     <div class="modal-content" style="max-width: 440px;">
       <div class="modal-header">
         <h2 class="modal-title" id="confirmation-title">Confirm action</h2>
@@ -961,6 +969,7 @@
 
   <!-- IMPORT PREVIEW MODAL -->
   <div class="modal" id="import-preview-modal">
+    <div class="modal-backdrop"></div>
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h2 class="modal-title">Import Preview</h2>
@@ -994,6 +1003,7 @@
 
   <!-- IMPORT PROGRESS MODAL -->
   <div class="modal" id="import-progress-modal">
+    <div class="modal-backdrop"></div>
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-header">
         <h2 class="modal-title">Importing Bookmarks...</h2>
@@ -1035,6 +1045,7 @@
 
   <!-- DELETE ACCOUNT MODAL -->
   <div class="modal" id="delete-account-modal">
+    <div class="modal-backdrop"></div>
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-header">
         <h2 class="modal-title">Wait, are you sure? 🥺</h2>
