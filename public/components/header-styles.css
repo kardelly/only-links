@@ -193,3 +193,40 @@
 #header-search {
   display: none;
 }
+
+/* Button base (needed on pages that don't load app styles) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 var(--space-4, 16px);
+  border-radius: 980px;
+  font-size: 14px;
+  font-weight: 510;
+  font-family: var(--font-sans, -apple-system, sans-serif);
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent, oklch(56% 0.18 250));
+  color: white;
+}
+
+.btn-primary:hover {
+  background: oklch(51% 0.18 250);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--fg, oklch(18% 0.012 60));
+  border: 1px solid var(--border, oklch(90% 0.006 60));
+}
+
+.btn-ghost:hover {
+  background: var(--surface, oklch(99.5% 0.004 60));
+}
