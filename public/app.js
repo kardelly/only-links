@@ -626,23 +626,23 @@ function setupEventListeners() {
   
   // Search input handler — shared logic for desktop + mobile
   function handleSearchInput(query, mirrorId) {
-    // Extract #tag tokens and convert to active tag filters
-    const tagMatches = query.match(/#(\w+)/g);
-    if (tagMatches) {
-      tagMatches.forEach(t => {
-        const name = t.substring(1);
+    // Extract #tag tokens only when the token is followed by a space or comma
+    // (user finished typing). Mid-word tokens like "#ace" while typing "#acessibilidade" are ignored.
+    const completedTags = [...query.matchAll(/#(\w+)(?=[\s,])/g)];
+
+    if (completedTags.length > 0) {
+      completedTags.forEach(m => {
+        const name = m[1];
         if (!state.activeTags.includes(name)) state.activeTags.push(name);
       });
-      query = query.replace(/#\w+/g, '').trim();
-      const inputEl = document.getElementById(mirrorId === 'search-input-mobile' ? 'search-input' : 'search-input-mobile');
-      const selfEl  = document.getElementById(mirrorId === 'search-input-mobile' ? 'search-input-mobile' : 'search-input');
+      query = query.replace(/#\w+[\s,]*/g, '').trim();
+      const selfEl = document.getElementById(mirrorId === 'search-input-mobile' ? 'search-input' : 'search-input-mobile');
       if (selfEl) selfEl.value = query;
+      const mirrorEl = document.getElementById(mirrorId);
+      if (mirrorEl) mirrorEl.value = query;
       renderActiveTagPills();
       window.sidebarTags.setActiveTags(state.activeTags);
-      // Tag changes require a server fetch (different dataset)
       state.searchQuery = query;
-      const mirror = document.getElementById(mirrorId);
-      if (mirror) mirror.value = query;
       refreshFeed();
       return;
     }
