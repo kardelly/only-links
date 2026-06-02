@@ -1,10 +1,11 @@
-<header class="header">
+<header class="header" id="site-header">
   <div class="header-container">
     <a href="/" class="logo" id="logo-home">
       <img src="/logo.png" alt="only.link" class="logo-img">
     </a>
 
-    <div class="search-container">
+    <!-- Search: only visible when logged in -->
+    <div class="search-container" id="header-search">
       <input
         type="search"
         class="search-input"
@@ -14,12 +15,14 @@
     </div>
 
     <nav class="nav">
+      <!-- Guest nav: landing style (Features + Sign in + Get started) -->
       <div id="guest-nav">
-        <a href="/extension" class="btn btn-ghost" style="text-decoration: none;">Extension</a>
-        <button class="btn btn-ghost" id="login-btn">Login</button>
-        <button class="btn btn-primary" id="signup-btn">Sign up</button>
+        <a href="/#features" class="nav-link">Features</a>
+        <button class="btn btn-ghost" id="login-btn">Sign in</button>
+        <button class="btn btn-primary" id="signup-btn">Get started</button>
       </div>
 
+      <!-- Auth nav: app style -->
       <div id="auth-nav">
         <button class="btn btn-primary" id="new-bookmark-btn">+ New bookmark</button>
 

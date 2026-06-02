@@ -60,11 +60,13 @@ function updateHeaderUI() {
   const profileAvatarBtn = document.getElementById('profile-avatar-btn');
 
   const logoLink = document.getElementById('logo-home');
+  const headerSearch = document.getElementById('header-search');
 
   if (headerState.currentUser) {
-    // Show logged-in elements
+    // Logged in: app-style header
     if (authNav) authNav.style.display = 'flex';
     if (guestNav) guestNav.style.display = 'none';
+    if (headerSearch) headerSearch.style.display = 'flex';
     if (logoLink) logoLink.href = '/app';
 
     // Set username display in dropdown and link
@@ -97,9 +99,10 @@ function updateHeaderUI() {
       }
     }
   } else {
-    // Hide logged-in elements, show guest
+    // Logged out: landing-style header
     if (authNav) authNav.style.display = 'none';
     if (guestNav) guestNav.style.display = 'flex';
+    if (headerSearch) headerSearch.style.display = 'none';
     if (logoLink) logoLink.href = '/';
   }
 }

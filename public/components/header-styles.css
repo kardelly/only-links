@@ -175,3 +175,21 @@
   background: var(--border);
   margin: var(--space-2) 0;
 }
+
+/* Guest nav link (Features) */
+.nav-link {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.nav-link:hover {
+  color: var(--fg);
+}
+
+/* Hide search bar by default — shown via JS when logged in */
+#header-search {
+  display: none;
+}
