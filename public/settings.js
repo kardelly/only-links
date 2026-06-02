@@ -53,23 +53,18 @@ async function checkSession() {
     // Update username field
     const usernameField = document.getElementById('username-field');
     if (usernameField) {
-      usernameField.value = data.user.username;
-      usernameField.dataset.originalUsername = data.user.username;
+      usernameField.value = user.username;
+      usernameField.dataset.originalUsername = user.username;
     }
 
     // Load email if available
     const emailInput = document.getElementById('email');
     if (emailInput) {
-      emailInput.value = data.user.email || '';
-      console.log('Email loaded:', data.user.email);
+      emailInput.value = user.email || '';
     }
 
     // Load user preferences
     await loadPreferences();
-  } catch (err) {
-    console.error('Session check error:', err);
-    window.location.href = '/';
-  }
 }
 
 // Load user preferences
