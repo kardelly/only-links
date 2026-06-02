@@ -460,7 +460,7 @@ function escapeHTML(str) {
 
 function timeAgo(dateString) {
   const date = new Date(dateString);
-  return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
 }
 
 // Setup pagination buttons
