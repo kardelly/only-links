@@ -558,6 +558,38 @@
       border: 1px solid oklch(88% 0.05 15);
     }
 
+    /* ===== DATA ACTIONS (neutral) ===== */
+    .data-action {
+      padding: var(--space-5) var(--space-6);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .data-action + .data-action {
+      margin-top: var(--space-4);
+    }
+
+    .data-action-title {
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: var(--space-1);
+    }
+
+    .data-action-description {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      margin-bottom: var(--space-4);
+      line-height: 1.5;
+    }
+
+    .data-action-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
     /* ===== DANGER ZONE ===== */
     .danger-zone {
       background: var(--danger-subtle);
@@ -569,23 +601,109 @@
     }
 
     .danger-action {
-      padding: var(--space-4);
+      padding: var(--space-5) var(--space-6);
       background: var(--surface);
       border: 1px solid oklch(88% 0.05 15);
-      border-radius: 10px;
+      border-radius: 12px;
+    }
+
+    .danger-action + .danger-action {
+      margin-top: var(--space-4);
     }
 
     .danger-action-title {
       font-size: var(--text-base);
       font-weight: 600;
       color: var(--danger);
-      margin-bottom: var(--space-2);
+      margin-bottom: var(--space-1);
     }
 
     .danger-action-description {
       font-size: var(--text-sm);
       color: var(--muted);
       margin-bottom: var(--space-4);
+      line-height: 1.5;
+    }
+
+    /* ===== FOCUS ===== */
+    .btn:focus-visible,
+    .form-input:focus-visible,
+    .toggle-switch input:focus-visible + .toggle-slider {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ===== IMPORT MODAL STATS ===== */
+    .import-stat {
+      text-align: center;
+      padding: var(--space-4);
+      border-radius: 10px;
+    }
+
+    .import-stat-value {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: var(--space-1);
+    }
+
+    .import-stat-label {
+      font-size: var(--text-xs);
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .import-stat.success {
+      background: oklch(96% 0.02 140);
+    }
+
+    .import-stat.success .import-stat-value {
+      color: oklch(45% 0.12 140);
+    }
+
+    .import-stat.error {
+      background: var(--danger-subtle);
+    }
+
+    .import-stat.error .import-stat-value {
+      color: var(--danger);
+    }
+
+    /* ===== DELETE MODAL CHECKLIST ===== */
+    .delete-checklist {
+      list-style: none;
+      padding: 0;
+      margin-bottom: var(--space-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .delete-checklist li {
+      padding: var(--space-3) var(--space-4);
+      background: var(--danger-subtle);
+      border: 1px solid oklch(90% 0.04 15);
+      border-radius: 8px;
+      font-size: var(--text-sm);
+      color: oklch(38% 0.12 15);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .container {
+        padding: var(--space-8) var(--space-4);
+      }
+      .settings-section {
+        padding: var(--space-6);
+        border-radius: 12px;
+      }
+      .form-actions {
+        flex-direction: column-reverse;
+      }
+      .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
     }
 
     .visually-hidden {
@@ -887,36 +1005,30 @@
 
       <div id="data-alert" class="alert"></div>
 
-      <div class="danger-action" style="background: var(--bg); border: 1px solid var(--border); margin-bottom: var(--space-6);">
-        <div style="font-size: var(--text-base); font-weight: 600; color: var(--fg); margin-bottom: var(--space-2);">
-          Fetch missing images
+      <div class="data-action">
+        <div class="data-action-title">Export bookmarks</div>
+        <p class="data-action-description">Download all your bookmarks as a JSON file for backup or migration.</p>
+        <div class="data-action-row">
+          <button class="btn btn-secondary btn-sm" id="export-bookmarks-btn">Export as JSON</button>
         </div>
-        <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
-          Pull thumbnail images for bookmarks imported without one. Runs in the background.
-        </p>
-        <button class="btn btn-secondary btn-sm" id="fetch-images-btn">Fetch images</button>
-        <span id="fetch-images-status" style="font-size: var(--text-sm); color: var(--muted); margin-left: var(--space-3);"></span>
       </div>
 
-      <div class="danger-action" style="background: var(--bg); border: 1px solid var(--border); margin-bottom: var(--space-6);">
-        <div style="font-size: var(--text-base); font-weight: 600; color: var(--fg); margin-bottom: var(--space-2);">
-          Export bookmarks
+      <div class="data-action">
+        <div class="data-action-title">Import bookmarks</div>
+        <p class="data-action-description">Upload a JSON or HTML file. Supported: only.link export, Delicious, Pinboard, Netscape Bookmark format.</p>
+        <div class="data-action-row">
+          <input type="file" id="import-file-input" accept=".json,.html,.htm,application/json,text/html" style="display: none;">
+          <button class="btn btn-secondary btn-sm" id="import-bookmarks-btn">Choose file</button>
         </div>
-        <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
-          Download all your bookmarks as a JSON file that can be imported later.
-        </p>
-        <button class="btn btn-secondary btn-sm" id="export-bookmarks-btn">Export as JSON</button>
       </div>
 
-      <div class="danger-action" style="background: var(--bg); border: 1px solid var(--border);">
-        <div style="font-size: var(--text-base); font-weight: 600; color: var(--fg); margin-bottom: var(--space-2);">
-          Import bookmarks
+      <div class="data-action">
+        <div class="data-action-title">Fetch missing images</div>
+        <p class="data-action-description">Pull thumbnail images for bookmarks imported without one. Runs in the background.</p>
+        <div class="data-action-row">
+          <button class="btn btn-secondary btn-sm" id="fetch-images-btn">Fetch images</button>
+          <span id="fetch-images-status" style="font-size: var(--text-sm); color: var(--muted);"></span>
         </div>
-        <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
-          Upload a JSON or HTML file to import bookmarks. Supported formats: only.link export, Delicious, Pinboard, Netscape Bookmark format.
-        </p>
-        <input type="file" id="import-file-input" accept=".json,.html,.htm,application/json,text/html" style="display: none;">
-        <button class="btn btn-secondary btn-sm" id="import-bookmarks-btn">Choose file</button>
       </div>
     </section>
 
@@ -927,19 +1039,15 @@
         <p class="section-description">Irreversible actions that affect your account</p>
       </div>
 
-      <div class="danger-action" style="margin-bottom: var(--space-6);">
+      <div class="danger-action">
         <div class="danger-action-title">Delete all bookmarks</div>
-        <p class="danger-action-description">
-          Permanently delete all your bookmarks. Your account will remain active. This action cannot be undone.
-        </p>
+        <p class="danger-action-description">Permanently delete all your bookmarks. Your account stays active. This cannot be undone.</p>
         <button class="btn btn-danger btn-sm" id="delete-all-bookmarks-btn">Delete all my links</button>
       </div>
 
       <div class="danger-action">
         <div class="danger-action-title">Delete account</div>
-        <p class="danger-action-description">
-          Permanently delete your account and all bookmarks. This action cannot be undone.
-        </p>
+        <p class="danger-action-description">Permanently delete your account and all bookmarks. This cannot be undone.</p>
         <button class="btn btn-danger btn-sm" id="delete-account-btn">Delete my account</button>
       </div>
     </section>
@@ -973,13 +1081,9 @@
       </div>
       <div class="modal-body">
         <div style="margin-bottom: var(--space-6);">
-          <div style="background: var(--accent-subtle); padding: var(--space-6); border-radius: 12px; margin-bottom: var(--space-4);">
-            <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--accent); margin-bottom: var(--space-2);" id="import-total-count">
-              0 bookmarks
-            </div>
-            <div style="font-size: var(--text-sm); color: var(--muted);">
-              found in file
-            </div>
+          <div style="padding: var(--space-4) var(--space-5); border: 1px solid var(--border); border-radius: 10px; margin-bottom: var(--space-4); display: flex; align-items: baseline; gap: var(--space-2);">
+            <span style="font-size: var(--text-xl); font-weight: 700; color: var(--fg);" id="import-total-count">0</span>
+            <span style="font-size: var(--text-sm); color: var(--muted);">bookmarks found in file</span>
           </div>
 
           <div id="import-preview-list" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: var(--space-4);">
@@ -1018,18 +1122,18 @@
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
-          <div style="text-align: center; padding: var(--space-4); background: oklch(96% 0.02 140); border-radius: 8px;">
-            <div style="font-size: var(--text-xl); font-weight: 700; color: oklch(45% 0.12 140);" id="import-success-count">0</div>
-            <div style="font-size: var(--text-xs); color: var(--muted); margin-top: var(--space-1);">Imported</div>
+          <div class="import-stat success">
+            <div class="import-stat-value" id="import-success-count">0</div>
+            <div class="import-stat-label">Imported</div>
           </div>
-          <div style="text-align: center; padding: var(--space-4); background: var(--danger-subtle); border-radius: 8px;">
-            <div style="font-size: var(--text-xl); font-weight: 700; color: var(--danger);" id="import-failed-count">0</div>
-            <div style="font-size: var(--text-xs); color: var(--muted); margin-top: var(--space-1);">Failed</div>
+          <div class="import-stat error">
+            <div class="import-stat-value" id="import-failed-count">0</div>
+            <div class="import-stat-label">Failed</div>
           </div>
         </div>
 
-        <div id="import-error-details" style="display: none; margin-top: var(--space-4); padding: var(--space-4); background: var(--danger-subtle); border-radius: 8px; max-height: 150px; overflow-y: auto;">
-          <div style="font-size: var(--text-sm); font-weight: 600; color: var(--danger); margin-bottom: var(--space-2);">Common errors:</div>
+        <div id="import-error-details" style="display: none; margin-top: var(--space-4); padding: var(--space-4); background: var(--danger-subtle); border: 1px solid oklch(90% 0.04 15); border-radius: 8px; max-height: 150px; overflow-y: auto;">
+          <p style="font-size: var(--text-sm); font-weight: 600; color: var(--danger); margin-bottom: var(--space-2);">Errors:</p>
           <ul id="import-error-list" style="font-size: var(--text-xs); color: var(--danger); margin: 0; padding-left: var(--space-5);">
           </ul>
         </div>
@@ -1048,31 +1152,19 @@
         <h2 class="modal-title">Wait, are you sure? 🥺</h2>
       </div>
       <div class="modal-body">
-        <p style="font-size: var(--text-base); color: var(--fg); line-height: 1.6; margin-bottom: var(--space-6);">
-          We'd hate to see you go! Deleting your account means:
-        </p>
-        <ul style="list-style: none; padding: 0; margin-bottom: var(--space-6);">
-          <li style="padding: var(--space-3); background: var(--accent-subtle); border-radius: 8px; margin-bottom: var(--space-3); font-size: var(--text-sm);">
-            📚 All your bookmarks will be permanently deleted
-          </li>
-          <li style="padding: var(--space-3); background: var(--accent-subtle); border-radius: 8px; margin-bottom: var(--space-3); font-size: var(--text-sm);">
-            🏷️ All your carefully curated tags will be lost
-          </li>
-          <li style="padding: var(--space-3); background: var(--accent-subtle); border-radius: 8px; font-size: var(--text-sm);">
-            ⏰ This action cannot be undone. Like, ever.
-          </li>
+        <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">This will permanently delete:</p>
+        <ul class="delete-checklist">
+          <li>All your saved bookmarks</li>
+          <li>All your tags and collections</li>
+          <li>Your account and login credentials</li>
         </ul>
-        <p style="font-size: var(--text-sm); color: var(--muted); margin-bottom: var(--space-4);">
-          Maybe just take a break instead? Your links will be here when you come back. 💙
-        </p>
-        <p style="font-size: var(--text-sm); color: var(--fg); font-weight: 600; margin-bottom: var(--space-2);">
-          If you're really sure, type your username to confirm:
-        </p>
+        <label class="form-label" for="delete-account-username" style="margin-bottom: var(--space-2);">Type your username to confirm</label>
         <input
           type="text"
           class="form-input"
           id="delete-account-username"
           placeholder="Your username"
+          autocomplete="off"
           style="margin-bottom: var(--space-2);"
         >
         <p id="delete-account-error" style="font-size: var(--text-xs); color: var(--danger); display: none;"></p>
