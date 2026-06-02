@@ -524,8 +524,8 @@ function renderBookmarks() {
         ` : ''}
 
         <div class="bookmark-meta">
-          <a href="/user/${escapeHTML(item.username)}" style="color: inherit; text-decoration: none; transition: color var(--duration-fast) var(--transition);" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='inherit'">@${escapeHTML(item.username)}</a>
-          <span>•</span>
+          <a href="/user/${escapeHTML(item.username)}" class="bookmark-meta-link">@${escapeHTML(item.username)}</a>
+          <span aria-hidden="true">·</span>
           <span>${timeAgo(item.created_at)}</span>
         </div>
 
