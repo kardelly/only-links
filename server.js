@@ -121,6 +121,10 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
+if (IS_PRODUCTION && allowedOrigins.some(o => o.includes('localhost') || o.includes('127.0.0.1'))) {
+  console.warn('\n⚠️  WARNING: ALLOWED_ORIGINS includes localhost/127.0.0.1 in production. Update ALLOWED_ORIGINS in .env.\n');
+}
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, curl, Postman)
@@ -136,19 +140,29 @@ app.use(cors({
 }));
 
 // Rate Limiting for Auth Endpoints
+// Login: 10 attempts per 15 min — tolerant enough for real users who mistype
 const authLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 5,
-  message: { error: 'Too many authentication attempts. Please try again later.' },
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many attempts. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting for successful requests to avoid punishing legitimate users
-  skipSuccessfulRequests: true
+  skipSuccessfulRequests: true,
+});
+
+// Register / password reset: 5 per hour — these are rarely done in bulk
+const strictLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: { error: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false,
 });
 
 // Standard Middlewares
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
 
 // ==========================================
@@ -201,6 +215,20 @@ const storage = multer.diskStorage({
   }
 });
 
+// Magic bytes for allowed image types
+const IMAGE_SIGNATURES = [
+  { mime: 'image/jpeg', bytes: [0xFF, 0xD8, 0xFF] },
+  { mime: 'image/png',  bytes: [0x89, 0x50, 0x4E, 0x47] },
+  { mime: 'image/webp', bytes: null, check: b => b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50 },
+];
+
+function matchesMagicBytes(buffer) {
+  return IMAGE_SIGNATURES.some(sig => {
+    if (sig.check) return buffer.length >= 12 && sig.check(buffer);
+    return sig.bytes.every((byte, i) => buffer[i] === byte);
+  });
+}
+
 const upload = multer({
   storage: storage,
   limits: {
@@ -208,11 +236,10 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (allowedMimes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.'));
+    if (!allowedMimes.includes(file.mimetype)) {
+      return cb(new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.'));
     }
+    cb(null, true);
   }
 });
 
@@ -425,7 +452,7 @@ app.get('/api/auth/me', optionalAuthenticate, async (req, res) => {
 });
 
 // POST /api/auth/register - Register a new user
-app.post('/api/auth/register', authLimiter, async (req, res) => {
+app.post('/api/auth/register', strictLimiter, async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
 
   // Validate username
@@ -575,7 +602,7 @@ app.get('/api/auth/check-username', async (req, res) => {
 });
 
 // POST /api/auth/request-password-reset - Request password reset
-app.post('/api/auth/request-password-reset', authLimiter, async (req, res) => {
+app.post('/api/auth/request-password-reset', strictLimiter, async (req, res) => {
   const { usernameOrEmail } = req.body;
 
   if (!usernameOrEmail) {
@@ -621,12 +648,11 @@ app.post('/api/auth/request-password-reset', authLimiter, async (req, res) => {
       console.log(`\n🔑 PASSWORD RESET LINK for @${user.username}:\n   ${resetUrl}\n`);
     }
 
-    // In development without SMTP, return the reset URL directly so it's testable
-    const isDev = process.env.NODE_ENV !== 'production';
     const response = {
       message: 'If an account exists with that username/email, a password reset link has been sent.'
     };
-    if (isDev && (!smtpConfigured || !user.email)) {
+    // Only expose reset URL in explicit development mode — never in production
+    if (NODE_ENV === 'development' && (!smtpConfigured || !user.email)) {
       response.devResetUrl = resetUrl;
     }
 
@@ -638,7 +664,7 @@ app.post('/api/auth/request-password-reset', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/reset-password - Reset password with token
-app.post('/api/auth/reset-password', authLimiter, async (req, res) => {
+app.post('/api/auth/reset-password', strictLimiter, async (req, res) => {
   const { token, newPassword } = req.body;
 
   if (!token || !newPassword) {
@@ -690,7 +716,6 @@ app.get('/api/bookmarks', optionalAuthenticate, async (req, res) => {
   const feedType = req.query.feedType || 'all'; // 'all', 'mine', 'network'
   const filterByUsername = req.query.user || null;
 
-  console.log('[/api/bookmarks] req.user:', req.user, 'feedType:', feedType, 'cookies:', req.cookies);
 
   let userIdFilter = null;
 
@@ -1187,12 +1212,9 @@ app.put('/api/settings/preferences', authenticate, async (req, res) => {
 app.put('/api/settings/username', authenticate, async (req, res) => {
   const { username } = req.body;
 
-  console.log('Username update request from user:', req.user.id, 'new username:', username);
-
   // Validate username
   const usernameValidation = validateUsername(username);
   if (!usernameValidation.valid) {
-    console.log('Username validation failed:', usernameValidation.error);
     return res.status(400).json({ error: usernameValidation.error });
   }
 
@@ -1200,12 +1222,10 @@ app.put('/api/settings/username', authenticate, async (req, res) => {
     // Check if username is already taken by another user
     const existingUsername = await getUserByUsername(usernameValidation.value);
     if (existingUsername && existingUsername.id !== req.user.id) {
-      console.log('Username already exists for user:', existingUsername.id);
       return res.status(400).json({ error: 'Username is already taken' });
     }
 
     await updateUsername(req.user.id, usernameValidation.value);
-    console.log('Username updated successfully for user:', req.user.id);
 
     // Clear session cookie to force re-login with new username
     res.clearCookie('token');
@@ -1221,12 +1241,9 @@ app.put('/api/settings/username', authenticate, async (req, res) => {
 app.put('/api/settings/email', authenticate, async (req, res) => {
   const { email } = req.body;
 
-  console.log('Email update request from user:', req.user.id, 'new email:', email);
-
   // Validate email
   const emailValidation = validateEmail(email);
   if (!emailValidation.valid) {
-    console.log('Email validation failed:', emailValidation.error);
     return res.status(400).json({ error: emailValidation.error });
   }
 
@@ -1234,12 +1251,10 @@ app.put('/api/settings/email', authenticate, async (req, res) => {
     // Check if email is already taken by another user
     const existingEmail = await getUserByEmail(emailValidation.value);
     if (existingEmail && existingEmail.id !== req.user.id) {
-      console.log('Email already exists for user:', existingEmail.id);
       return res.status(400).json({ error: 'Email is already registered' });
     }
 
     await updateUserEmail(req.user.id, emailValidation.value);
-    console.log('Email updated successfully for user:', req.user.id);
     res.json({ message: 'Email updated successfully' });
   } catch (err) {
     console.error('Update Email Error:', err);
@@ -1300,6 +1315,17 @@ app.post('/api/settings/avatar', authenticate, (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Verify actual file content via magic bytes (client-supplied mimetype is untrustworthy)
+      const filePath = path.join(__dirname, 'public', 'uploads', 'avatars', req.file.filename);
+      const fd = fs.openSync(filePath, 'r');
+      const header = Buffer.alloc(12);
+      fs.readSync(fd, header, 0, 12, 0);
+      fs.closeSync(fd);
+      if (!matchesMagicBytes(header)) {
+        fs.unlinkSync(filePath);
+        return res.status(400).json({ error: 'Invalid file content. Only JPEG, PNG, and WebP images are allowed.' });
       }
 
       const avatarPath = `/uploads/avatars/${req.file.filename}`;
