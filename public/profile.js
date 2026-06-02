@@ -216,6 +216,18 @@ function renderBookmarks() {
       host = new URL(item.url).hostname.replace('www.', '');
     } catch (e) {}
 
+    const isOwner = profileState.currentUser && profileState.currentUser.username === profileState.username;
+
+    // Fix relative/protocol-relative og_image URLs
+    let ogImage = item.og_image;
+    if (ogImage) {
+      if (ogImage.startsWith('//')) ogImage = 'https:' + ogImage;
+      else if (ogImage.startsWith('/')) {
+        try { const b = new URL(item.url); ogImage = `${b.protocol}//${b.host}${ogImage}`; } catch(e) {}
+      }
+      ogImage = ogImage.replace(/^http:\/\//, 'https://');
+    }
+
     const article = document.createElement('article');
     article.className = 'bookmark-item';
 
@@ -224,9 +236,9 @@ function renderBookmarks() {
     `).join('');
 
     article.innerHTML = `
-      ${item.og_image ? `
+      ${ogImage ? `
         <div class="bookmark-thumbnail">
-          <img src="${escapeHTML(item.og_image)}" alt="${escapeHTML(item.title)}" loading="lazy" onerror="this.parentElement.style.display='none'">
+          <img src="${escapeHTML(ogImage)}" alt="${escapeHTML(item.title)}" loading="lazy" onerror="this.parentElement.style.display='none'">
         </div>
       ` : ''}
 
@@ -249,8 +261,17 @@ function renderBookmarks() {
         ` : ''}
 
         <div class="bookmark-meta">
+          <a href="/user/${escapeHTML(item.username)}" class="bookmark-meta-link">@${escapeHTML(item.username)}</a>
+          <span aria-hidden="true">·</span>
           <span>${timeAgo(item.created_at)}</span>
         </div>
+
+        ${isOwner ? `
+          <div class="bookmark-actions">
+            <button class="btn btn-ghost btn-sm edit-bookmark-btn" data-id="${item.id}" title="Edit">Edit</button>
+            <button class="btn btn-ghost btn-sm delete-bookmark-btn" data-id="${item.id}" title="Delete">Delete</button>
+          </div>
+        ` : ''}
       </div>
     `;
 
@@ -259,8 +280,21 @@ function renderBookmarks() {
 
   // Attach tag click listeners
   container.querySelectorAll('.tag').forEach(tag => {
-    tag.onclick = () => {
-      filterByTag(tag.getAttribute('data-tag'));
+    tag.onclick = () => filterByTag(tag.getAttribute('data-tag'));
+  });
+
+  // Attach edit/delete listeners
+  container.querySelectorAll('.edit-bookmark-btn').forEach(btn => {
+    btn.onclick = () => {
+      const id = parseInt(btn.getAttribute('data-id'));
+      openEditBookmarkModal(id);
+    };
+  });
+
+  container.querySelectorAll('.delete-bookmark-btn').forEach(btn => {
+    btn.onclick = () => {
+      const id = parseInt(btn.getAttribute('data-id'));
+      performDeleteBookmark(id);
     };
   });
 }
@@ -286,6 +320,87 @@ function renderPagination() {
   infoSpan.textContent = `Page ${page} of ${totalPages}`;
   prevBtn.disabled = (page === 1);
   nextBtn.disabled = (page === totalPages);
+}
+
+// Edit bookmark modal (profile version — uses profileState)
+async function openEditBookmarkModal(bookmarkId) {
+  const bookmark = profileState.bookmarks.find(b => b.id === bookmarkId);
+  if (!bookmark) return;
+
+  const modal = document.getElementById('bookmark-modal');
+  if (!modal) return;
+
+  const urlInput = document.getElementById('bookmark-url');
+  const titleInput = document.getElementById('bookmark-title');
+  const descInput = document.getElementById('bookmark-description');
+  const tagsInput = document.getElementById('bookmark-tags');
+
+  if (urlInput) urlInput.value = bookmark.url;
+  if (titleInput) titleInput.value = bookmark.title;
+  if (descInput) descInput.value = bookmark.description || '';
+  if (tagsInput) tagsInput.value = bookmark.tags.join(', ');
+
+  modal.dataset.editingId = bookmark.id;
+
+  const saveBtn = document.getElementById('bookmark-submit');
+  if (saveBtn) { saveBtn.classList.remove('saving', 'done'); saveBtn.disabled = false; }
+
+  const thumb = document.getElementById('bm-og-thumb');
+  const ogImg = document.getElementById('bm-og-img');
+  if (bookmark.og_image) {
+    modal.dataset.ogImage = bookmark.og_image;
+    if (thumb && ogImg) {
+      ogImg.src = bookmark.og_image.replace(/^http:\/\//, 'https://');
+      ogImg.onload = () => thumb.classList.add('visible');
+      ogImg.onerror = () => thumb.classList.remove('visible');
+    }
+  } else {
+    delete modal.dataset.ogImage;
+    if (thumb) thumb.classList.remove('visible');
+    if (ogImg) ogImg.src = '';
+  }
+
+  const titleEl = document.getElementById('bookmark-modal-title');
+  if (titleEl) titleEl.textContent = 'Edit bookmark';
+
+  modal.classList.add('active');
+}
+
+// Delete bookmark (profile version — reloads after delete)
+async function performDeleteBookmark(id) {
+  const modal = document.getElementById('delete-confirmation-modal');
+  if (!modal) return;
+
+  const confirmed = await new Promise(resolve => {
+    modal.classList.add('active');
+
+    const confirmBtn = document.getElementById('delete-confirm-btn');
+    const cancelBtns = modal.querySelectorAll('.delete-cancel');
+
+    const cleanup = () => {
+      modal.classList.remove('active');
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtns.forEach(b => b.removeEventListener('click', onCancel));
+    };
+
+    const onConfirm = () => { cleanup(); resolve(true); };
+    const onCancel  = () => { cleanup(); resolve(false); };
+
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtns.forEach(b => b.addEventListener('click', onCancel));
+  });
+
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/api/bookmarks/${id}`, { method: 'DELETE', credentials: 'include' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete bookmark');
+    profileState.bookmarks = profileState.bookmarks.filter(b => b.id !== id);
+    renderBookmarks();
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 // Filter by tag
@@ -435,6 +550,60 @@ async function initProfile() {
       }
     });
   }
+
+  // Bookmark form submit (edit only — profile owners can edit their bookmarks)
+  // bookmark-modals.js injects the HTML async, so we use event delegation
+  document.addEventListener('submit', async (e) => {
+    const form = e.target.closest('#bookmark-form');
+    if (!form) return;
+    e.preventDefault();
+
+    const modal = document.getElementById('bookmark-modal');
+    const bookmarkId = modal?.dataset.editingId;
+    if (!bookmarkId) return; // profile only supports editing, not creating
+
+    const url = document.getElementById('bookmark-url')?.value;
+    const title = document.getElementById('bookmark-title')?.value;
+    const description = document.getElementById('bookmark-description')?.value || '';
+    const tags = document.getElementById('bookmark-tags')?.value || '';
+    const isPublic = document.getElementById('bookmark-is-public')?.checked ?? true;
+    const og_image = modal?.dataset.ogImage || null;
+
+    const submitBtn = document.getElementById('bookmark-submit');
+    if (submitBtn) { submitBtn.classList.add('saving'); submitBtn.disabled = true; }
+
+    try {
+      const res = await fetch(`/api/bookmarks/${bookmarkId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ url, title, description,
+          tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+          is_public: isPublic, og_image })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+
+      if (submitBtn) { submitBtn.classList.remove('saving'); submitBtn.classList.add('done'); }
+      await new Promise(r => setTimeout(r, 480));
+
+      modal.classList.add('exit');
+      setTimeout(() => {
+        modal.classList.remove('active', 'exit');
+        delete modal.dataset.editingId;
+        delete modal.dataset.ogImage;
+        if (submitBtn) submitBtn.classList.remove('done');
+        form.reset();
+        const thumb = document.getElementById('bm-og-thumb');
+        if (thumb) thumb.classList.remove('visible');
+      }, 200);
+
+      await loadBookmarks();
+    } catch (err) {
+      if (submitBtn) { submitBtn.classList.remove('saving'); submitBtn.disabled = false; }
+      alert(err.message);
+    }
+  });
 
   // Load profile on page load
   loadProfile();
