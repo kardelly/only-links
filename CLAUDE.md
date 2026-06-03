@@ -38,8 +38,10 @@
 
 ## Deploy
 - VPS: `root@2.25.147.170`, process name `only-links` (pm2)
-- Deploy flow: `bash deploy-prepare.sh` → `scp onlylink-deploy.tar.gz root@2.25.147.170:/tmp/` → on server: `cd /var/www/onlylinks && tar -xzf /tmp/onlylink-deploy.tar.gz && npm install --production && pm2 restart only-links`
+- **Normal deploy (preferred):** push to main, then on server: `cd /var/www/onlylinks && git pull origin main && pm2 restart only-links`
 - `deploy-prepare.sh` and `vps-setup.sh` are gitignored (server-specific, not tracked)
+- If git ownership error: `git config --global --add safe.directory /var/www/onlylinks`
+- If `node_modules` changed: add `npm install --production` before `pm2 restart`
 
 ## Dates & formats
 - Timestamps displayed as `12 JUN 2026` via `toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()`
