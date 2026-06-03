@@ -1108,6 +1108,12 @@
     </div>
   </div>
 
+  <!-- Redirect mobile users to PWA -->
+  <script>
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      window.location.replace('/mobile/app');
+    }
+  </script>
   <script src="/components/session.js"></script>
   <script src="/components/header.js"></script>
   <script src="/components/auth-modal.js"></script>
