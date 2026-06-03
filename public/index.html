@@ -984,22 +984,28 @@
     }
 
     .bmc-link {
-      display: inline-block;
-      line-height: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #FFDD00;
+      color: #000;
+      font-size: 15px;
+      font-weight: 600;
       border-radius: 8px;
-      overflow: hidden;
+      text-decoration: none;
       transition: opacity 0.15s ease, transform 0.15s ease;
+      letter-spacing: -0.01em;
     }
 
     .bmc-link:hover {
-      opacity: 0.9;
+      opacity: 0.88;
       transform: translateY(-1px);
     }
 
-    .bmc-btn {
-      height: 40px;
-      width: auto;
-      display: block;
+    .bmc-emoji {
+      font-size: 18px;
+      line-height: 1;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1099,6 +1105,17 @@
         height: 32px;
         padding: 0 12px;
         font-size: 13px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .nav-links .btn-ghost {
+        display: none;
+      }
+      .nav-links .btn {
+        height: 30px;
+        padding: 0 10px;
+        font-size: 12px;
       }
     }
 
@@ -1522,7 +1539,8 @@
     <div class="final-cta-support">
       <p class="support-label">Enjoying onlylinks? Help keep it running.</p>
       <a href="https://www.buymeacoffee.com/onlylinks" target="_blank" rel="noopener" class="bmc-link">
-        <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=onlylinks&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a coffee" class="bmc-btn" />
+        <span class="bmc-emoji">☕</span>
+        Buy me a coffee
       </a>
     </div>
   </section>
