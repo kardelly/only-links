@@ -1,5 +1,5 @@
 import { BaseView } from './base-view.js';
-import { escapeHtml, timeAgo, fetchWithError } from './utils.js';
+import { escapeHtml, timeAgo, fetchWithError, showToast } from './utils.js';
 
 /**
  * Profile View
@@ -158,14 +158,125 @@ export class ProfileView extends BaseView {
       <div class="card-footer">
         <span class="card-domain">${escapeHtml(domain)}</span>
         <span class="card-date">${timeAgo(bookmark.created_at)}</span>
+        <div class="card-owner-actions">
+          <button class="card-action-btn" data-action="edit">Edit</button>
+          <button class="card-action-btn card-action-delete" data-action="delete">Delete</button>
+        </div>
       </div>
     `;
 
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.card-owner-actions')) return;
       window.open(bookmark.url, '_blank');
     });
 
+    card.querySelector('[data-action="edit"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.openEditSheet(bookmark, card);
+    });
+
+    card.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.confirmDelete(bookmark, card);
+    });
+
     return card;
+  }
+
+  /**
+   * Open edit bottom sheet
+   */
+  openEditSheet(bookmark, card) {
+    // Remove any existing sheet
+    document.querySelector('.edit-sheet-backdrop')?.remove();
+
+    const tags = Array.isArray(bookmark.tags)
+      ? bookmark.tags.join(', ')
+      : (bookmark.tags || '');
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'edit-sheet-backdrop';
+    backdrop.innerHTML = `
+      <div class="edit-sheet">
+        <div class="edit-sheet-handle"></div>
+        <h3 class="edit-sheet-title">Edit bookmark</h3>
+        <div class="edit-sheet-fields">
+          <label class="edit-field-label">URL</label>
+          <input class="edit-field-input" id="es-url" type="text" inputmode="url" autocorrect="off" autocapitalize="none" value="${escapeHtml(bookmark.url)}">
+          <label class="edit-field-label">Title</label>
+          <input class="edit-field-input" id="es-title" type="text" value="${escapeHtml(bookmark.title)}">
+          <label class="edit-field-label">Description</label>
+          <textarea class="edit-field-input edit-field-textarea" id="es-desc">${escapeHtml(bookmark.description || '')}</textarea>
+          <label class="edit-field-label">Tags <span class="edit-field-hint">(comma separated)</span></label>
+          <input class="edit-field-input" id="es-tags" type="text" value="${escapeHtml(tags)}">
+          <label class="edit-field-checkbox-row">
+            <input type="checkbox" id="es-public" ${bookmark.is_public ? 'checked' : ''}>
+            Public
+          </label>
+        </div>
+        <div class="edit-sheet-actions">
+          <button class="btn btn-secondary" id="es-cancel">Cancel</button>
+          <button class="btn btn-primary" id="es-save">Save</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => backdrop.classList.add('open'));
+
+    const close = () => {
+      backdrop.classList.remove('open');
+      setTimeout(() => backdrop.remove(), 250);
+    };
+
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+    backdrop.querySelector('#es-cancel').addEventListener('click', close);
+    backdrop.querySelector('#es-save').addEventListener('click', async () => {
+      const url = backdrop.querySelector('#es-url').value.trim();
+      const title = backdrop.querySelector('#es-title').value.trim();
+      const description = backdrop.querySelector('#es-desc').value.trim();
+      const tagsVal = backdrop.querySelector('#es-tags').value.trim();
+      const is_public = backdrop.querySelector('#es-public').checked;
+
+      if (!url || !title) { showToast('URL and title are required', 'error'); return; }
+
+      const btn = backdrop.querySelector('#es-save');
+      btn.disabled = true; btn.textContent = 'Saving…';
+
+      const result = await fetchWithError(`/api/bookmarks/${bookmark.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, title, description, tags: tagsVal, is_public })
+      });
+
+      if (result) {
+        showToast('Saved', 'success');
+        // Update local data and re-render card
+        Object.assign(bookmark, { url, title, description, tags: tagsVal.split(',').map(t => t.trim()).filter(Boolean), is_public });
+        const newCard = this.createBookmarkCard(bookmark);
+        card.replaceWith(newCard);
+        close();
+      } else {
+        btn.disabled = false; btn.textContent = 'Save';
+      }
+    });
+  }
+
+  /**
+   * Confirm and delete bookmark
+   */
+  async confirmDelete(bookmark, card) {
+    if (!confirm(`Delete "${bookmark.title}"?`)) return;
+
+    const result = await fetchWithError(`/api/bookmarks/${bookmark.id}`, { method: 'DELETE' });
+    if (result) {
+      card.remove();
+      this.totalBookmarks = Math.max(0, this.totalBookmarks - 1);
+      // Update counter in header
+      const statValue = this.container.querySelector('.stat-value');
+      if (statValue) statValue.textContent = this.totalBookmarks;
+      showToast('Deleted', 'success');
+    }
   }
 
   /**
