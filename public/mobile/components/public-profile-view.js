@@ -152,7 +152,6 @@ export class PublicProfileView extends BaseView {
         try { const b = new URL(bookmark.url); ogImage = `${b.protocol}//${b.host}${ogImage}`; } catch { ogImage = ''; }
       }
       ogImage = ogImage.replace(/^http:\/\//, 'https://');
-      if (!ogImage.startsWith('https://')) ogImage = '';
     }
 
     const description = bookmark.description || bookmark.og_description || '';

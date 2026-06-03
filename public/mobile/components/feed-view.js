@@ -126,8 +126,6 @@ export class FeedView extends BaseView {
         } catch (e) { ogImage = ''; }
       }
       ogImage = ogImage.replace(/^http:\/\//, 'https://');
-      // Sanity check — must start with https://
-      if (!ogImage.startsWith('https://')) ogImage = '';
     }
 
     // Render tags (max 3)

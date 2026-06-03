@@ -139,7 +139,6 @@ export class SearchView extends BaseView {
         try { const base = new URL(bookmark.url); ogImage = `${base.protocol}//${base.host}${ogImage}`; } catch { ogImage = ''; }
       }
       ogImage = ogImage.replace(/^http:\/\//, 'https://');
-      if (!ogImage.startsWith('https://')) ogImage = '';
     }
 
     let domain = '';
