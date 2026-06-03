@@ -45,3 +45,7 @@ backups/
 # Internal AI session docs
 docs/superpowers/
 *.backup
+
+# Infra scripts (server-specific, not tracked)
+deploy-prepare.sh
+vps-setup.sh
