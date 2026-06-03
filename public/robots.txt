@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /settings
+Disallow: /mobile/app
+
+# Allow crawling of public pages
+Allow: /user/
+Allow: /extension
+Allow: /bookmarklet
+Allow: /privacy
+Allow: /terms
+
+Sitemap: https://onlylinks.id/sitemap.xml
