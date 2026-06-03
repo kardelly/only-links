@@ -46,6 +46,7 @@ export const dbPromise = open({
     CREATE TABLE IF NOT EXISTS user_preferences (
       user_id INTEGER PRIMARY KEY,
       default_public INTEGER DEFAULT 1,
+      searchable INTEGER DEFAULT 1,
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
@@ -451,12 +452,23 @@ export async function getUserTags(userId, limit = 100) {
 // Helper: Get user preferences
 export async function getUserPreferences(userId) {
   const db = await dbPromise;
+
+  // Migration: add searchable column if missing
+  try {
+    await db.run('ALTER TABLE user_preferences ADD COLUMN searchable INTEGER DEFAULT 1');
+  } catch {}
+
   let prefs = await db.get('SELECT * FROM user_preferences WHERE user_id = ?', [userId]);
 
   // Create default preferences if they don't exist
   if (!prefs) {
-    await db.run('INSERT INTO user_preferences (user_id, default_public) VALUES (?, 1)', [userId]);
-    prefs = { user_id: userId, default_public: 1 };
+    await db.run('INSERT INTO user_preferences (user_id, default_public, searchable) VALUES (?, 1, 1)', [userId]);
+    prefs = { user_id: userId, default_public: 1, searchable: 1 };
+  }
+
+  // Ensure searchable has a value (for existing rows before migration)
+  if (prefs.searchable === undefined || prefs.searchable === null) {
+    prefs.searchable = 1;
   }
 
   return prefs;
@@ -476,6 +488,11 @@ export async function updateUserPreferences(userId, preferences) {
   if (preferences.default_public !== undefined) {
     updates.push('default_public = ?');
     values.push(preferences.default_public ? 1 : 0);
+  }
+
+  if (preferences.searchable !== undefined) {
+    updates.push('searchable = ?');
+    values.push(preferences.searchable ? 1 : 0);
   }
 
   if (updates.length === 0) return;
@@ -626,7 +643,7 @@ export async function cleanupExpiredResetTokens() {
   await db.run('DELETE FROM password_reset_tokens WHERE expires_at < datetime("now")');
 }
 
-// Search users by username prefix
+// Search users by username prefix (respects searchable opt-out)
 export async function searchUsers(query, limit = 10) {
   const db = await dbPromise;
   const pattern = `%${query.toLowerCase()}%`;
@@ -635,7 +652,9 @@ export async function searchUsers(query, limit = 10) {
             COUNT(b.id) as bookmark_count
      FROM users u
      LEFT JOIN bookmarks b ON b.user_id = u.id AND b.is_public = 1
+     LEFT JOIN user_preferences p ON p.user_id = u.id
      WHERE LOWER(u.username) LIKE ?
+       AND (p.searchable IS NULL OR p.searchable = 1)
      GROUP BY u.id
      ORDER BY bookmark_count DESC
      LIMIT ?`,

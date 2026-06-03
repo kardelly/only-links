@@ -75,10 +75,15 @@ async function loadPreferences() {
 
     const data = await response.json();
 
-    // Set default public toggle
-    const defaultPublicToggle = document.getElementById('default-public');
-    if (defaultPublicToggle && data.preferences) {
-      defaultPublicToggle.checked = data.preferences.default_public !== false;
+    if (data.preferences) {
+      const defaultPublicToggle = document.getElementById('default-public');
+      if (defaultPublicToggle) {
+        defaultPublicToggle.checked = data.preferences.default_public !== 0;
+      }
+      const searchableToggle = document.getElementById('searchable');
+      if (searchableToggle) {
+        searchableToggle.checked = data.preferences.searchable !== 0;
+      }
     }
   } catch (err) {
     console.error('Load preferences error:', err);
@@ -155,10 +160,14 @@ function setupEventListeners() {
     passwordForm.addEventListener('submit', handlePasswordChange);
   }
 
-  // Privacy toggle
+  // Privacy toggles
   const defaultPublicToggle = document.getElementById('default-public');
   if (defaultPublicToggle) {
     defaultPublicToggle.addEventListener('change', handlePrivacyChange);
+  }
+  const searchableToggle = document.getElementById('searchable');
+  if (searchableToggle) {
+    searchableToggle.addEventListener('change', handlePrivacyChange);
   }
 
   // Delete all bookmarks
@@ -415,14 +424,15 @@ async function handlePasswordChange(e) {
 }
 
 // Handle privacy setting change
-async function handlePrivacyChange(e) {
-  const defaultPublic = e.target.checked;
+async function handlePrivacyChange() {
+  const defaultPublic = document.getElementById('default-public')?.checked ?? true;
+  const searchable = document.getElementById('searchable')?.checked ?? true;
 
   try {
     const response = await fetch('/api/settings/preferences', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ default_public: defaultPublic })
+      body: JSON.stringify({ default_public: defaultPublic, searchable })
     });
 
     const data = await response.json();

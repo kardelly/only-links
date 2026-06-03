@@ -1220,10 +1220,10 @@ app.get('/api/settings/preferences', authenticate, async (req, res) => {
 
 // PUT /api/settings/preferences - Update user preferences
 app.put('/api/settings/preferences', authenticate, async (req, res) => {
-  const { default_public } = req.body;
+  const { default_public, searchable } = req.body;
 
   try {
-    await updateUserPreferences(req.user.id, { default_public });
+    await updateUserPreferences(req.user.id, { default_public, searchable });
     res.json({ message: 'Preferences updated successfully' });
   } catch (err) {
     console.error('Update Preferences Error:', err);
