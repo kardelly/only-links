@@ -38,8 +38,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only handle GET requests
+  // Only handle GET requests from our own origin — never intercept external images/fonts
   if (request.method !== 'GET') return;
+  if (url.origin !== self.location.origin) return;
 
   // API calls: always network, no cache
   if (url.pathname.startsWith('/api/')) {
