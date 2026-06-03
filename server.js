@@ -1152,6 +1152,79 @@ function decodeHtmlEntities(str) {
     .replace(/&nbsp;/g, ' ');
 }
 
+// ==========================================
+// URL METADATA FETCHER (shared utility)
+// ==========================================
+
+function decodeHtmlEntitiesInternal(str) {
+  if (!str) return '';
+  return str
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+}
+
+async function fetchUrlMetadata(targetUrl) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  const response = await fetch(targetUrl, {
+    signal: controller.signal,
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    }
+  });
+  clearTimeout(timeoutId);
+
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const html = await response.text();
+
+  // Title
+  let title = '';
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (titleMatch?.[1]) title = titleMatch[1].trim();
+  if (!title) {
+    const m = html.match(/<meta[^>]+(?:property|name)=["']og:title["'][^>]+content=["']([^"']*)["']/i) ||
+              html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']og:title["']/i);
+    if (m?.[1]) title = m[1].trim();
+  }
+
+  // Description
+  let description = '';
+  const descMatch = html.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']*)["']/i) ||
+                    html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:name|property)=["'](?:description|og:description)["']/i);
+  if (descMatch?.[1]) description = descMatch[1].trim();
+
+  // Keywords/tags
+  let tags = '';
+  const kwMatch = html.match(/<meta[^>]+(?:name|property)=["'](?:keywords|og:tags)["'][^>]+content=["']([^"']*)["']/i) ||
+                  html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:name|property)=["'](?:keywords|og:tags)["']/i);
+  if (kwMatch?.[1]) tags = kwMatch[1].trim();
+
+  // og:image
+  let og_image = '';
+  const imgMatch = html.match(/<meta[^>]+(?:property|name)=["']og:image["'][^>]+content=["']([^"']*)["']/i) ||
+                   html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']og:image["']/i);
+  if (imgMatch?.[1]) {
+    og_image = imgMatch[1].trim();
+    if (og_image.startsWith('/')) {
+      const base = new URL(targetUrl);
+      og_image = `${base.protocol}//${base.host}${og_image}`;
+    } else if (og_image.startsWith('//')) {
+      og_image = `https:${og_image}`;
+    }
+    if (og_image.startsWith('http://')) og_image = og_image.replace('http://', 'https://');
+  }
+
+  return {
+    title: decodeHtmlEntitiesInternal(title),
+    description: decodeHtmlEntitiesInternal(description),
+    tags: decodeHtmlEntitiesInternal(tags),
+    og_image
+  };
+}
+
 // Blocklist for SSRF prevention — private/internal IPs
 const SSRF_BLOCKED = /^(localhost$|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$|0\.0\.0\.0$|fd[0-9a-f]{2}:)/i;
 
@@ -1178,81 +1251,8 @@ app.get('/api/metadata', authenticate, authLimiter, async (req, res) => {
   }
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout limit
-
-    const response = await fetch(urlValidation.value, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-      }
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const html = await response.text();
-
-    // 1. Scrape Title
-    let title = '';
-    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-    if (titleMatch && titleMatch[1]) {
-      title = titleMatch[1].trim();
-    }
-    if (!title) {
-      const ogTitleMatch = html.match(/<meta[^>]+(?:property|name)=["']og:title["'][^>]+content=["']([^"']*)["']/i) ||
-                            html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']og:title["']/i);
-      if (ogTitleMatch && ogTitleMatch[1]) {
-        title = ogTitleMatch[1].trim();
-      }
-    }
-
-    // 2. Scrape Description
-    let description = '';
-    const descMatch = html.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']*)["']/i) ||
-                      html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:name|property)=["'](?:description|og:description)["']/i);
-    if (descMatch && descMatch[1]) {
-      description = descMatch[1].trim();
-    }
-
-    // 3. Scrape Keywords
-    let tags = '';
-    const keywordsMatch = html.match(/<meta[^>]+(?:name|property)=["'](?:keywords|og:tags)["'][^>]+content=["']([^"']*)["']/i) ||
-                          html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:name|property)=["'](?:keywords|og:tags)["']/i);
-    if (keywordsMatch && keywordsMatch[1]) {
-      tags = keywordsMatch[1].trim();
-    }
-
-    // 4. Scrape og:image
-    let og_image = '';
-    const ogImageMatch = html.match(/<meta[^>]+(?:property|name)=["']og:image["'][^>]+content=["']([^"']*)["']/i) ||
-                         html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']og:image["']/i);
-    if (ogImageMatch && ogImageMatch[1]) {
-      og_image = ogImageMatch[1].trim();
-
-      // Convert relative URLs to absolute
-      if (og_image.startsWith('/')) {
-        const baseUrl = new URL(urlValidation.value);
-        og_image = `${baseUrl.protocol}//${baseUrl.host}${og_image}`;
-      } else if (og_image.startsWith('//')) {
-        og_image = `https:${og_image}`;
-      }
-      // Upgrade http to https to avoid mixed-content blocking
-      if (og_image.startsWith('http://')) {
-        og_image = og_image.replace('http://', 'https://');
-      }
-    }
-
-    res.json({
-      title: decodeHtmlEntities(title),
-      description: decodeHtmlEntities(description),
-      tags: decodeHtmlEntities(tags),
-      og_image: og_image
-    });
+    const metadata = await fetchUrlMetadata(urlValidation.value);
+    res.json(metadata);
 
   } catch (err) {
     console.error(`Metadata fetch error:`, err.message);
