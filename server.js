@@ -241,7 +241,7 @@ app.get('/share-target', (req, res) => {
 });
 
 // Serve Static Frontend Assets
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'public', 'uploads', 'avatars');
