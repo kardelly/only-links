@@ -116,7 +116,7 @@ export class SearchView extends BaseView {
         </div>
       `;
       row.addEventListener('click', () => {
-        window.open(`/user/${encodeURIComponent(user.username)}`, '_blank');
+        if (window.mobileApp) window.mobileApp.showPublicProfile(user.username);
       });
       list.appendChild(row);
     });

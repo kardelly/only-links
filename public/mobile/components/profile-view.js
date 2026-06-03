@@ -389,7 +389,9 @@ export class ProfileView extends BaseView {
           <span class="people-username">@${escapeHtml(user.username)}</span>
         </div>
       `;
-      row.addEventListener('click', () => window.open(`/user/${encodeURIComponent(user.username)}`, '_blank'));
+      row.addEventListener('click', () => {
+        if (window.mobileApp) window.mobileApp.showPublicProfile(user.username);
+      });
       listEl.appendChild(row);
     });
   }

@@ -5,6 +5,7 @@ import { AddBookmarkView } from './components/add-bookmark-view.js';
 import { TagsView } from './components/tags-view.js';
 import { ProfileView } from './components/profile-view.js';
 import { SettingsView } from './components/settings-view.js';
+import { PublicProfileView } from './components/public-profile-view.js';
 import { InstallPrompt } from './components/install-prompt.js';
 import { fetchWithError, showToast } from './components/utils.js';
 
@@ -155,7 +156,8 @@ class MobileApp {
       add: new AddBookmarkView(),
       tags: new TagsView(),
       profile: new ProfileView(),
-      settings: new SettingsView()
+      settings: new SettingsView(),
+      'public-profile': new PublicProfileView()
     };
 
     // Initialize each view
@@ -216,6 +218,31 @@ class MobileApp {
   /**
    * Show a view
    */
+  /**
+   * Show a public user profile inside the PWA (no new tab)
+   */
+  async showPublicProfile(username) {
+    this.previousView = this.currentView;
+    const view = this.views['public-profile'];
+    view.currentUser = this.user;
+
+    if (this.currentView && this.views[this.currentView]) {
+      this.views[this.currentView].hide();
+    }
+    this.currentView = 'public-profile';
+    if (this.bottomNav) this.bottomNav.setActive(null);
+    await view.loadForUser(username);
+  }
+
+  /**
+   * Go back to previous view
+   */
+  goBack() {
+    const prev = this.previousView || 'feed';
+    this.previousView = null;
+    this.showView(prev);
+  }
+
   async showView(viewName) {
     // Hide current view
     if (this.currentView && this.views[this.currentView]) {
