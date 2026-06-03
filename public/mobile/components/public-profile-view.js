@@ -167,12 +167,14 @@ export class PublicProfileView extends BaseView {
       ...(rest > 0 ? [`<span class="tag tag-more">+${rest}</span>`] : [])
     ].join('');
 
+    const placeholderSrc = `/api/placeholder/${encodeURIComponent(domain || 'link')}`;
+
     card.innerHTML = `
       <div class="card-body">
         <div class="card-thumb">
           ${ogImage
-            ? `<img src="${escapeHtml(ogImage)}" alt="" onerror="this.parentElement.innerHTML='<div class=\\'card-thumb-fallback\\'>🔗</div>'" loading="lazy">`
-            : `<div class="card-thumb-fallback">🔗</div>`
+            ? `<img src="${escapeHtml(ogImage)}" alt="" onerror="this.src='${placeholderSrc}'" loading="lazy">`
+            : `<img src="${placeholderSrc}" alt="" loading="lazy">`
           }
         </div>
         <div class="card-content">

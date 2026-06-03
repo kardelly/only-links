@@ -181,6 +181,28 @@ app.use(cookieParser());
 // PWA ROUTES (Must be BEFORE static middleware)
 // ==========================================
 
+// GET /api/placeholder/:domain — SVG placeholder with domain initials
+app.get('/api/placeholder/:domain', (req, res) => {
+  const domain = req.params.domain.replace(/[^a-zA-Z0-9.-]/g, '').substring(0, 50);
+  const initials = domain.replace(/^www\./, '').substring(0, 2).toUpperCase();
+
+  // Deterministic color from domain string
+  let hash = 0;
+  for (let i = 0; i < domain.length; i++) hash = domain.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  const bg = `hsl(${hue}, 35%, 28%)`;
+  const fg = `hsl(${hue}, 60%, 78%)`;
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <rect width="80" height="80" fill="${bg}"/>
+  <text x="40" y="52" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="700" fill="${fg}" text-anchor="middle" dominant-baseline="middle">${initials}</text>
+</svg>`;
+
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(svg);
+});
+
 // Serve robots.txt
 app.get('/robots.txt', (req, res) => {
   res.setHeader('Content-Type', 'text/plain');
@@ -1556,9 +1578,53 @@ app.get('/app', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'app.html'));
 });
 
-// Serve user profile page
-app.get('/user/:username', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+// Serve user profile page — inject og tags server-side for social sharing
+app.get('/user/:username', async (req, res) => {
+  const username = req.params.username;
+
+  // Fetch profile data for og tags (crawlers don't run JS)
+  let title = `@${username} — onlylinks`;
+  let description = `Bookmarks curated by @${username} on onlylinks.`;
+  let ogImage = 'https://onlylinks.id/og-image.png';
+  let canonicalUrl = `https://onlylinks.id/user/${encodeURIComponent(username)}`;
+
+  try {
+    const profile = await getUserProfile(username);
+    if (profile) {
+      const bookmarkCount = profile.stats?.bookmarks || 0;
+      title = `@${profile.username} — onlylinks`;
+      description = `${bookmarkCount} curated bookmarks by @${profile.username} on onlylinks.`;
+      if (profile.avatar) {
+        // Use avatar as og:image — full URL if relative
+        ogImage = profile.avatar.startsWith('http')
+          ? profile.avatar
+          : `https://onlylinks.id${profile.avatar}`;
+      }
+    }
+  } catch {}
+
+  // Read profile.html and inject og tags before </head>
+  const fs2 = await import('fs/promises');
+  let html = await fs2.readFile(path.join(__dirname, 'public', 'profile.html'), 'utf8');
+
+  const ogTags = `
+  <!-- Dynamic og tags for social sharing -->
+  <meta property="og:type" content="profile">
+  <meta property="og:site_name" content="onlylinks">
+  <meta property="og:url" content="${canonicalUrl}">
+  <meta property="og:title" content="${title.replace(/"/g, '&quot;')}">
+  <meta property="og:description" content="${description.replace(/"/g, '&quot;')}">
+  <meta property="og:image" content="${ogImage}">
+  <meta property="og:image:width" content="400">
+  <meta property="og:image:height" content="400">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}">
+  <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}">
+  <meta name="twitter:image" content="${ogImage}">
+  <link rel="canonical" href="${canonicalUrl}">`;
+
+  html = html.replace('</head>', ogTags + '\n</head>');
+  res.send(html);
 });
 
 // Serve settings page

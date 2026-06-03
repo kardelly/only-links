@@ -481,9 +481,8 @@ function renderBookmarks() {
   
   // Render bookmarks with design system classes
   state.bookmarks.forEach((item, index) => {
-    // Debug: log og_image and convert relative URLs to absolute
+    // Normalize og_image URLs
     if (item.og_image) {
-      console.log(`Bookmark "${item.title}" has og_image:`, item.og_image);
 
       // Convert relative URLs to absolute
       if (item.og_image.startsWith('//')) {
@@ -522,12 +521,15 @@ function renderBookmarks() {
     const q = state.searchQuery;
     const hl = (str) => q ? highlightText(str, q) : escapeHTML(str);
 
+    const placeholderUrl = `/api/placeholder/${encodeURIComponent(host)}`;
+
     article.innerHTML = `
-      ${item.og_image ? `
-        <div class="bookmark-thumbnail">
-          <img src="${escapeHTML(item.og_image)}" alt="${escapeHTML(item.title)}" loading="lazy" onerror="this.parentElement.style.display='none'">
-        </div>
-      ` : ''}
+      <div class="bookmark-thumbnail">
+        <img src="${item.og_image ? escapeHTML(item.og_image) : placeholderUrl}"
+             alt=""
+             loading="lazy"
+             onerror="this.src='${placeholderUrl}'">
+      </div>
 
       <div class="bookmark-content">
         <div class="bookmark-header">

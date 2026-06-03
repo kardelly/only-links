@@ -135,15 +135,19 @@ export class FeedView extends BaseView {
 
     const description = bookmark.description || bookmark.og_description || '';
 
+    let domain = '';
+    try { domain = new URL(bookmark.url).hostname.replace(/^www\./, ''); } catch {}
+    const placeholderSrc = `/api/placeholder/${encodeURIComponent(domain || 'link')}`;
+
     card.innerHTML = `
       <div class="card-body">
         <div class="card-thumb">
           ${ogImage
             ? `<img src="${escapeHtml(ogImage)}"
                     alt=""
-                    onerror="this.parentElement.innerHTML='<div class=\\'card-thumb-fallback\\'>🔗</div>'"
+                    onerror="this.src='${placeholderSrc}'"
                     loading="lazy">`
-            : `<div class="card-thumb-fallback">🔗</div>`
+            : `<img src="${placeholderSrc}" alt="" loading="lazy">`
           }
         </div>
         <div class="card-content">
@@ -153,7 +157,7 @@ export class FeedView extends BaseView {
         </div>
       </div>
       <div class="card-footer">
-        <span class="card-domain">${escapeHtml((() => { try { return new URL(bookmark.url).hostname.replace(/^www\./, ''); } catch { return ''; } })())}</span>
+        <span class="card-domain">${escapeHtml(domain)}</span>
         <span class="card-date">${timeAgo(bookmark.created_at)}</span>
         <button class="card-share-btn" aria-label="Compartilhar link">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
