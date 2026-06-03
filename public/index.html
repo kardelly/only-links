@@ -1222,17 +1222,20 @@
 
     @media (max-width: 600px) {
       .footer {
-        padding: var(--space-8) var(--space-5);
+        padding: 32px 20px;
       }
 
       .footer-container {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--space-5);
+        gap: 20px;
       }
 
       .footer-links {
-        gap: var(--space-3) var(--space-5);
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+        gap: 12px 20px;
+        justify-content: start;
       }
 
       .footer-text {
@@ -1240,7 +1243,7 @@
       }
 
       .footer-link {
-        font-size: 12px;
+        font-size: 13px;
       }
     }
 
