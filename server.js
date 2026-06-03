@@ -1005,7 +1005,23 @@ app.delete('/api/bookmarks/:id', authenticate, async (req, res) => {
 app.get('/api/tags', async (req, res) => {
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 30));
   const offset = Math.max(0, parseInt(req.query.offset) || 0);
+  const q = (req.query.q || '').trim().toLowerCase();
   try {
+    if (q) {
+      // Autocomplete: search tags by prefix
+      const db = await dbPromise;
+      const tags = await db.all(
+        `SELECT t.name, COUNT(bt.bookmark_id) as count
+         FROM tags t
+         JOIN bookmark_tags bt ON t.id = bt.tag_id
+         WHERE LOWER(t.name) LIKE ?
+         GROUP BY t.id
+         ORDER BY count DESC, t.name ASC
+         LIMIT ?`,
+        [`${q}%`, limit]
+      );
+      return res.json({ tags, total: tags.length, hasMore: false });
+    }
     const [tags, total] = await Promise.all([getPopularTags(limit, offset), countAllTags()]);
     res.json({ tags, total, hasMore: offset + tags.length < total });
   } catch (err) {

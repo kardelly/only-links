@@ -1,4 +1,4 @@
-import { isValidUrl, showToast, fetchWithError, escapeHtml } from './utils.js';
+import { isValidUrl, showToast, fetchWithError, escapeHtml, TagInput } from './utils.js';
 
 /**
  * Add Bookmark View (Bottom Sheet)
@@ -9,6 +9,7 @@ export class AddBookmarkView {
     this.sheet = null;
     this.backdrop = null;
     this.sharedData = null;
+    this.tagInput = null;
   }
 
   /**
@@ -72,13 +73,8 @@ export class AddBookmarkView {
           </div>
 
           <div class="form-group">
-            <label for="bookmark-tags">Tags</label>
-            <input 
-              type="text" 
-              id="bookmark-tags" 
-              name="tags" 
-              placeholder="javascript, tutorial, react">
-            <small>Separate tags with commas</small>
+            <label>Tags</label>
+            <div id="bookmark-tags-container"></div>
           </div>
 
           <div class="form-group form-checkbox">
@@ -97,6 +93,10 @@ export class AddBookmarkView {
     `;
 
     document.body.appendChild(this.sheet);
+
+    // Initialize tag input
+    const tagContainer = document.getElementById('bookmark-tags-container');
+    this.tagInput = new TagInput(tagContainer);
   }
 
   /**
@@ -180,6 +180,9 @@ export class AddBookmarkView {
     const form = document.getElementById('add-bookmark-form');
     form.reset();
 
+    // Reset tag input
+    if (this.tagInput) this.tagInput.setTags([]);
+
     // Clear errors
     const errors = form.querySelectorAll('.form-error');
     errors.forEach(error => {
@@ -211,9 +214,8 @@ export class AddBookmarkView {
     }
 
     // Tags length
-    if (formData.tags) {
-      const tags = formData.tags.split(',').map(t => t.trim());
-      if (tags.some(tag => tag.length > 50)) {
+    if (formData.tags && formData.tags.length) {
+      if (formData.tags.some(tag => tag.length > 50)) {
         errors.push({ field: 'tags', message: 'Individual tags must be under 50 characters' });
       }
     }
@@ -257,7 +259,7 @@ export class AddBookmarkView {
       url: rawUrl,
       title: form.title.value.trim(),
       description: form.description.value.trim(),
-      tags: form.tags.value.trim(),
+      tags: this.tagInput ? this.tagInput.getValue() : '',
       is_public: form.is_public.checked
     };
 

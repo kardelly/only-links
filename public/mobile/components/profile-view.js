@@ -1,5 +1,5 @@
 import { BaseView } from './base-view.js';
-import { escapeHtml, timeAgo, fetchWithError, showToast } from './utils.js';
+import { escapeHtml, timeAgo, fetchWithError, showToast, TagInput } from './utils.js';
 
 /**
  * Profile View
@@ -234,8 +234,8 @@ export class ProfileView extends BaseView {
           <input class="edit-field-input" id="es-title" type="text" value="${escapeHtml(bookmark.title)}">
           <label class="edit-field-label">Description</label>
           <textarea class="edit-field-input edit-field-textarea" id="es-desc">${escapeHtml(bookmark.description || '')}</textarea>
-          <label class="edit-field-label">Tags <span class="edit-field-hint">(comma separated)</span></label>
-          <input class="edit-field-input" id="es-tags" type="text" value="${escapeHtml(tags)}">
+          <label class="edit-field-label">Tags</label>
+          <div id="es-tags-container"></div>
           <label class="edit-field-checkbox-row">
             <input type="checkbox" id="es-public" ${bookmark.is_public ? 'checked' : ''}>
             Public
@@ -251,7 +251,12 @@ export class ProfileView extends BaseView {
     document.body.appendChild(backdrop);
     requestAnimationFrame(() => backdrop.classList.add('open'));
 
+    // Initialize tag input in the edit sheet
+    const editTagInput = new TagInput(backdrop.querySelector('#es-tags-container'));
+    editTagInput.setTags(tags);
+
     const close = () => {
+      editTagInput.destroy();
       backdrop.classList.remove('open');
       setTimeout(() => backdrop.remove(), 250);
     };
@@ -262,7 +267,7 @@ export class ProfileView extends BaseView {
       const url = backdrop.querySelector('#es-url').value.trim();
       const title = backdrop.querySelector('#es-title').value.trim();
       const description = backdrop.querySelector('#es-desc').value.trim();
-      const tagsVal = backdrop.querySelector('#es-tags').value.trim();
+      const tagsVal = editTagInput.getValue();
       const is_public = backdrop.querySelector('#es-public').checked;
 
       if (!url || !title) { showToast('URL and title are required', 'error'); return; }

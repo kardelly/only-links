@@ -108,6 +108,171 @@ export function isValidUrl(url) {
 }
 
 /**
+ * Tag Input with chips + autocomplete
+ * Usage:
+ *   const ti = new TagInput(containerEl);
+ *   ti.setTags(['js', 'react']);   // pre-fill
+ *   ti.getTags();                  // → ['js', 'react']
+ *   ti.destroy();                  // cleanup
+ */
+export class TagInput {
+  constructor(container) {
+    this.container = container;
+    this.tags = [];
+    this.suggestions = [];
+    this.suggestionsVisible = false;
+    this._onDocClick = this._onDocClick.bind(this);
+    this._render();
+  }
+
+  _render() {
+    this.container.innerHTML = '';
+    this.container.className = 'tag-input-wrapper';
+
+    // chips row + text input
+    this.field = document.createElement('div');
+    this.field.className = 'tag-input-field';
+
+    this.input = document.createElement('input');
+    this.input.type = 'text';
+    this.input.className = 'tag-input-text';
+    this.input.placeholder = 'Add tags…';
+    this.input.autocomplete = 'off';
+    this.input.autocorrect = 'off';
+    this.input.autocapitalize = 'none';
+    this.input.spellcheck = false;
+
+    this.field.appendChild(this.input);
+    this.container.appendChild(this.field);
+
+    // dropdown
+    this.dropdown = document.createElement('div');
+    this.dropdown.className = 'tag-input-dropdown';
+    this.dropdown.hidden = true;
+    this.container.appendChild(this.dropdown);
+
+    this._bindEvents();
+  }
+
+  _bindEvents() {
+    const debouncedFetch = debounce((q) => this._fetchSuggestions(q), 200);
+
+    this.input.addEventListener('input', () => {
+      const val = this.input.value;
+      // comma or space → confirm
+      if (val.endsWith(',') || val.endsWith(' ')) {
+        const tag = val.slice(0, -1).trim();
+        if (tag) this._addTag(tag);
+        return;
+      }
+      const q = val.trim();
+      if (q.length >= 1) debouncedFetch(q);
+      else this._hideDropdown();
+    });
+
+    this.input.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ',') && !e.isComposing) {
+        e.preventDefault();
+        const tag = this.input.value.replace(/,$/, '').trim();
+        if (tag) this._addTag(tag);
+      } else if (e.key === 'Backspace' && this.input.value === '' && this.tags.length) {
+        this._removeTag(this.tags[this.tags.length - 1]);
+      }
+    });
+
+    this.input.addEventListener('blur', () => {
+      // small delay so tap on dropdown registers first
+      setTimeout(() => this._hideDropdown(), 150);
+    });
+
+    document.addEventListener('click', this._onDocClick);
+  }
+
+  _onDocClick(e) {
+    if (!this.container.contains(e.target)) this._hideDropdown();
+  }
+
+  async _fetchSuggestions(q) {
+    try {
+      const res = await fetch(`/api/tags?q=${encodeURIComponent(q)}&limit=8`, { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const all = (data.tags || []).map(t => t.name || t).filter(t => !this.tags.includes(t));
+      this._showDropdown(all);
+    } catch { /* silent */ }
+  }
+
+  _showDropdown(items) {
+    if (!items.length) { this._hideDropdown(); return; }
+    this.dropdown.innerHTML = '';
+    items.forEach(tag => {
+      const item = document.createElement('div');
+      item.className = 'tag-input-suggestion';
+      item.textContent = tag;
+      item.addEventListener('mousedown', (e) => { e.preventDefault(); this._addTag(tag); });
+      item.addEventListener('touchend', (e) => { e.preventDefault(); this._addTag(tag); });
+      this.dropdown.appendChild(item);
+    });
+    this.dropdown.hidden = false;
+  }
+
+  _hideDropdown() {
+    this.dropdown.hidden = true;
+    this.dropdown.innerHTML = '';
+  }
+
+  _addTag(tag) {
+    tag = tag.trim().toLowerCase().replace(/[^a-z0-9-_.]/g, '').slice(0, 50);
+    if (!tag || this.tags.includes(tag) || this.tags.length >= 20) return;
+    this.tags.push(tag);
+    this.input.value = '';
+    this._hideDropdown();
+    this._renderChips();
+    this.input.focus();
+  }
+
+  _removeTag(tag) {
+    this.tags = this.tags.filter(t => t !== tag);
+    this._renderChips();
+    this.input.focus();
+  }
+
+  _renderChips() {
+    // remove existing chips
+    this.field.querySelectorAll('.tag-chip').forEach(c => c.remove());
+    // insert chips before input
+    [...this.tags].reverse().forEach(tag => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.innerHTML = `${escapeHtml(tag)}<button type="button" aria-label="Remove ${escapeHtml(tag)}" class="tag-chip-remove">×</button>`;
+      chip.querySelector('button').addEventListener('click', () => this._removeTag(tag));
+      this.field.insertBefore(chip, this.input);
+    });
+    // update placeholder
+    this.input.placeholder = this.tags.length ? '' : 'Add tags…';
+  }
+
+  /** Pre-fill tags (array or comma string) */
+  setTags(value) {
+    const arr = Array.isArray(value)
+      ? value
+      : String(value || '').split(',').map(t => t.trim()).filter(Boolean);
+    this.tags = [];
+    arr.forEach(t => this._addTag(t));
+  }
+
+  /** Returns current tags as array */
+  getTags() { return [...this.tags]; }
+
+  /** Returns current tags as comma-separated string */
+  getValue() { return this.tags.join(', '); }
+
+  destroy() {
+    document.removeEventListener('click', this._onDocClick);
+  }
+}
+
+/**
  * Fetch with error handling
  * @param {string} url - URL to fetch
  * @param {object} options - Fetch options
