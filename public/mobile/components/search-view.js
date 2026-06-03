@@ -73,13 +73,34 @@ export class SearchView extends BaseView {
   }
 
   async searchBookmarks(resultsEl) {
-    const data = await fetchWithError(`/api/bookmarks?q=${encodeURIComponent(this.query)}`);
+    const data = await fetchWithError(`/api/bookmarks?q=${encodeURIComponent(this.query)}&limit=50`);
     resultsEl.innerHTML = '';
 
     if (!data || !data.items || data.items.length === 0) {
-      resultsEl.innerHTML = `<div class="search-empty">No bookmarks found for <strong>${escapeHtml(this.query)}</strong></div>`;
+      resultsEl.innerHTML = `
+        <div class="search-active-filter">
+          <span class="search-filter-chip">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            ${escapeHtml(this.query)}
+          </span>
+        </div>
+        <div class="search-empty">No bookmarks found for <strong>${escapeHtml(this.query)}</strong></div>`;
       return;
     }
+
+    const total = data.pagination?.total || data.items.length;
+
+    // Active filter chip + result count
+    const header = document.createElement('div');
+    header.className = 'search-active-filter';
+    header.innerHTML = `
+      <span class="search-filter-chip">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        ${escapeHtml(this.query)}
+      </span>
+      <span class="search-result-count">${total} result${total !== 1 ? 's' : ''}</span>
+    `;
+    resultsEl.appendChild(header);
 
     const grid = document.createElement('div');
     grid.className = 'bookmark-grid';

@@ -1443,3 +1443,29 @@ body {
 .tag-input-suggestion:hover {
   background: var(--surface-secondary);
 }
+
+/* ===== SEARCH ACTIVE FILTER ===== */
+.search-active-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 4px;
+  flex-wrap: wrap;
+}
+
+.search-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: var(--primary);
+  color: white;
+  border-radius: 980px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.search-result-count {
+  font-size: 13px;
+  color: var(--text-secondary);
+}

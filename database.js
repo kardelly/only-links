@@ -360,8 +360,18 @@ export async function getBookmarks({ userId, search, tag, page = 1, limit = 10, 
   
   if (search) {
     const searchPattern = `%${search.trim().toLowerCase()}%`;
-    whereClauses.push('(LOWER(b.title) LIKE ? OR LOWER(b.description) LIKE ? OR LOWER(b.url) LIKE ?)');
-    params.push(searchPattern, searchPattern, searchPattern);
+    whereClauses.push(`(
+      LOWER(b.title) LIKE ? OR
+      LOWER(b.description) LIKE ? OR
+      LOWER(b.url) LIKE ? OR
+      b.id IN (
+        SELECT bt_s.bookmark_id
+        FROM bookmark_tags bt_s
+        JOIN tags t_s ON bt_s.tag_id = t_s.id
+        WHERE LOWER(t_s.name) LIKE ?
+      )
+    )`);
+    params.push(searchPattern, searchPattern, searchPattern, searchPattern);
   }
   
   const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
