@@ -780,7 +780,7 @@ body {
 
 .search-input-wrapper {
   position: relative;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 12px;
 }
 
 .search-input {
@@ -806,8 +806,106 @@ body {
   pointer-events: none;
 }
 
+/* Search tabs */
+.search-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.search-tab {
+  flex: 1;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+  margin-bottom: -1px;
+}
+
+.search-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
 .search-results {
-  min-height: 200px;
+  min-height: 100px;
+}
+
+.search-empty {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* People list (search + follow modal) */
+.people-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.people-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.people-row:last-child {
+  border-bottom: none;
+}
+
+.people-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.people-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.people-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.people-username {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.people-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Follow sheet */
+.follow-list {
+  min-height: 80px;
+  max-height: 60dvh;
+  overflow-y: auto;
 }
 
 /* Tags View */
@@ -894,6 +992,17 @@ body {
 
 .stat {
   text-align: center;
+}
+
+.stat-clickable {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 150ms;
+}
+
+.stat-clickable:active {
+  background: var(--surface-secondary);
 }
 
 .stat-value {

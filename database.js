@@ -625,3 +625,20 @@ export async function cleanupExpiredResetTokens() {
   const db = await dbPromise;
   await db.run('DELETE FROM password_reset_tokens WHERE expires_at < datetime("now")');
 }
+
+// Search users by username prefix
+export async function searchUsers(query, limit = 10) {
+  const db = await dbPromise;
+  const pattern = `%${query.toLowerCase()}%`;
+  return db.all(
+    `SELECT u.id, u.username, u.avatar,
+            COUNT(b.id) as bookmark_count
+     FROM users u
+     LEFT JOIN bookmarks b ON b.user_id = u.id AND b.is_public = 1
+     WHERE LOWER(u.username) LIKE ?
+     GROUP BY u.id
+     ORDER BY bookmark_count DESC
+     LIMIT ?`,
+    [pattern, limit]
+  );
+}

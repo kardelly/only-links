@@ -11,6 +11,8 @@ export class ProfileView extends BaseView {
     this.user = null;
     this.bookmarks = [];
     this.totalBookmarks = 0;
+    this.followersCount = 0;
+    this.followingCount = 0;
   }
 
   /**
@@ -29,11 +31,18 @@ export class ProfileView extends BaseView {
 
       this.user = userData.user;
 
-      // Get user's bookmarks (first page)
-      const bookmarksData = await fetchWithError(`/api/bookmarks?user=${this.user.username}&page=1&limit=20`);
+      // Get user's bookmarks + follower counts in parallel
+      const [bookmarksData, profileData] = await Promise.all([
+        fetchWithError(`/api/bookmarks?user=${this.user.username}&page=1&limit=20`),
+        fetchWithError(`/api/users/${encodeURIComponent(this.user.username)}`)
+      ]);
       if (bookmarksData) {
         this.bookmarks = bookmarksData.items || [];
         this.totalBookmarks = bookmarksData.pagination?.total || 0;
+      }
+      if (profileData?.user) {
+        this.followersCount = profileData.user.followersCount || 0;
+        this.followingCount = profileData.user.followingCount || 0;
       }
 
       this.render();
@@ -69,6 +78,14 @@ export class ProfileView extends BaseView {
           <span class="stat-value">${this.totalBookmarks}</span>
           <span class="stat-label">Bookmarks</span>
         </div>
+        <div class="stat stat-clickable" id="followers-stat">
+          <span class="stat-value">${this.followersCount}</span>
+          <span class="stat-label">Followers</span>
+        </div>
+        <div class="stat stat-clickable" id="following-stat">
+          <span class="stat-value">${this.followingCount}</span>
+          <span class="stat-label">Following</span>
+        </div>
       </div>
       <div class="profile-actions">
         <button class="btn btn-secondary" id="settings-btn">Settings</button>
@@ -98,6 +115,14 @@ export class ProfileView extends BaseView {
       bookmarksSection.appendChild(grid);
       this.container.appendChild(bookmarksSection);
     }
+
+    // Followers / Following modals
+    this.container.querySelector('#followers-stat')?.addEventListener('click', () => {
+      this.openFollowModal('followers');
+    });
+    this.container.querySelector('#following-stat')?.addEventListener('click', () => {
+      this.openFollowModal('following');
+    });
 
     // Attach settings handler
     const settingsBtn = document.getElementById('settings-btn');
@@ -307,6 +332,66 @@ export class ProfileView extends BaseView {
     }
 
     return html;
+  }
+
+  /**
+   * Open followers / following bottom sheet
+   */
+  async openFollowModal(type) {
+    document.querySelector('.follow-sheet-backdrop')?.remove();
+
+    const title = type === 'followers' ? 'Followers' : 'Following';
+    const endpoint = `/api/users/${encodeURIComponent(this.user.username)}/${type}`;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'edit-sheet-backdrop follow-sheet-backdrop';
+    backdrop.innerHTML = `
+      <div class="edit-sheet">
+        <div class="edit-sheet-handle"></div>
+        <h3 class="edit-sheet-title">${title}</h3>
+        <div class="follow-list" id="follow-list">
+          <div class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => backdrop.classList.add('open'));
+
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        backdrop.classList.remove('open');
+        setTimeout(() => backdrop.remove(), 250);
+      }
+    });
+
+    const listEl = backdrop.querySelector('#follow-list');
+    const data = await fetchWithError(endpoint);
+    listEl.innerHTML = '';
+
+    const users = type === 'followers' ? data?.followers : data?.following;
+    if (!users || users.length === 0) {
+      listEl.innerHTML = `<p class="search-empty">No ${title.toLowerCase()} yet.</p>`;
+      return;
+    }
+
+    users.forEach(user => {
+      const row = document.createElement('div');
+      row.className = 'people-row';
+      const initials = user.username[0].toUpperCase();
+      row.innerHTML = `
+        <div class="people-avatar">
+          ${user.avatar
+            ? `<img src="${escapeHtml(user.avatar)}" alt="${escapeHtml(user.username)}" onerror="this.parentElement.innerHTML='${initials}'">`
+            : initials
+          }
+        </div>
+        <div class="people-info">
+          <span class="people-username">@${escapeHtml(user.username)}</span>
+        </div>
+      `;
+      row.addEventListener('click', () => window.open(`/user/${encodeURIComponent(user.username)}`, '_blank'));
+      listEl.appendChild(row);
+    });
   }
 
   /**

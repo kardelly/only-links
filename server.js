@@ -42,7 +42,8 @@ import {
   createPasswordResetToken,
   getUserByResetToken,
   deletePasswordResetToken,
-  cleanupExpiredResetTokens
+  cleanupExpiredResetTokens,
+  searchUsers
 } from './database.js';
 
 // ==========================================
@@ -952,6 +953,19 @@ app.get('/api/tags/mine', authenticate, async (req, res) => {
 // ==========================================
 // 4. USER PROFILE API ENDPOINTS
 // ==========================================
+
+// GET /api/users?q=query - Search users by username
+app.get('/api/users', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (!q || q.length < 2) return res.json({ users: [] });
+  try {
+    const users = await searchUsers(q, 10);
+    res.json({ users });
+  } catch (err) {
+    console.error('Search Users Error:', err);
+    res.status(500).json({ error: 'Failed to search users' });
+  }
+});
 
 // GET /api/users/:username - Get public user profile
 app.get('/api/users/:username', optionalAuthenticate, async (req, res) => {
