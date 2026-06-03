@@ -97,6 +97,9 @@ function updateHeaderUI() {
 
 // Setup all header event listeners
 function setupHeaderListeners() {
+  // User search dropdown
+  setupUserSearch();
+
   // Profile dropdown toggle
   const profileAvatarBtn = document.getElementById('profile-avatar-btn');
   const profileMenu = document.getElementById('profile-menu');
@@ -183,6 +186,80 @@ function setupHeaderListeners() {
       }
     });
   }
+}
+
+// User search dropdown
+function setupUserSearch() {
+  const input = document.getElementById('search-input');
+  const dropdown = document.getElementById('search-users-dropdown');
+  if (!input || !dropdown) return;
+
+  let debounceTimer = null;
+  let lastQuery = '';
+
+  const hide = () => { dropdown.hidden = true; dropdown.innerHTML = ''; };
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (q === lastQuery) return;
+    lastQuery = q;
+    clearTimeout(debounceTimer);
+
+    if (q.length < 2) { hide(); return; }
+
+    debounceTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/users?q=${encodeURIComponent(q)}`, { credentials: 'include' });
+        if (!res.ok) return;
+        const { users } = await res.json();
+        if (!users || users.length === 0) { hide(); return; }
+
+        dropdown.innerHTML = `
+          <div class="search-users-section">
+            <div class="search-users-label">People</div>
+            ${users.map(u => {
+              const initials = u.username[0].toUpperCase();
+              return `
+                <div class="search-user-row" data-href="/user/${encodeURIComponent(u.username)}">
+                  <div class="search-user-avatar">
+                    ${u.avatar
+                      ? `<img src="${u.avatar.replace(/"/g, '')}" alt="${initials}" onerror="this.parentElement.textContent='${initials}'">`
+                      : initials
+                    }
+                  </div>
+                  <div class="search-user-info">
+                    <span class="search-user-name">@${u.username}</span>
+                    <span class="search-user-count">${u.bookmark_count || 0} bookmarks</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+        dropdown.hidden = false;
+
+        dropdown.querySelectorAll('.search-user-row').forEach(row => {
+          row.addEventListener('click', () => {
+            window.location.href = row.dataset.href;
+            hide();
+          });
+        });
+      } catch {}
+    }, 280);
+  });
+
+  // Hide on blur (with delay to allow click)
+  input.addEventListener('blur', () => setTimeout(hide, 180));
+
+  // Hide when pressing Enter (let app.js handle bookmark search)
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.key === 'Enter') hide();
+  });
+
+  // Hide when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) hide();
+  });
 }
 
 // Initialize header immediately (synchronously load HTML)
