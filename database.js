@@ -115,6 +115,14 @@ export const dbPromise = open({
     console.log('Avatar column migration skipped (already exists or error):', e.message);
   }
 
+  // Migration: Add password_version column to users (for JWT invalidation)
+  try {
+    await db.run('ALTER TABLE users ADD COLUMN password_version INTEGER DEFAULT 1');
+    console.log('Added password_version column to users');
+  } catch (e) {
+    // Column already exists, ignore
+  }
+
   console.log('SQLite Database and Schema initialized with foreign keys enabled.');
   return db;
 });
@@ -128,7 +136,7 @@ export async function getUserByUsername(username) {
 // Helper: Get user by ID
 export async function getUserById(id) {
   const db = await dbPromise;
-  return db.get('SELECT id, username, email, avatar, created_at FROM users WHERE id = ?', [id]);
+  return db.get('SELECT id, username, email, avatar, created_at, password_version FROM users WHERE id = ?', [id]);
 }
 
 // Helper: Get user profile with statistics
@@ -507,7 +515,11 @@ export async function updateUserPreferences(userId, preferences) {
 // Helper: Update user password
 export async function updateUserPassword(userId, newPasswordHash) {
   const db = await dbPromise;
-  await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [newPasswordHash, userId]);
+  // Increment password_version to invalidate all existing JWT tokens
+  await db.run(
+    'UPDATE users SET password_hash = ?, password_version = COALESCE(password_version, 1) + 1 WHERE id = ?',
+    [newPasswordHash, userId]
+  );
 }
 
 // Helper: Update user email

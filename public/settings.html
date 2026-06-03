@@ -1098,6 +1098,10 @@
         <p id="confirmation-message" style="font-size: var(--text-base); color: var(--fg); line-height: 1.6;">
           Are you sure?
         </p>
+        <div id="confirmation-password-field" style="display:none; margin-top: var(--space-4);">
+          <label class="form-label" for="confirmation-password" style="margin-bottom: var(--space-2);">Enter your password to confirm</label>
+          <input type="password" class="form-input" id="confirmation-password" placeholder="Your password" autocomplete="current-password">
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="confirmation-cancel">Cancel</button>
@@ -1199,6 +1203,15 @@
           id="delete-account-username"
           placeholder="Your username"
           autocomplete="off"
+          style="margin-bottom: var(--space-3);"
+        >
+        <label class="form-label" for="delete-account-password" style="margin-bottom: var(--space-2);">Enter your password</label>
+        <input
+          type="password"
+          class="form-input"
+          id="delete-account-password"
+          placeholder="Your password"
+          autocomplete="current-password"
           style="margin-bottom: var(--space-2);"
         >
         <p id="delete-account-error" style="font-size: var(--text-xs); color: var(--danger); display: none;"></p>

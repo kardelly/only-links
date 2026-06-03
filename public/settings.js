@@ -456,53 +456,22 @@ async function handlePrivacyChange() {
 
 // Handle delete all bookmarks
 async function handleDeleteAllBookmarks() {
+  const result = await showConfirmationModal(
+    'Delete all bookmarks?',
+    'This will permanently delete all your bookmarks. Your account will remain active, but all your saved links will be lost forever. This action cannot be undone.',
+    { requirePassword: true }
+  );
+
+  if (!result) return;
+
   const modal = document.getElementById('confirmation-modal');
   const titleEl = document.getElementById('confirmation-title');
   const messageEl = document.getElementById('confirmation-message');
   const confirmBtn = document.getElementById('confirmation-confirm');
   const cancelBtn = document.getElementById('confirmation-cancel');
 
-  // Show confirmation modal
-  titleEl.textContent = 'Delete all bookmarks?';
-  messageEl.textContent = 'This will permanently delete all your bookmarks. Your account will remain active, but all your saved links will be lost forever. This action cannot be undone.';
-
-  modal.classList.add('active');
-
-  // Wait for user decision
-  const confirmed = await new Promise((resolve) => {
-    const handleConfirm = () => {
-      cleanup();
-      resolve(true);
-    };
-
-    const handleCancel = () => {
-      cleanup();
-      resolve(false);
-    };
-
-    const cleanup = () => {
-      confirmBtn.removeEventListener('click', handleConfirm);
-      cancelBtn.removeEventListener('click', handleCancel);
-      modal.removeEventListener('click', handleBackdropClick);
-    };
-
-    const handleBackdropClick = (e) => {
-      if (e.target === modal) {
-        handleCancel();
-      }
-    };
-
-    confirmBtn.addEventListener('click', handleConfirm);
-    cancelBtn.addEventListener('click', handleCancel);
-    modal.addEventListener('click', handleBackdropClick);
-  });
-
-  if (!confirmed) {
-    modal.classList.remove('active');
-    return;
-  }
-
   // Show loading state in modal
+  modal.classList.add('active');
   titleEl.textContent = 'Deleting bookmarks...';
   messageEl.textContent = 'Please wait while we delete all your bookmarks.';
   confirmBtn.style.display = 'none';
@@ -510,7 +479,10 @@ async function handleDeleteAllBookmarks() {
 
   try {
     const response = await fetch('/api/settings/bookmarks', {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ password: result.password })
     });
 
     const data = await response.json();
@@ -555,13 +527,16 @@ async function handleDeleteAllBookmarks() {
 
 // Handle account deletion
 async function handleDeleteAccount() {
-  const confirmed = await showDeleteAccountModal();
+  const result = await showDeleteAccountModal();
 
-  if (!confirmed) return;
+  if (!result) return;
 
   try {
     const response = await fetch('/api/settings/account', {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ password: result.password })
     });
 
     const data = await response.json();
@@ -570,7 +545,6 @@ async function handleDeleteAccount() {
       throw new Error(data.error || 'Failed to delete account');
     }
 
-    // Redirect to home after successful deletion
     alert('Your account has been deleted.');
     window.location.href = '/';
   } catch (err) {
@@ -758,41 +732,55 @@ function updateAvatarDisplay(avatarPath) {
 }
 
 // Show confirmation modal
-function showConfirmationModal(title, message) {
+// showConfirmationModal — pass requirePassword:true to collect password before confirming
+// Returns true | { password } | false depending on requirePassword flag
+function showConfirmationModal(title, message, { requirePassword = false } = {}) {
   return new Promise((resolve) => {
     const modal = document.getElementById('confirmation-modal');
     const titleEl = document.getElementById('confirmation-title');
     const messageEl = document.getElementById('confirmation-message');
     const confirmBtn = document.getElementById('confirmation-confirm');
     const cancelBtn = document.getElementById('confirmation-cancel');
+    const passwordField = document.getElementById('confirmation-password-field');
+    const passwordInput = document.getElementById('confirmation-password');
 
     titleEl.textContent = title;
     messageEl.textContent = message;
 
+    if (requirePassword && passwordField && passwordInput) {
+      passwordField.style.display = 'block';
+      passwordInput.value = '';
+      confirmBtn.disabled = true;
+      passwordInput.addEventListener('input', () => {
+        confirmBtn.disabled = passwordInput.value.length === 0;
+      });
+    } else if (passwordField) {
+      passwordField.style.display = 'none';
+      confirmBtn.disabled = false;
+    }
+
     modal.classList.add('active');
 
     const handleConfirm = () => {
+      if (requirePassword && passwordInput && !passwordInput.value) return;
+      const result = requirePassword ? { password: passwordInput.value } : true;
       cleanup();
-      resolve(true);
+      resolve(result);
     };
 
-    const handleCancel = () => {
-      cleanup();
-      resolve(false);
-    };
+    const handleCancel = () => { cleanup(); resolve(false); };
 
     const cleanup = () => {
       modal.classList.remove('active');
+      if (passwordField) passwordField.style.display = 'none';
+      if (passwordInput) passwordInput.value = '';
+      confirmBtn.disabled = false;
       confirmBtn.removeEventListener('click', handleConfirm);
       cancelBtn.removeEventListener('click', handleCancel);
       modal.removeEventListener('click', handleBackdropClick);
     };
 
-    const handleBackdropClick = (e) => {
-      if (e.target === modal) {
-        handleCancel();
-      }
-    };
+    const handleBackdropClick = (e) => { if (e.target === modal) handleCancel(); };
 
     confirmBtn.addEventListener('click', handleConfirm);
     cancelBtn.addEventListener('click', handleCancel);
@@ -800,68 +788,62 @@ function showConfirmationModal(title, message) {
   });
 }
 
-// Show delete account modal
+// Show delete account modal — returns { password } on confirm, null on cancel
 function showDeleteAccountModal() {
   return new Promise((resolve) => {
     const modal = document.getElementById('delete-account-modal');
     const usernameInput = document.getElementById('delete-account-username');
+    const passwordInput = document.getElementById('delete-account-password');
     const confirmBtn = document.getElementById('delete-account-confirm');
     const cancelBtn = document.getElementById('delete-account-cancel');
     const errorEl = document.getElementById('delete-account-error');
 
     modal.classList.add('active');
     usernameInput.value = '';
+    if (passwordInput) passwordInput.value = '';
     confirmBtn.disabled = true;
     errorEl.style.display = 'none';
 
-    const handleUsernameInput = () => {
-      const value = usernameInput.value.trim();
-      if (value === settingsState.currentUser.username) {
-        confirmBtn.disabled = false;
-        errorEl.style.display = 'none';
+    const validate = () => {
+      const usernameOk = usernameInput.value.trim() === settingsState.currentUser.username;
+      const passwordOk = passwordInput ? passwordInput.value.length > 0 : true;
+      confirmBtn.disabled = !(usernameOk && passwordOk);
+      if (usernameInput.value.trim() && !usernameOk) {
+        errorEl.textContent = 'Username does not match';
+        errorEl.style.display = 'block';
       } else {
-        confirmBtn.disabled = true;
-        if (value) {
-          errorEl.textContent = 'Username does not match';
-          errorEl.style.display = 'block';
-        } else {
-          errorEl.style.display = 'none';
-        }
+        errorEl.style.display = 'none';
       }
     };
 
     const handleConfirm = () => {
-      if (usernameInput.value.trim() === settingsState.currentUser.username) {
+      const usernameOk = usernameInput.value.trim() === settingsState.currentUser.username;
+      const password = passwordInput ? passwordInput.value : '';
+      if (usernameOk && password) {
         cleanup();
-        resolve(true);
+        resolve({ password });
       }
     };
 
-    const handleCancel = () => {
-      cleanup();
-      resolve(false);
-    };
+    const handleCancel = () => { cleanup(); resolve(null); };
 
     const cleanup = () => {
       modal.classList.remove('active');
-      usernameInput.removeEventListener('input', handleUsernameInput);
+      usernameInput.removeEventListener('input', validate);
+      if (passwordInput) passwordInput.removeEventListener('input', validate);
       confirmBtn.removeEventListener('click', handleConfirm);
       cancelBtn.removeEventListener('click', handleCancel);
       modal.removeEventListener('click', handleBackdropClick);
     };
 
-    const handleBackdropClick = (e) => {
-      if (e.target === modal) {
-        handleCancel();
-      }
-    };
+    const handleBackdropClick = (e) => { if (e.target === modal) handleCancel(); };
 
-    usernameInput.addEventListener('input', handleUsernameInput);
+    usernameInput.addEventListener('input', validate);
+    if (passwordInput) passwordInput.addEventListener('input', validate);
     confirmBtn.addEventListener('click', handleConfirm);
     cancelBtn.addEventListener('click', handleCancel);
     modal.addEventListener('click', handleBackdropClick);
 
-    // Focus input
     setTimeout(() => usernameInput.focus(), 100);
   });
 }

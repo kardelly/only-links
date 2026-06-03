@@ -163,6 +163,15 @@ const strictLimiter = rateLimit({
   skipSuccessfulRequests: false,
 });
 
+// Search / enumeration endpoints: 60 per minute
+const searchLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: 'Too many requests. Please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Standard Middlewares
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
@@ -338,6 +347,23 @@ function validateEmail(email) {
 }
 
 /**
+ * Sanitizes an og_image URL from client input.
+ * Accepts only http/https, strips anything else.
+ */
+function sanitizeOgImage(value) {
+  if (!value || typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  try {
+    const { protocol } = new URL(trimmed);
+    if (!['http:', 'https:'].includes(protocol)) return null;
+    return trimmed;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Validates and sanitizes URL input
  */
 function validateUrl(url) {
@@ -393,13 +419,28 @@ function validateText(text, fieldName, minLength = 0, maxLength = 1000) {
 // AUTHENTICATION MIDDLEWARE
 // ==========================================
 
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   const token = req.cookies.token;
   if (!token) {
     return res.status(401).json({ error: 'Unauthorized: Session expired or not logged in' });
   }
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
+
+    // Verify password_version to detect post-password-change tokens
+    if (decoded.passwordVersion !== undefined) {
+      const user = await getUserById(decoded.id);
+      if (!user) {
+        res.clearCookie('token');
+        return res.status(401).json({ error: 'Unauthorized: User not found' });
+      }
+      const currentVersion = user.password_version || 1;
+      if (decoded.passwordVersion !== currentVersion) {
+        res.clearCookie('token');
+        return res.status(401).json({ error: 'Unauthorized: Session invalidated. Please log in again.' });
+      }
+    }
+
     req.user = decoded;
     next();
   } catch (err) {
@@ -502,7 +543,7 @@ app.post('/api/auth/register', strictLimiter, async (req, res) => {
 
     // Auto-login after registration
     const token = jwt.sign(
-      { id: userId, username: usernameValidation.value },
+      { id: userId, username: usernameValidation.value, passwordVersion: 1 },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -556,9 +597,9 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
-    // Create session token
+    // Create session token (include passwordVersion for post-password-change invalidation)
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, username: user.username, passwordVersion: user.password_version || 1 },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -582,7 +623,7 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 // GET /api/auth/check-username - Check username availability
-app.get('/api/auth/check-username', async (req, res) => {
+app.get('/api/auth/check-username', searchLimiter, async (req, res) => {
   const { username } = req.query;
 
   // Validate username format
@@ -822,7 +863,7 @@ app.post('/api/bookmarks', authenticate, async (req, res) => {
       description: descValidation.value,
       tags: tagsValidation.value,
       is_public: is_public !== undefined ? (is_public ? 1 : 0) : 1,
-      og_image: og_image || null
+      og_image: sanitizeOgImage(og_image)
     });
 
     res.status(201).json({
@@ -890,7 +931,7 @@ app.put('/api/bookmarks/:id', authenticate, async (req, res) => {
       description: descValidation.value,
       tags: tagsValidation.value,
       is_public: is_public !== undefined ? (is_public ? 1 : 0) : undefined,
-      og_image: og_image !== undefined ? og_image : undefined
+      og_image: og_image !== undefined ? sanitizeOgImage(og_image) : undefined
     });
     res.json({ message: 'Bookmark updated successfully' });
   } catch (err) {
@@ -955,7 +996,7 @@ app.get('/api/tags/mine', authenticate, async (req, res) => {
 // ==========================================
 
 // GET /api/users?q=query - Search users by username
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', searchLimiter, async (req, res) => {
   const q = (req.query.q || '').trim();
   if (!q || q.length < 2) return res.json({ users: [] });
   try {
@@ -1111,13 +1152,29 @@ function decodeHtmlEntities(str) {
     .replace(/&nbsp;/g, ' ');
 }
 
+// Blocklist for SSRF prevention — private/internal IPs
+const SSRF_BLOCKED = /^(localhost$|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$|0\.0\.0\.0$|fd[0-9a-f]{2}:)/i;
+
+function isSsrfBlocked(urlString) {
+  try {
+    const { hostname } = new URL(urlString);
+    return SSRF_BLOCKED.test(hostname);
+  } catch {
+    return true;
+  }
+}
+
 // GET /api/metadata - Crawler to extract metadata from a submitted URL
-app.get('/api/metadata', authenticate, async (req, res) => {
+app.get('/api/metadata', authenticate, authLimiter, async (req, res) => {
   const targetUrl = req.query.url;
 
   const urlValidation = validateUrl(targetUrl);
   if (!urlValidation.valid) {
     return res.status(400).json({ error: urlValidation.error });
+  }
+
+  if (isSsrfBlocked(urlValidation.value)) {
+    return res.status(400).json({ error: 'URL not allowed' });
   }
 
   try {
@@ -1414,7 +1471,20 @@ app.delete('/api/settings/avatar', authenticate, async (req, res) => {
 
 // DELETE /api/settings/bookmarks - Delete all user bookmarks
 app.delete('/api/settings/bookmarks', authenticate, async (req, res) => {
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ error: 'Password is required to delete all bookmarks' });
+  }
+
   try {
+    const userWithHash = await getUserByUsername(req.user.username);
+    if (!userWithHash) return res.status(404).json({ error: 'User not found' });
+    const isMatch = await bcrypt.compare(password, userWithHash.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Incorrect password' });
+    }
+
     await deleteAllUserBookmarks(req.user.id);
     res.json({ message: 'All bookmarks deleted successfully' });
   } catch (err) {
@@ -1425,7 +1495,21 @@ app.delete('/api/settings/bookmarks', authenticate, async (req, res) => {
 
 // DELETE /api/settings/account - Delete user account
 app.delete('/api/settings/account', authenticate, async (req, res) => {
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ error: 'Password is required to delete your account' });
+  }
+
   try {
+    // Verify password before deletion
+    const userWithHash = await getUserByUsername(req.user.username);
+    if (!userWithHash) return res.status(404).json({ error: 'User not found' });
+    const isMatch = await bcrypt.compare(password, userWithHash.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Incorrect password' });
+    }
+
     // Get user's avatar to delete it
     const user = await getUserById(req.user.id);
     const avatarPath = user.avatar;

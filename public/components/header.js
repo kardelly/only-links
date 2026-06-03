@@ -214,36 +214,54 @@ function setupUserSearch() {
         const { users } = await res.json();
         if (!users || users.length === 0) { hide(); return; }
 
-        dropdown.innerHTML = `
-          <div class="search-users-section">
-            <div class="search-users-label">People</div>
-            ${users.map(u => {
-              const initials = u.username[0].toUpperCase();
-              return `
-                <div class="search-user-row" data-href="/user/${encodeURIComponent(u.username)}">
-                  <div class="search-user-avatar">
-                    ${u.avatar
-                      ? `<img src="${u.avatar.replace(/"/g, '')}" alt="${initials}" onerror="this.parentElement.textContent='${initials}'">`
-                      : initials
-                    }
-                  </div>
-                  <div class="search-user-info">
-                    <span class="search-user-name">@${u.username}</span>
-                    <span class="search-user-count">${u.bookmark_count || 0} bookmarks</span>
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        `;
-        dropdown.hidden = false;
+        // Build dropdown via DOM to prevent XSS
+        dropdown.innerHTML = '';
+        const section = document.createElement('div');
+        section.className = 'search-users-section';
+        const label = document.createElement('div');
+        label.className = 'search-users-label';
+        label.textContent = 'People';
+        section.appendChild(label);
 
-        dropdown.querySelectorAll('.search-user-row').forEach(row => {
+        users.forEach(u => {
+          const initials = u.username[0].toUpperCase();
+          const row = document.createElement('div');
+          row.className = 'search-user-row';
+
+          const avatarEl = document.createElement('div');
+          avatarEl.className = 'search-user-avatar';
+          if (u.avatar) {
+            const img = document.createElement('img');
+            img.src = u.avatar;           // safe: assigned as property, not innerHTML
+            img.alt = initials;
+            img.addEventListener('error', () => { avatarEl.textContent = initials; });
+            avatarEl.appendChild(img);
+          } else {
+            avatarEl.textContent = initials;
+          }
+
+          const info = document.createElement('div');
+          info.className = 'search-user-info';
+          const name = document.createElement('span');
+          name.className = 'search-user-name';
+          name.textContent = '@' + u.username;
+          const count = document.createElement('span');
+          count.className = 'search-user-count';
+          count.textContent = (u.bookmark_count || 0) + ' bookmarks';
+          info.appendChild(name);
+          info.appendChild(count);
+
+          row.appendChild(avatarEl);
+          row.appendChild(info);
           row.addEventListener('click', () => {
-            window.location.href = row.dataset.href;
+            window.location.href = '/user/' + encodeURIComponent(u.username);
             hide();
           });
+          section.appendChild(row);
         });
+
+        dropdown.appendChild(section);
+        dropdown.hidden = false;
       } catch {}
     }, 280);
   });
