@@ -145,7 +145,7 @@ export class FeedView extends BaseView {
           ${ogImage
             ? `<img src="${escapeHtml(ogImage)}"
                     alt=""
-                    onerror="this.src='${placeholderSrc}'"
+                    onerror="this.onerror=null;this.src='${placeholderSrc}'"
                     loading="lazy">`
             : `<img src="${placeholderSrc}" alt="" loading="lazy">`
           }

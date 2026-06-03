@@ -528,7 +528,7 @@ function renderBookmarks() {
         <img src="${item.og_image ? escapeHTML(item.og_image) : placeholderUrl}"
              alt=""
              loading="lazy"
-             onerror="this.src='${placeholderUrl}'">
+             onerror="this.onerror=null;this.src='${placeholderUrl}'">
       </div>
 
       <div class="bookmark-content">

@@ -173,7 +173,7 @@ export class PublicProfileView extends BaseView {
       <div class="card-body">
         <div class="card-thumb">
           ${ogImage
-            ? `<img src="${escapeHtml(ogImage)}" alt="" onerror="this.src='${placeholderSrc}'" loading="lazy">`
+            ? `<img src="${escapeHtml(ogImage)}" alt="" onerror="this.onerror=null;this.src='${placeholderSrc}'" loading="lazy">`
             : `<img src="${placeholderSrc}" alt="" loading="lazy">`
           }
         </div>
