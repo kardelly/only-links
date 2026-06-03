@@ -1,211 +1,113 @@
-# Security Hardening Guide
+# Security Policy
 
-This document outlines the security improvements implemented in delicious-modern and best practices for deployment.
+## Reporting a Vulnerability
 
-## ✅ Implemented Security Measures
+If you discover a security vulnerability, **do not open a public issue**.
 
-### 1. Environment Variables & Secrets Management
-- **JWT_SECRET validation**: Server refuses to start without a valid secret (min 32 characters)
-- **No hardcoded secrets**: All sensitive values come from environment variables
-- **.env.example provided**: Template for required configuration
-- **.gitignore configured**: Prevents accidental commit of secrets
+Please email **kardelly@gmail.com** with:
+- A description of the vulnerability
+- Steps to reproduce
+- Potential impact
 
-### 2. Rate Limiting
-- **Auth endpoint protection**: 5 attempts per IP per 15 minutes on `/api/auth/login` and `/api/auth/register`
-- **Skip successful requests**: Only failed attempts count toward the limit
-- **Configurable**: Adjust via `RATE_LIMIT_WINDOW_MS` and `RATE_LIMIT_MAX_REQUESTS`
-
-### 3. Secure Cookies
-- **Auto-detection**: `secure` flag automatically enabled in `NODE_ENV=production`
-- **httpOnly**: Cookies not accessible via JavaScript (XSS protection)
-- **sameSite=strict**: CSRF protection
-
-### 4. Helmet.js Security Headers
-- **Content Security Policy (CSP)**: Restricts resource loading origins
-- **HSTS**: Forces HTTPS in production (31536000s / 1 year)
-- **X-Frame-Options**: Clickjacking protection
-- **X-Content-Type-Options**: MIME-sniffing prevention
-
-### 5. CORS Configuration
-- **Whitelist-based**: Only allowed origins can access the API
-- **Environment-aware**: Configure via `ALLOWED_ORIGINS` env var
-- **Credentials support**: Allows cookies in cross-origin requests
-
-### 6. Input Validation & Sanitization
-- **Username validation**: 3-30 chars, alphanumeric + underscores/hyphens only
-- **Password strength**: Minimum 8 characters (increased from 6)
-- **URL validation**: Max 2048 chars, proper format checking
-- **Length limits**: Title (500), description (2000), tags (500)
-- **Pagination caps**: Max 100 items per page to prevent DoS
-
-### 7. Existing Good Practices (Maintained)
-- **Bcrypt password hashing**: Salt rounds = 10
-- **JWT with expiration**: 7-day token lifetime
-- **Prepared statements**: All SQL queries use parameterized queries (no SQL injection risk)
-- **HTML entity decoding**: Proper handling of scraped metadata
+You'll receive a response within 48 hours. Responsible disclosure is appreciated.
 
 ---
 
-## 🚀 Deployment Checklist
+## Implemented Security Measures
 
-### Before Going to Production
+### Authentication
+- JWT tokens in httpOnly, Secure, SameSite=Strict cookies (no JS access)
+- `password_version` field on users — incremented on every password change, invalidating all previously issued tokens
+- Bcrypt password hashing (10 rounds)
+- 7-day token lifetime
 
-1. **Generate a Strong JWT Secret**
+### Rate Limiting
+- **Auth endpoints** (`/login`, `/register`, `/reset-password`): 5–10 req / 15 min per IP
+- **Search & metadata** (`/api/users`, `/api/metadata`, `/api/auth/check-username`): 60 req / min per IP
+- Failed requests count toward the limit; successful ones do not
+
+### Input Validation
+- Username: 3–30 chars, alphanumeric + `_` `-` only
+- Password: minimum 8 characters
+- URL: max 2048 chars, valid format required
+- Title: max 500 chars — Description: max 2000 chars
+- Pagination capped at 100 items per request
+
+### File Uploads
+- Avatar uploads validated by magic bytes (JPEG, PNG, WebP only — extension alone is not trusted)
+- Size limit enforced by Multer
+
+### SSRF Protection
+- `/api/metadata` blocks requests to private/loopback IP ranges before fetching external URLs
+
+### XSS Protection
+- All user content rendered via `textContent` or `escapeHtml()` — no raw innerHTML with user data
+- Strict Content Security Policy via Helmet
+
+### Destructive Actions
+- Deleting all bookmarks or deleting account requires password confirmation in the request body, verified server-side with bcrypt
+
+### Transport & Headers
+- HSTS enabled in production (1 year, includeSubDomains)
+- X-Frame-Options, X-Content-Type-Options, Referrer-Policy via Helmet
+- CORS restricted to `ALLOWED_ORIGINS`
+- Body size capped at 1 MB
+
+### Database
+- All queries use parameterized statements — no SQL injection surface
+- Foreign keys with `ON DELETE CASCADE`
+
+---
+
+## Deployment Checklist
+
+1. Generate a strong JWT secret:
    ```bash
    node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
    ```
-   Update `.env` with the generated value.
 
-2. **Set NODE_ENV**
+2. Set environment variables (never commit `.env`):
    ```bash
-   export NODE_ENV=production
+   NODE_ENV=production
+   JWT_SECRET=<generated above>
+   ALLOWED_ORIGINS=https://onlylinks.id
    ```
-   This automatically:
-   - Enables `secure` cookies (requires HTTPS)
-   - Tightens error messages
-   - Activates HSTS headers
 
-3. **Configure CORS Origins**
+3. Run behind HTTPS — use Nginx + Let's Encrypt or equivalent.
+
+4. Restrict database file permissions:
    ```bash
-   # .env
-   ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+   chmod 600 database.db
    ```
 
-4. **Set Up HTTPS/TLS**
-   - Use a reverse proxy (Nginx, Caddy) with Let's Encrypt
-   - Or deploy behind a service with automatic SSL (Vercel, Netlify, Railway)
-
-5. **Database Permissions**
-   ```bash
-   chmod 600 delicious.db
-   ```
-   Ensure only the application user can read/write the database.
-
-6. **Review CSP Policy**
-   If you add external resources (CDNs, analytics), update the CSP in `server.js`:
-   ```javascript
-   contentSecurityPolicy: {
-     directives: {
-       scriptSrc: ["'self'", "https://trusted-cdn.com"],
-       // ... other directives
-     }
-   }
-   ```
-
-7. **Enable Process Manager**
-   Use PM2 or systemd to keep the server running:
-   ```bash
-   npm install -g pm2
-   pm2 start server.js --name delicious-modern
-   pm2 save
-   pm2 startup
-   ```
-
-8. **Monitor Logs**
-   Watch for suspicious patterns:
-   ```bash
-   pm2 logs delicious-modern
-   ```
-
----
-
-## 🔒 Additional Recommendations
-
-### Short-Term Improvements
-
-1. **Add Request Logging**
-   ```bash
-   npm install morgan
-   ```
-   ```javascript
-   import morgan from 'morgan';
-   app.use(morgan('combined'));
-   ```
-
-2. **Implement Account Lockout**
-   After 10 failed login attempts, lock the account for 1 hour.
-
-3. **Add Email Verification**
-   Require email confirmation before activating accounts.
-
-4. **Two-Factor Authentication (2FA)**
-   Use TOTP (Time-based One-Time Password) via libraries like `speakeasy`.
-
-### Long-Term Improvements
-
-1. **Database Encryption at Rest**
-   Use SQLCipher for encrypted SQLite databases.
-
-2. **Session Management**
-   - Implement session revocation (store active tokens in Redis)
-   - Add "logout all devices" functionality
-   - Shorter token lifetimes (1 hour) with refresh tokens
-
-3. **Security Scanning**
+5. Keep dependencies up to date:
    ```bash
    npm audit
    npm audit fix
    ```
-   Run regularly and update dependencies.
-
-4. **Penetration Testing**
-   Hire a security professional or use tools like:
-   - OWASP ZAP (automated scanner)
-   - Burp Suite (manual testing)
-
-5. **Web Application Firewall (WAF)**
-   Deploy behind Cloudflare or AWS WAF for DDoS protection.
 
 ---
 
-## 🛡️ Security Incident Response
+## Incident Response
 
-If you suspect a breach:
+**If you suspect a breach:**
 
-1. **Rotate JWT_SECRET immediately**
-   - This invalidates all existing tokens
-   - All users will need to log in again
-
-2. **Check Database for Anomalies**
-   ```sql
-   -- Recent user registrations
-   SELECT * FROM users ORDER BY created_at DESC LIMIT 100;
-   
-   -- Bookmarks with suspicious URLs
-   SELECT * FROM bookmarks WHERE url LIKE '%<script%' OR url LIKE '%javascript:%';
-   ```
-
-3. **Review Server Logs**
-   Look for:
-   - Repeated 401/403 errors (brute-force attempts)
-   - Unusual request patterns
-   - Large payloads (DoS attempts)
-
-4. **Backup and Restore**
+1. Rotate `JWT_SECRET` immediately — this invalidates all active sessions.
+2. Check for anomalous registrations or bookmarks in the database.
+3. Review server logs via `pm2 logs only-links`.
+4. Backup before any changes:
    ```bash
-   # Backup
-   cp delicious.db delicious-backup-$(date +%Y%m%d-%H%M%S).db
-   
-   # Restore
-   cp delicious-backup-TIMESTAMP.db delicious.db
+   cp database.db database-backup-$(date +%Y%m%d-%H%M%S).db
    ```
 
 ---
 
-## 📚 References
+## References
 
 - [OWASP Top Ten](https://owasp.org/www-project-top-ten/)
 - [Node.js Security Best Practices](https://nodejs.org/en/docs/guides/security/)
-- [Express Security Best Practices](https://expressjs.com/en/advanced/best-practice-security.html)
-- [Helmet.js Documentation](https://helmetjs.github.io/)
+- [Helmet.js](https://helmetjs.github.io/)
 
 ---
 
-## 🐛 Reporting Security Issues
-
-If you discover a security vulnerability, please email security@yourdomain.com instead of opening a public issue. We will respond within 48 hours.
-
----
-
-**Last Updated**: 2026-05-28
-**Version**: 1.1.0 (Security Hardened)
+**Last updated:** 2026-06-03
