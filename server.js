@@ -1601,7 +1601,7 @@ app.get('/user/:username', async (req, res) => {
   // Fetch profile data for og tags (crawlers don't run JS)
   let title = `@${username} — onlylinks`;
   let description = `Bookmarks curated by @${username} on onlylinks.`;
-  let ogImage = 'https://onlylinks.id/og-image.png';
+  let ogImage = 'https://onlylinks.id/og-image.jpg';
   let canonicalUrl = `https://onlylinks.id/user/${encodeURIComponent(username)}`;
 
   try {
