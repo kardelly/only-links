@@ -133,28 +133,36 @@ export class FeedView extends BaseView {
     // Render tags (max 3)
     const tagsHtml = this.renderTags(bookmark.tags);
 
+    const description = bookmark.description || bookmark.og_description || '';
+
     card.innerHTML = `
-      <div class="card-thumbnail">
-        ${ogImage
-          ? `<img src="${escapeHtml(ogImage)}"
-                  alt=""
-                  onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;background:#E5E5E5;display:flex;align-items:center;justify-content:center;font-size:28px\'>🔗</div>'"
-                  loading="lazy">`
-          : `<div style="width:100%;height:100%;background:#E5E5E5;display:flex;align-items:center;justify-content:center;font-size:28px">🔗</div>`
-        }
-      </div>
-      <div class="card-content">
-        <h3 class="card-title">${escapeHtml(bookmark.title)}</h3>
-        ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
-        <div class="card-meta">
-          <span class="username">@${escapeHtml(bookmark.username)}</span>
-          <span class="date">${timeAgo(bookmark.created_at)}</span>
-          <button class="card-share-btn" aria-label="Compartilhar link">Share</button>
+      <div class="card-body">
+        <div class="card-thumb">
+          ${ogImage
+            ? `<img src="${escapeHtml(ogImage)}"
+                    alt=""
+                    onerror="this.parentElement.innerHTML='<div class=\\'card-thumb-fallback\\'>🔗</div>'"
+                    loading="lazy">`
+            : `<div class="card-thumb-fallback">🔗</div>`
+          }
         </div>
+        <div class="card-content">
+          <h3 class="card-title">${escapeHtml(bookmark.title)}</h3>
+          ${description ? `<p class="card-description">${escapeHtml(description)}</p>` : ''}
+          ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="card-domain">${escapeHtml((() => { try { return new URL(bookmark.url).hostname.replace(/^www\./, ''); } catch { return ''; } })())}</span>
+        <span class="card-date">${timeAgo(bookmark.created_at)}</span>
+        <button class="card-share-btn" aria-label="Compartilhar link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
       </div>
     `;
 
-    // Share button — stops propagation so card click doesn't also fire
+    // Share button
     card.querySelector('.card-share-btn').addEventListener('click', async (e) => {
       e.stopPropagation();
       const btn = e.currentTarget;
