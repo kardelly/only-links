@@ -125,23 +125,39 @@ export class ProfileView extends BaseView {
     card.dataset.id = bookmark.id;
 
     const tagsHtml = this.renderTags(bookmark.tags);
+    const description = bookmark.description || bookmark.og_description || '';
+
+    // Normalize og_image
+    let ogImage = bookmark.og_image || '';
+    if (ogImage) {
+      if (ogImage.startsWith('//')) ogImage = 'https:' + ogImage;
+      else if (ogImage.startsWith('/')) {
+        try { const base = new URL(bookmark.url); ogImage = `${base.protocol}//${base.host}${ogImage}`; } catch { ogImage = ''; }
+      }
+      ogImage = ogImage.replace(/^http:\/\//, 'https://');
+      if (!ogImage.startsWith('https://')) ogImage = '';
+    }
+
+    let domain = '';
+    try { domain = new URL(bookmark.url).hostname.replace(/^www\./, ''); } catch {}
 
     card.innerHTML = `
-      <div class="card-thumbnail">
-        ${bookmark.og_image
-          ? `<img src="${bookmark.og_image}"
-                  alt="${escapeHtml(bookmark.title)}"
-                  onerror="this.style.display='none';this.parentElement.style.background='#E5E5E5'"
-                  loading="lazy">`
-          : `<div style="width:100%;height:100%;background:#E5E5E5;display:flex;align-items:center;justify-content:center;font-size:32px;color:#999">🔗</div>`
-        }
-      </div>
-      <div class="card-content">
-        <h3 class="card-title">${escapeHtml(bookmark.title)}</h3>
-        ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
-        <div class="card-meta">
-          <span class="date">${timeAgo(bookmark.created_at)}</span>
+      <div class="card-body">
+        <div class="card-thumb">
+          ${ogImage
+            ? `<img src="${escapeHtml(ogImage)}" alt="" onerror="this.parentElement.innerHTML='<div class=\\'card-thumb-fallback\\'>🔗</div>'" loading="lazy">`
+            : `<div class="card-thumb-fallback">🔗</div>`
+          }
         </div>
+        <div class="card-content">
+          <h3 class="card-title">${escapeHtml(bookmark.title)}</h3>
+          ${description ? `<p class="card-description">${escapeHtml(description)}</p>` : ''}
+          ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="card-domain">${escapeHtml(domain)}</span>
+        <span class="card-date">${timeAgo(bookmark.created_at)}</span>
       </div>
     `;
 
