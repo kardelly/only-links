@@ -157,6 +157,12 @@ export class FeedView extends BaseView {
       <div class="card-footer">
         <span class="card-domain">${escapeHtml(domain)}</span>
         <span class="card-date">${timeAgo(bookmark.created_at)}</span>
+        ${this._canSave(bookmark) ? `
+          <button class="card-save-btn" aria-label="Save to my collection">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            Save
+          </button>
+        ` : ''}
         <button class="card-share-btn" aria-label="Compartilhar link">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Share
@@ -185,11 +191,57 @@ export class FeedView extends BaseView {
       }
     });
 
+    // Save button
+    const saveBtn = card.querySelector('.card-save-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (saveBtn.classList.contains('save-done') || saveBtn.disabled) return;
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = '…';
+
+        const tags = Array.isArray(bookmark.tags)
+          ? bookmark.tags.join(', ')
+          : (bookmark.tags || '');
+
+        try {
+          const res = await fetch('/api/bookmarks', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url: bookmark.url,
+              title: bookmark.title,
+              description: bookmark.description || '',
+              tags,
+              is_public: true
+            })
+          });
+
+          if (res.ok) {
+            saveBtn.classList.add('save-done');
+            saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
+            if ('vibrate' in navigator) navigator.vibrate(30);
+          } else {
+            const err = await res.json().catch(() => ({}));
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
+            showToast(err.error || 'Failed to save', 'error');
+          }
+        } catch {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
+          showToast('Connection error', 'error');
+        }
+      });
+    }
+
     // Click card to open bookmark (not on share btn)
     card.addEventListener('click', () => {
       window.open(bookmark.url, '_blank');
     });
-    
+
     return card;
   }
 
@@ -221,6 +273,14 @@ export class FeedView extends BaseView {
     }
 
     return html;
+  }
+
+  _canSave(bookmark) {
+    const user = window.mobileApp?.user;
+    if (!user) return false;
+    // Don't show Save on own bookmarks
+    const ownerId = bookmark.user_id ?? bookmark.userId;
+    return ownerId !== user.id;
   }
 
   /**

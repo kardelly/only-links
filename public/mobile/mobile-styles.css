@@ -377,6 +377,32 @@ body {
   border-color: #dc2626;
 }
 
+.card-save-btn {
+  margin-left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 980px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 150ms, color 150ms, border-color 150ms;
+  flex-shrink: 0;
+}
+
+.card-save-btn:active {
+  background: var(--border);
+}
+
+.card-save-btn.save-done {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
 /* Owner actions (Edit / Delete) in profile cards */
 .card-owner-actions {
   display: flex;
