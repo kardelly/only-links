@@ -105,6 +105,7 @@ export class AddBookmarkView {
   attachEventListeners() {
     const form = document.getElementById('add-bookmark-form');
     const cancelBtn = document.getElementById('cancel-btn');
+    const urlInput = document.getElementById('bookmark-url');
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -113,6 +114,13 @@ export class AddBookmarkView {
 
     cancelBtn.addEventListener('click', () => this.close());
 
+    // Fetch metadata when URL field loses focus
+    urlInput.addEventListener('blur', () => this.fetchMetadata());
+    // Also trigger on paste
+    urlInput.addEventListener('paste', () => {
+      setTimeout(() => this.fetchMetadata(), 100);
+    });
+
     // Keyboard handling for visual viewport
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => {
@@ -120,6 +128,49 @@ export class AddBookmarkView {
           this.sheet.style.maxHeight = `${window.visualViewport.height - 20}px`;
         }
       });
+    }
+  }
+
+  /**
+   * Fetch og metadata for the current URL and fill title/description
+   */
+  async fetchMetadata() {
+    const urlInput = document.getElementById('bookmark-url');
+    const titleInput = document.getElementById('bookmark-title');
+    const descInput = document.getElementById('bookmark-description');
+
+    let url = urlInput.value.trim();
+    if (!url) return;
+
+    // Normalise protocol
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+      urlInput.value = url;
+    }
+
+    // Only fetch if title is still empty (don't overwrite user edits)
+    if (titleInput.value.trim()) return;
+
+    // Show subtle loading state on title field
+    titleInput.placeholder = 'Fetching…';
+
+    try {
+      const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`, {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('metadata failed');
+      const data = await res.json();
+
+      if (data.title && !titleInput.value.trim()) {
+        titleInput.value = data.title;
+      }
+      if (data.description && !descInput.value.trim()) {
+        descInput.value = data.description;
+      }
+    } catch (_) {
+      // silent fail — user can fill manually
+    } finally {
+      titleInput.placeholder = 'Bookmark title';
     }
   }
 
