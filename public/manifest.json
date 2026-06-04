@@ -1,6 +1,6 @@
 {
-  "name": "only.link",
-  "short_name": "only.link",
+  "name": "OnlyLinks",
+  "short_name": "OnlyLinks",
   "description": "Social bookmarking, reimagined",
   "start_url": "/mobile/app?source=pwa",
   "display": "standalone",
