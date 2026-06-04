@@ -272,9 +272,10 @@ export class AddBookmarkView {
       errors.push({ field: 'title', message: 'Title too long (max 500 characters)' });
     }
 
-    // Tags length
+    // Tags length — tags is a comma-separated string
     if (formData.tags && formData.tags.length) {
-      if (formData.tags.some(tag => tag.length > 50)) {
+      const tagsArr = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+      if (tagsArr.some(tag => tag.length > 50)) {
         errors.push({ field: 'tags', message: 'Individual tags must be under 50 characters' });
       }
     }
