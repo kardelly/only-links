@@ -796,6 +796,102 @@
       display: block;
     }
 
+    /* ── Row 4: Import/Export demo ── */
+    .demo-import {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .demo-import-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      opacity: 0;
+      animation: result-in 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .demo-import-item:nth-child(1) { animation-delay: 0.15s; }
+    .demo-import-item:nth-child(2) { animation-delay: 0.35s; }
+    .demo-import-item:nth-child(3) { animation-delay: 0.55s; }
+    .demo-import-item:nth-child(4) { animation-delay: 0.75s; }
+    .demo-import-item:nth-child(5) { animation-delay: 0.95s; }
+
+    .demo-import-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .demo-import-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fg);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .demo-import-tag {
+      font-size: 11px;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .demo-import-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 2px 0;
+      opacity: 0;
+      animation: result-in 400ms cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+    }
+
+    .demo-import-count {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .demo-import-count span {
+      @property --n {
+        syntax: '<integer>';
+        initial-value: 0;
+        inherits: false;
+      }
+      --n: 0;
+      animation: count-up 1.2s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+      counter-reset: n var(--n);
+    }
+
+    .demo-export-chips {
+      display: flex;
+      gap: 6px;
+    }
+
+    .demo-export-chip {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+    }
+
+    @keyframes count-up {
+      to { --n: 247; }
+    }
+
     /* Scroll-driven reveal for each row */
     .feature-row {
       opacity: 0;
@@ -1620,6 +1716,52 @@
               <div class="demo-feed-name">@jan</div>
               <div class="demo-feed-title">The Innovation Stack</div>
               <span class="demo-feed-tag">innovation</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 4: Import/Export — text left (dark), demo right (light) -->
+    <div class="feature-row">
+      <div class="feature-text">
+        <span class="feature-index">04 — Portability</span>
+        <h2 class="feature-heading">Start with<br>what you have.</h2>
+        <p class="feature-body">Import your browser bookmarks in one click. Export anytime in standard formats. Your collection is yours, always.</p>
+      </div>
+      <div class="feature-demo">
+        <div class="demo-import">
+          <div class="demo-import-item">
+            <div class="demo-import-dot"></div>
+            <span class="demo-import-title">Resilient Web Design</span>
+            <span class="demo-import-tag">design</span>
+          </div>
+          <div class="demo-import-item">
+            <div class="demo-import-dot"></div>
+            <span class="demo-import-title">A Complete Guide to Flexbox</span>
+            <span class="demo-import-tag">css</span>
+          </div>
+          <div class="demo-import-item">
+            <div class="demo-import-dot"></div>
+            <span class="demo-import-title">Shape Up — Basecamp</span>
+            <span class="demo-import-tag">process</span>
+          </div>
+          <div class="demo-import-item">
+            <div class="demo-import-dot"></div>
+            <span class="demo-import-title">The Pragmatic Programmer</span>
+            <span class="demo-import-tag">books</span>
+          </div>
+          <div class="demo-import-item">
+            <div class="demo-import-dot"></div>
+            <span class="demo-import-title">Refactoring UI</span>
+            <span class="demo-import-tag">design</span>
+          </div>
+          <div class="demo-import-footer">
+            <span class="demo-import-count">247 links rescued from your browser.</span>
+            <div class="demo-export-chips">
+              <span class="demo-export-chip">.html</span>
+              <span class="demo-export-chip">.json</span>
+              <span class="demo-export-chip">CSV</span>
             </div>
           </div>
         </div>
