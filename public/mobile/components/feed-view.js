@@ -88,9 +88,9 @@ export class FeedView extends BaseView {
       const tabs = document.createElement('div');
       tabs.className = 'feed-tabs-mobile';
       tabs.innerHTML = `
-        <button class="feed-tab-mobile ${this.feedType === 'mine' ? 'active' : ''}" data-feed="mine">Mine</button>
+        <button class="feed-tab-mobile ${this.feedType === 'mine' ? 'active' : ''}" data-feed="mine">My links</button>
         <button class="feed-tab-mobile ${this.feedType === 'network' ? 'active' : ''}" data-feed="network">Network</button>
-        <button class="feed-tab-mobile ${this.feedType === 'all' ? 'active' : ''}" data-feed="all">All</button>
+        <button class="feed-tab-mobile ${this.feedType === 'all' ? 'active' : ''}" data-feed="all">Discover</button>
       `;
       tabs.querySelectorAll('.feed-tab-mobile').forEach(btn => {
         btn.addEventListener('click', () => {
