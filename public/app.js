@@ -106,6 +106,15 @@ async function checkSession() {
 
   if (state.currentUser) {
     state.feedType = 'mine';
+    // Sync theme from server on login (new device may have wrong localStorage)
+    fetch('/api/settings/preferences', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.preferences?.theme) {
+          window.onlylinksTheme?.syncFromServer(data.preferences.theme);
+        }
+      })
+      .catch(() => {});
   }
 
   updateFeedTabsVisibility();

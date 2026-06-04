@@ -33,6 +33,18 @@ const profileState = {
 async function checkSession() {
   const { user } = await window.getSession();
   profileState.currentUser = user || null;
+
+  if (profileState.currentUser) {
+    // Sync theme from server on login (new device may have wrong localStorage)
+    fetch('/api/settings/preferences', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.preferences?.theme) {
+          window.onlylinksTheme?.syncFromServer(data.preferences.theme);
+        }
+      })
+      .catch(() => {});
+  }
 }
 
 // Load profile data
