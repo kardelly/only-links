@@ -476,6 +476,11 @@ export async function getUserPreferences(userId) {
     await db.run('ALTER TABLE user_preferences ADD COLUMN searchable INTEGER DEFAULT 1');
   } catch {}
 
+  // Migration: add theme column if missing
+  try {
+    await db.run("ALTER TABLE user_preferences ADD COLUMN theme TEXT DEFAULT 'system'");
+  } catch {}
+
   let prefs = await db.get('SELECT * FROM user_preferences WHERE user_id = ?', [userId]);
 
   // Create default preferences if they don't exist
@@ -488,6 +493,8 @@ export async function getUserPreferences(userId) {
   if (prefs.searchable === undefined || prefs.searchable === null) {
     prefs.searchable = 1;
   }
+
+  if (!prefs.theme) prefs.theme = 'system';
 
   return prefs;
 }
@@ -511,6 +518,14 @@ export async function updateUserPreferences(userId, preferences) {
   if (preferences.searchable !== undefined) {
     updates.push('searchable = ?');
     values.push(preferences.searchable ? 1 : 0);
+  }
+
+  if (preferences.theme !== undefined) {
+    const validThemes = ['system', 'light', 'dark'];
+    if (validThemes.includes(preferences.theme)) {
+      updates.push('theme = ?');
+      values.push(preferences.theme);
+    }
   }
 
   if (updates.length === 0) return;
