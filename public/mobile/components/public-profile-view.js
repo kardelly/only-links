@@ -13,14 +13,22 @@ export class PublicProfileView extends BaseView {
     this.profile = null;
     this.bookmarks = [];
     this.currentUser = null;
+    this.page = 1;
+    this.hasMore = false;
+    this.loading = false;
   }
 
   async loadForUser(username) {
     this.username = username;
     this.profile = null;
     this.bookmarks = [];
+    this.page = 1;
+    this.hasMore = false;
     this.show();
     this.showLoading();
+
+    // Get current user from app state if available
+    this.currentUser = window.mobileApp?.user || null;
 
     try {
       const [profileData, bookmarksData] = await Promise.all([
@@ -31,6 +39,8 @@ export class PublicProfileView extends BaseView {
       if (!profileData?.user) { this.showError('User not found'); return; }
       this.profile = profileData.user;
       this.bookmarks = bookmarksData?.items || [];
+      const pagination = bookmarksData?.pagination;
+      this.hasMore = pagination ? pagination.page < pagination.totalPages : false;
       this.render();
     } catch (err) {
       this.showError('Failed to load profile');
@@ -74,11 +84,11 @@ export class PublicProfileView extends BaseView {
       </div>
       <h2 class="profile-username">@${escapeHtml(p.username)}</h2>
       <div class="profile-stats">
-        <div class="stat">
+        <div class="stat stat-clickable" id="pub-followers-stat">
           <span class="stat-value">${p.followersCount || 0}</span>
           <span class="stat-label">Followers</span>
         </div>
-        <div class="stat">
+        <div class="stat stat-clickable" id="pub-following-stat">
           <span class="stat-value">${p.followingCount || 0}</span>
           <span class="stat-label">Following</span>
         </div>
@@ -104,9 +114,20 @@ export class PublicProfileView extends BaseView {
       section.appendChild(title);
 
       const grid = document.createElement('div');
+      grid.id = 'pub-bookmark-grid';
       grid.className = 'bookmark-grid';
       this.bookmarks.forEach(b => grid.appendChild(this.createBookmarkCard(b)));
       section.appendChild(grid);
+
+      if (this.hasMore) {
+        const loadMoreBtn = document.createElement('button');
+        loadMoreBtn.className = 'btn btn-secondary load-more';
+        loadMoreBtn.id = 'pub-load-more';
+        loadMoreBtn.textContent = 'Load More';
+        loadMoreBtn.addEventListener('click', () => this.loadMore(loadMoreBtn));
+        section.appendChild(loadMoreBtn);
+      }
+
       wrapper.appendChild(section);
     } else {
       const empty = document.createElement('div');
@@ -122,6 +143,14 @@ export class PublicProfileView extends BaseView {
     if (followBtn) {
       followBtn.addEventListener('click', () => this.toggleFollow(followBtn));
     }
+
+    // Followers / following modals
+    wrapper.querySelector('#pub-followers-stat')?.addEventListener('click', () => {
+      this.openFollowModal('followers');
+    });
+    wrapper.querySelector('#pub-following-stat')?.addEventListener('click', () => {
+      this.openFollowModal('following');
+    });
   }
 
   async toggleFollow(btn) {
@@ -139,6 +168,105 @@ export class PublicProfileView extends BaseView {
         showToast('Following!', 'success');
       }
     }
+  }
+
+  async openFollowModal(type) {
+    document.querySelector('.follow-sheet-backdrop')?.remove();
+
+    const title = type === 'followers' ? 'Followers' : 'Following';
+    const endpoint = `/api/users/${encodeURIComponent(this.username)}/${type}`;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'edit-sheet-backdrop follow-sheet-backdrop';
+    backdrop.innerHTML = `
+      <div class="edit-sheet">
+        <div class="edit-sheet-handle"></div>
+        <h3 class="edit-sheet-title">${title}</h3>
+        <div class="follow-list" id="pub-follow-list">
+          <div class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => backdrop.classList.add('open'));
+
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        backdrop.classList.remove('open');
+        setTimeout(() => backdrop.remove(), 250);
+      }
+    });
+
+    const listEl = backdrop.querySelector('#pub-follow-list');
+    const data = await fetchWithError(endpoint);
+    listEl.innerHTML = '';
+
+    const users = type === 'followers' ? data?.followers : data?.following;
+    if (!users || users.length === 0) {
+      listEl.innerHTML = `<p class="search-empty">No ${title.toLowerCase()} yet.</p>`;
+      return;
+    }
+
+    users.forEach(user => {
+      const row = document.createElement('div');
+      row.className = 'people-row';
+      const initials = user.username[0].toUpperCase();
+      row.innerHTML = `
+        <div class="people-avatar">
+          ${user.avatar
+            ? `<img src="${escapeHtml(user.avatar)}" alt="${escapeHtml(user.username)}" onerror="this.parentElement.innerHTML='${initials}'">`
+            : initials
+          }
+        </div>
+        <div class="people-info">
+          <span class="people-username">@${escapeHtml(user.username)}</span>
+        </div>
+      `;
+      row.addEventListener('click', () => {
+        backdrop.classList.remove('open');
+        setTimeout(() => backdrop.remove(), 250);
+        if (window.mobileApp) window.mobileApp.showPublicProfile(user.username);
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  async loadMore(btn) {
+    if (this.loading) return;
+    this.loading = true;
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+
+    this.page++;
+    try {
+      const data = await fetchWithError(
+        `/api/bookmarks?user=${encodeURIComponent(this.username)}&page=${this.page}&limit=20`
+      );
+      if (data?.items) {
+        this.bookmarks.push(...data.items);
+        const grid = document.getElementById('pub-bookmark-grid');
+        if (grid) {
+          data.items.forEach(b => grid.appendChild(this.createBookmarkCard(b)));
+        }
+        const pagination = data.pagination;
+        this.hasMore = pagination ? pagination.page < pagination.totalPages : false;
+        if (!this.hasMore) btn.remove();
+        else { btn.disabled = false; btn.textContent = 'Load More'; }
+      }
+    } catch {
+      this.page--;
+      btn.disabled = false;
+      btn.textContent = 'Load More';
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  _canSave(bookmark) {
+    const user = window.mobileApp?.user;
+    if (!user) return false;
+    const ownerId = bookmark.user_id ?? bookmark.userId;
+    return ownerId !== user.id;
   }
 
   createBookmarkCard(bookmark) {
@@ -185,10 +313,65 @@ export class PublicProfileView extends BaseView {
       <div class="card-footer">
         <span class="card-domain">${escapeHtml(domain)}</span>
         <span class="card-date">${timeAgo(bookmark.created_at)}</span>
+        ${this._canSave(bookmark) ? `
+          <button class="card-save-btn" aria-label="Save to my collection">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            Save
+          </button>
+        ` : ''}
       </div>
     `;
 
     card.addEventListener('click', () => window.open(bookmark.url, '_blank'));
+
+    const saveBtn = card.querySelector('.card-save-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (saveBtn.classList.contains('save-done') || saveBtn.disabled) return;
+
+        saveBtn.disabled = true;
+        const saveBtnText = saveBtn.lastChild;
+        if (saveBtnText?.nodeType === Node.TEXT_NODE) saveBtnText.textContent = ' …';
+
+        const tags = Array.isArray(bookmark.tags)
+          ? bookmark.tags.join(', ')
+          : (bookmark.tags || '');
+
+        const isPublic = window.mobileApp?.prefs?.default_public !== 0;
+
+        try {
+          const res = await fetch('/api/bookmarks', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url: bookmark.url,
+              title: bookmark.title,
+              description: bookmark.description || '',
+              tags,
+              is_public: isPublic
+            })
+          });
+
+          if (res.ok) {
+            saveBtn.classList.add('save-done');
+            saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
+            if ('vibrate' in navigator) navigator.vibrate(30);
+          } else {
+            const err = await res.json().catch(() => ({}));
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
+            showToast(err.error || 'Failed to save', 'error');
+          }
+        } catch {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
+          showToast('Connection error', 'error');
+        }
+      });
+    }
+
     return card;
   }
 }
