@@ -909,7 +909,8 @@ app.post('/api/bookmarks', authenticate, async (req, res) => {
     });
 
     // Notify the bookmark owner's followers of the new public bookmark (fire-and-forget)
-    if (is_public !== false && is_public !== 0) {
+    const bookmarkIsPublic = is_public !== undefined ? !!is_public : true;
+    if (bookmarkIsPublic) {
       (async () => {
         try {
           const db = await dbPromise;
@@ -917,7 +918,7 @@ app.post('/api/bookmarks', authenticate, async (req, res) => {
             'SELECT follower_id FROM follows WHERE following_id = ?',
             [req.user.id]
           );
-          await Promise.all(
+          await Promise.allSettled(
             followers.map(f => createNotification(f.follower_id, req.user.id, 'bookmark_save', bookmarkId))
           );
         } catch (err) {
@@ -1212,11 +1213,15 @@ app.get('/api/users/:username/following', async (req, res) => {
 });
 
 // GET /api/notifications — get notifications for the authenticated user
-app.get('/api/notifications', authenticate, async (req, res) => {
+app.get('/api/notifications', authenticate, searchLimiter, async (req, res) => {
   try {
     const notifications = await getNotifications(req.user.id);
-    const unreadCount = notifications.filter(n => !n.read).length;
-    res.json({ notifications, unreadCount });
+    const db = await dbPromise;
+    const { unread } = await db.get(
+      'SELECT COUNT(*) AS unread FROM notifications WHERE recipient_id = ? AND read = 0',
+      [req.user.id]
+    );
+    res.json({ notifications, unreadCount: unread });
   } catch (err) {
     console.error('Get Notifications Error:', err);
     res.status(500).json({ error: 'Failed to get notifications' });
@@ -1226,8 +1231,8 @@ app.get('/api/notifications', authenticate, async (req, res) => {
 // POST /api/notifications/read — mark notifications as read
 app.post('/api/notifications/read', authenticate, async (req, res) => {
   try {
-    const { ids } = req.body; // optional array of ids; if omitted marks all
-    await markNotificationsRead(req.user.id, ids || []);
+    const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+    await markNotificationsRead(req.user.id, ids);
     res.json({ message: 'Marked as read' });
   } catch (err) {
     console.error('Mark Notifications Read Error:', err);
