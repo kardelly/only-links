@@ -326,13 +326,31 @@ export class AddBookmarkView {
     saveBtn.textContent = 'Saving...';
 
     try {
-      const data = await fetchWithError('/api/bookmarks', {
+      const res = await fetch('/api/bookmarks', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
+
+      if (res.status === 401) {
+        showToast('Session expired. Please log in again.', 'error');
+        setTimeout(() => { window.location.href = '/'; }, 1500);
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+        return;
+      }
+
+      if (!res.ok) {
+        let msg = 'Failed to save bookmark';
+        try { const e = await res.json(); msg = e.error || msg; } catch (_) {}
+        showToast(msg, 'error');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+        return;
+      }
+
+      const data = await res.json();
 
       if (data) {
         // Success animation: button transforms to checkmark
