@@ -5,7 +5,7 @@ export class SettingsView extends BaseView {
   constructor() {
     super('settings-view');
     this.user = null;
-    this.prefs = { default_public: 1, searchable: 1 };
+    this.prefs = { default_public: 1, searchable: 1, theme: 'system' };
   }
 
   async load() {
@@ -19,6 +19,7 @@ export class SettingsView extends BaseView {
       if (!userData?.user) { window.location.href = '/'; return; }
       this.user = userData.user;
       if (prefsData?.preferences) this.prefs = prefsData.preferences;
+      window.onlylinksTheme?.syncFromServer(this.prefs.theme || 'system');
 
       this.render();
     } catch (err) {
@@ -63,6 +64,22 @@ export class SettingsView extends BaseView {
         </div>
       </div>
 
+      <!-- Appearance -->
+      <div class="settings-section">
+        <h2 class="section-title">Appearance</h2>
+        <div class="settings-item">
+          <div class="item-info">
+            <div class="item-label">Theme</div>
+            <div class="item-value">Choose how onlylinks looks</div>
+          </div>
+        </div>
+        <div class="theme-selector-mobile" id="theme-selector-mobile">
+          <button class="theme-btn-mobile ${(this.prefs.theme||'system')==='light'?'active':''}" data-theme="light">☀️ Light</button>
+          <button class="theme-btn-mobile ${(this.prefs.theme||'system')==='system'?'active':''}" data-theme="system">⚙️ System</button>
+          <button class="theme-btn-mobile ${(this.prefs.theme||'system')==='dark'?'active':''}" data-theme="dark">🌙 Dark</button>
+        </div>
+      </div>
+
       <!-- Privacy -->
       <div class="settings-section">
         <h2 class="section-title">Privacy</h2>
@@ -102,6 +119,25 @@ export class SettingsView extends BaseView {
     `;
 
     this.container.appendChild(container);
+
+    // Theme selector
+    this.container.querySelectorAll('.theme-btn-mobile').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const pref = btn.dataset.theme;
+        window.onlylinksTheme?.set(pref);
+        this.container.querySelectorAll('.theme-btn-mobile').forEach(b =>
+          b.classList.toggle('active', b.dataset.theme === pref)
+        );
+        this.prefs.theme = pref;
+        await fetchWithError('/api/settings/preferences', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: pref })
+        });
+        showToast('Theme updated', 'success');
+      });
+    });
+
     this.attachEventListeners();
   }
 
