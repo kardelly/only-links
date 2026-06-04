@@ -13,6 +13,9 @@ export class ProfileView extends BaseView {
     this.totalBookmarks = 0;
     this.followersCount = 0;
     this.followingCount = 0;
+    this.page = 1;
+    this.hasMore = false;
+    this.loading = false;
   }
 
   /**
@@ -39,6 +42,9 @@ export class ProfileView extends BaseView {
       if (bookmarksData) {
         this.bookmarks = bookmarksData.items || [];
         this.totalBookmarks = bookmarksData.pagination?.total || 0;
+        const pagination = bookmarksData.pagination;
+        this.hasMore = pagination ? pagination.page < pagination.totalPages : false;
+        this.page = 1;
       }
       if (profileData?.user) {
         this.followersCount = profileData.user.followersCount || 0;
@@ -105,6 +111,7 @@ export class ProfileView extends BaseView {
       bookmarksSection.appendChild(title);
 
       const grid = document.createElement('div');
+      grid.id = 'profile-bookmark-grid';
       grid.className = 'bookmark-grid';
 
       this.bookmarks.forEach(bookmark => {
@@ -113,6 +120,16 @@ export class ProfileView extends BaseView {
       });
 
       bookmarksSection.appendChild(grid);
+
+      if (this.hasMore) {
+        const loadMoreBtn = document.createElement('button');
+        loadMoreBtn.className = 'btn btn-secondary load-more';
+        loadMoreBtn.id = 'profile-load-more';
+        loadMoreBtn.textContent = 'Load More';
+        loadMoreBtn.addEventListener('click', () => this.loadMore(loadMoreBtn));
+        bookmarksSection.appendChild(loadMoreBtn);
+      }
+
       this.container.appendChild(bookmarksSection);
     }
 
@@ -138,6 +155,44 @@ export class ProfileView extends BaseView {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => this.handleLogout());
+    }
+  }
+
+  /**
+   * Load more bookmarks (pagination)
+   */
+  async loadMore(btn) {
+    if (this.loading) return;
+    this.loading = true;
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+
+    this.page++;
+    try {
+      const data = await fetchWithError(
+        `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=20`
+      );
+      if (!data?.items) {
+        this.page--;
+        btn.disabled = false;
+        btn.textContent = 'Load More';
+        return;
+      }
+      this.bookmarks.push(...data.items);
+      const grid = document.getElementById('profile-bookmark-grid');
+      if (grid) {
+        data.items.forEach(b => grid.appendChild(this.createBookmarkCard(b)));
+      }
+      const pagination = data.pagination;
+      this.hasMore = pagination ? pagination.page < pagination.totalPages : false;
+      if (!this.hasMore) btn.remove();
+      else { btn.disabled = false; btn.textContent = 'Load More'; }
+    } catch {
+      this.page--;
+      btn.disabled = false;
+      btn.textContent = 'Load More';
+    } finally {
+      this.loading = false;
     }
   }
 
