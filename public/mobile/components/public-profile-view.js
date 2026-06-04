@@ -201,6 +201,11 @@ export class PublicProfileView extends BaseView {
     const data = await fetchWithError(endpoint);
     listEl.innerHTML = '';
 
+    if (!data) {
+      listEl.innerHTML = `<p class="search-empty">Failed to load ${title.toLowerCase()}.</p>`;
+      return;
+    }
+
     const users = type === 'followers' ? data?.followers : data?.following;
     if (!users || users.length === 0) {
       listEl.innerHTML = `<p class="search-empty">No ${title.toLowerCase()} yet.</p>`;
@@ -242,17 +247,22 @@ export class PublicProfileView extends BaseView {
       const data = await fetchWithError(
         `/api/bookmarks?user=${encodeURIComponent(this.username)}&page=${this.page}&limit=20`
       );
-      if (data?.items) {
-        this.bookmarks.push(...data.items);
-        const grid = document.getElementById('pub-bookmark-grid');
-        if (grid) {
-          data.items.forEach(b => grid.appendChild(this.createBookmarkCard(b)));
-        }
-        const pagination = data.pagination;
-        this.hasMore = pagination ? pagination.page < pagination.totalPages : false;
-        if (!this.hasMore) btn.remove();
-        else { btn.disabled = false; btn.textContent = 'Load More'; }
+      if (!data?.items) {
+        // fetchWithError returned null (401, 429, network error) — restore button
+        this.page--;
+        btn.disabled = false;
+        btn.textContent = 'Load More';
+        return;
       }
+      this.bookmarks.push(...data.items);
+      const grid = document.getElementById('pub-bookmark-grid');
+      if (grid) {
+        data.items.forEach(b => grid.appendChild(this.createBookmarkCard(b)));
+      }
+      const pagination = data.pagination;
+      this.hasMore = pagination ? pagination.page < pagination.totalPages : false;
+      if (!this.hasMore) btn.remove();
+      else { btn.disabled = false; btn.textContent = 'Load More'; }
     } catch {
       this.page--;
       btn.disabled = false;
