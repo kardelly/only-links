@@ -86,6 +86,7 @@ function updateHeaderUI() {
         profileAvatarInitial.textContent = headerState.currentUser.username.charAt(0).toUpperCase();
       }
     }
+    initNotifications(headerState.currentUser);
   } else {
     // Logged out: landing-style header
     if (authNav) authNav.style.display = 'none';
@@ -277,6 +278,167 @@ function setupUserSearch() {
   // Hide when clicking outside
   document.addEventListener('click', (e) => {
     if (!input.contains(e.target) && !dropdown.contains(e.target)) hide();
+  });
+}
+
+// ===== NOTIFICATIONS =====
+let _notifOpen = false;
+let _notifInitialized = false;
+
+async function loadNotifications() {
+  try {
+    const res = await fetch('/api/notifications', { credentials: 'include' });
+    if (!res.ok) return;
+    const data = await res.json();
+    updateNotifBadge(data.unreadCount);
+    renderNotifList(data.notifications);
+  } catch {}
+}
+
+function updateNotifBadge(count) {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function _escapeHtmlNotif(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function _timeAgoNotif(ts) {
+  const diff = Date.now() - new Date(ts).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function renderNotifList(notifications) {
+  const list = document.getElementById('notif-list');
+  if (!list) return;
+
+  if (!notifications || notifications.length === 0) {
+    list.innerHTML = '<p class="notif-empty">No notifications yet.</p>';
+    return;
+  }
+
+  list.innerHTML = '';
+  notifications.forEach(n => {
+    const item = document.createElement('div');
+    item.className = 'notif-item' + (n.read ? '' : ' unread');
+    item.dataset.id = n.id;
+
+    const initials = (n.actor_username || '?')[0].toUpperCase();
+    const avatarHtml = n.actor_avatar
+      ? `<img src="${_escapeHtmlNotif(n.actor_avatar)}" alt="" onerror="this.parentElement.textContent='${initials}'">`
+      : initials;
+
+    let textHtml = '';
+    if (n.type === 'follow') {
+      textHtml = `<strong>${_escapeHtmlNotif(n.actor_username)}</strong> started following you`;
+    } else {
+      textHtml = `<strong>${_escapeHtmlNotif(n.actor_username)}</strong> saved your link <em>${_escapeHtmlNotif(n.bookmark_title || '')}</em>`;
+    }
+
+    item.innerHTML = `
+      <div class="notif-avatar">${avatarHtml}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="notif-text">${textHtml}</div>
+        <div class="notif-time">${_timeAgoNotif(n.created_at)}</div>
+      </div>
+    `;
+
+    item.addEventListener('click', () => _handleNotifClick(n, item));
+    list.appendChild(item);
+  });
+}
+
+async function _handleNotifClick(n, itemEl) {
+  // Mark as read
+  await fetch('/api/notifications/read', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids: [n.id] })
+  });
+
+  // Optimistically update badge
+  if (!n.read) {
+    const badge = document.getElementById('notif-badge');
+    if (badge && badge.style.display !== 'none') {
+      const current = parseInt(badge.textContent) || 0;
+      const next = current - 1;
+      if (next <= 0) badge.style.display = 'none';
+      else badge.textContent = next > 99 ? '99+' : next;
+    }
+    n.read = 1;
+    itemEl.classList.remove('unread');
+  }
+
+  _closeNotifDropdown();
+
+  // Navigate
+  if (n.type === 'follow') {
+    window.location.href = `/user/${encodeURIComponent(n.actor_username)}`;
+  } else if (n.bookmark_url) {
+    window.open(n.bookmark_url, '_blank');
+  }
+}
+
+function _closeNotifDropdown() {
+  const dropdown = document.getElementById('notif-dropdown');
+  if (dropdown) dropdown.hidden = true;
+  _notifOpen = false;
+}
+
+function initNotifications(user) {
+  if (!user || _notifInitialized) return;
+  _notifInitialized = true;
+
+  const wrapper = document.getElementById('notif-bell-wrapper');
+  const btn = document.getElementById('notif-bell-btn');
+  const dropdown = document.getElementById('notif-dropdown');
+  const markAllBtn = document.getElementById('notif-mark-all-btn');
+
+  if (!wrapper || !btn || !dropdown) return;
+  wrapper.style.display = 'block';
+
+  // Load on init
+  loadNotifications();
+
+  // Toggle dropdown
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    _notifOpen = !_notifOpen;
+    dropdown.hidden = !_notifOpen;
+  });
+
+  // Mark all read
+  markAllBtn?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    await fetch('/api/notifications/read', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [] })
+    });
+    updateNotifBadge(0);
+    document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (wrapper && !wrapper.contains(e.target)) _closeNotifDropdown();
   });
 }
 
