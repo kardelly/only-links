@@ -297,17 +297,45 @@ export class ProfileView extends BaseView {
    * Confirm and delete bookmark
    */
   async confirmDelete(bookmark, card) {
-    if (!confirm(`Delete "${bookmark.title}"?`)) return;
+    // Custom bottom-sheet confirmation instead of native confirm()
+    await new Promise((resolve) => {
+      document.querySelector('.delete-confirm-backdrop')?.remove();
 
-    const result = await fetchWithError(`/api/bookmarks/${bookmark.id}`, { method: 'DELETE' });
-    if (result) {
-      card.remove();
-      this.totalBookmarks = Math.max(0, this.totalBookmarks - 1);
-      // Update counter in header
-      const statValue = this.container.querySelector('.stat-value');
-      if (statValue) statValue.textContent = this.totalBookmarks;
-      showToast('Deleted', 'success');
-    }
+      const backdrop = document.createElement('div');
+      backdrop.className = 'edit-sheet-backdrop delete-confirm-backdrop';
+      backdrop.innerHTML = `
+        <div class="edit-sheet" style="padding-bottom: max(40px, env(safe-area-inset-bottom));">
+          <div class="edit-sheet-handle"></div>
+          <h3 class="edit-sheet-title">Delete bookmark?</h3>
+          <p style="font-size:14px;color:var(--text-secondary);margin:0 0 24px;line-height:1.5;">"${escapeHtml(bookmark.title)}" will be permanently removed.</p>
+          <div class="edit-sheet-actions">
+            <button class="btn btn-secondary" id="delete-cancel-btn">Cancel</button>
+            <button class="btn btn-primary" id="delete-confirm-btn" style="background:oklch(54% 0.2 25);">Delete</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(backdrop);
+      requestAnimationFrame(() => backdrop.classList.add('open'));
+
+      const close = (confirmed) => {
+        backdrop.classList.remove('open');
+        setTimeout(() => { backdrop.remove(); resolve(confirmed); }, 250);
+      };
+
+      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(false); });
+      backdrop.querySelector('#delete-cancel-btn').addEventListener('click', () => close(false));
+      backdrop.querySelector('#delete-confirm-btn').addEventListener('click', () => close(true));
+    }).then(async (confirmed) => {
+      if (!confirmed) return;
+      const result = await fetchWithError(`/api/bookmarks/${bookmark.id}`, { method: 'DELETE' });
+      if (result) {
+        card.remove();
+        this.totalBookmarks = Math.max(0, this.totalBookmarks - 1);
+        const statValue = this.container.querySelector('.stat-value');
+        if (statValue) statValue.textContent = this.totalBookmarks;
+        showToast('Deleted', 'success');
+      }
+    });
   }
 
   /**

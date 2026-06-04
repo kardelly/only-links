@@ -336,48 +336,27 @@ export class PublicProfileView extends BaseView {
 
     const saveBtn = card.querySelector('.card-save-btn');
     if (saveBtn) {
-      saveBtn.addEventListener('click', async (e) => {
+      saveBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (saveBtn.classList.contains('save-done') || saveBtn.disabled) return;
-
-        saveBtn.disabled = true;
-        const saveBtnText = saveBtn.lastChild;
-        if (saveBtnText?.nodeType === Node.TEXT_NODE) saveBtnText.textContent = ' …';
 
         const tags = Array.isArray(bookmark.tags)
           ? bookmark.tags.join(', ')
           : (bookmark.tags || '');
 
-        const isPublic = window.mobileApp?.prefs?.default_public !== 0;
-
-        try {
-          const res = await fetch('/api/bookmarks', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              url: bookmark.url,
-              title: bookmark.title,
-              description: bookmark.description || '',
-              tags,
-              is_public: isPublic
-            })
+        // Open the add-bookmark sheet pre-filled so user can review/edit before saving
+        const addView = window.mobileApp?.views?.add;
+        if (addView) {
+          addView.openWithData({
+            url: bookmark.url,
+            title: bookmark.title,
+            description: bookmark.description || bookmark.og_description || '',
+            tags
           });
-
-          if (res.ok) {
-            saveBtn.classList.add('save-done');
-            saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
-            if ('vibrate' in navigator) navigator.vibrate(30);
-          } else {
-            const err = await res.json().catch(() => ({}));
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
-            showToast(err.error || 'Failed to save', 'error');
-          }
-        } catch {
-          saveBtn.disabled = false;
-          saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
-          showToast('Connection error', 'error');
+          saveBtn.classList.add('save-done');
+          saveBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
+        } else {
+          showToast('Could not open save form', 'error');
         }
       });
     }

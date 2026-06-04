@@ -202,6 +202,8 @@ export class AddBookmarkView {
    */
   openWithData(data) {
     this.sharedData = data;
+    this._metadataFetching = false;
+    this._metadataFetched = !!data.title; // skip metadata fetch if title already provided
     this.clearForm();
 
     if (data.url) {
@@ -213,13 +215,20 @@ export class AddBookmarkView {
     if (data.text) {
       document.getElementById('bookmark-description').value = data.text;
     }
+    if (data.description) {
+      document.getElementById('bookmark-description').value = data.description;
+    }
+    if (data.tags && this.tagInput) {
+      this.tagInput.setTags(data.tags);
+    }
 
     this.backdrop.classList.add('active');
     this.sheet.classList.add('active');
 
     // Focus tags input (URL already filled)
     setTimeout(() => {
-      document.getElementById('bookmark-tags').focus();
+      const tagsInput = document.querySelector('.tag-input-text');
+      if (tagsInput) tagsInput.focus();
     }, 300);
   }
 
