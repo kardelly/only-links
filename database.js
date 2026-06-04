@@ -745,6 +745,20 @@ export async function markNotificationsRead(userId, notificationIds) {
   }
 }
 
+export async function deleteNotifications(userId, notificationIds) {
+  const db = await dbPromise;
+  if (!notificationIds || notificationIds.length === 0) {
+    // Delete all for this user
+    await db.run('DELETE FROM notifications WHERE recipient_id = ?', [userId]);
+  } else {
+    const placeholders = notificationIds.map(() => '?').join(', ');
+    await db.run(
+      `DELETE FROM notifications WHERE recipient_id = ? AND id IN (${placeholders})`,
+      [userId, ...notificationIds]
+    );
+  }
+}
+
 // Search users by username prefix (respects searchable opt-out)
 export async function searchUsers(query, limit = 10) {
   const db = await dbPromise;

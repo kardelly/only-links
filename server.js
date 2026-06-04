@@ -46,7 +46,8 @@ import {
   searchUsers,
   createNotification,
   getNotifications,
-  markNotificationsRead
+  markNotificationsRead,
+  deleteNotifications
 } from './database.js';
 
 // ==========================================
@@ -1246,6 +1247,18 @@ app.post('/api/notifications/read', authenticate, async (req, res) => {
   } catch (err) {
     console.error('Mark Notifications Read Error:', err);
     res.status(500).json({ error: 'Failed to mark notifications as read' });
+  }
+});
+
+// DELETE /api/notifications — delete notifications (ids[] in body, or all if omitted)
+app.delete('/api/notifications', authenticate, async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
+    await deleteNotifications(req.user.id, ids);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('Delete Notifications Error:', err);
+    res.status(500).json({ error: 'Failed to delete notifications' });
   }
 });
 

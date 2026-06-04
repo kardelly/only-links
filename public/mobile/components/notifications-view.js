@@ -25,7 +25,10 @@ export class NotificationsView extends BaseView {
     header.style.cssText = 'padding: 16px 16px 8px; display: flex; align-items: center; justify-content: space-between;';
     header.innerHTML = `
       <h2 style="font-size: 20px; font-weight: 700;">Notifications</h2>
-      <button id="notif-mark-all-mobile" style="font-size:13px;background:none;border:none;color:var(--primary);cursor:pointer;font-weight:500;font-family:inherit;">Mark all read</button>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <button id="notif-mark-all-mobile" style="font-size:13px;background:none;border:none;color:var(--primary);cursor:pointer;font-weight:500;font-family:inherit;">Mark all read</button>
+        <button id="notif-clear-all-mobile" style="font-size:13px;background:none;border:none;color:oklch(54% 0.2 25);cursor:pointer;font-weight:500;font-family:inherit;">Clear all</button>
+      </div>
     `;
     this.container.appendChild(header);
 
@@ -82,10 +85,11 @@ export class NotificationsView extends BaseView {
         textContainer.appendChild(textEl);
         textContainer.appendChild(timeEl);
 
-        item.style.cssText = 'display:flex;gap:12px;align-items:flex-start;';
+        item.style.cssText = 'display:flex;gap:12px;align-items:flex-start;position:relative;overflow:hidden;';
         item.appendChild(avatarEl);
         item.appendChild(textContainer);
         item.addEventListener('click', () => this.handleClick(n, item));
+        this._addSwipeToDelete(item, n);
         list.appendChild(item);
       });
 
@@ -108,6 +112,97 @@ export class NotificationsView extends BaseView {
         showToast('All marked as read', 'success');
       } catch (_) {
         showToast('Failed to mark as read', 'error');
+      }
+    });
+
+    // Clear all button
+    this.container.querySelector('#notif-clear-all-mobile')?.addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/notifications', {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [] })
+        });
+        if (!res.ok) throw new Error('failed');
+        this.notifications = [];
+        this.updateBadge(0);
+        this.render();
+        showToast('Notifications cleared', 'success');
+      } catch (_) {
+        showToast('Failed to clear', 'error');
+      }
+    });
+  }
+
+  _addSwipeToDelete(item, n) {
+    let startX = 0;
+    let currentX = 0;
+    let isSwiping = false;
+    const THRESHOLD = 80; // px to trigger delete
+
+    // Red delete layer behind the item
+    const deleteLayer = document.createElement('div');
+    deleteLayer.style.cssText = `
+      position: absolute; inset: 0; right: 0;
+      background: oklch(54% 0.2 25);
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 20px; color: white; font-size: 13px; font-weight: 600;
+      opacity: 0; transition: opacity 100ms; pointer-events: none;
+    `;
+    deleteLayer.textContent = 'Delete';
+    item.appendChild(deleteLayer);
+
+    item.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      isSwiping = true;
+    }, { passive: true });
+
+    item.addEventListener('touchmove', (e) => {
+      if (!isSwiping) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX > 0) { currentX = 0; return; } // only left swipe
+      const translateX = Math.max(currentX, -120);
+      item.style.transform = `translateX(${translateX}px)`;
+      item.style.transition = 'none';
+      deleteLayer.style.opacity = Math.min(Math.abs(translateX) / THRESHOLD, 1);
+    }, { passive: true });
+
+    item.addEventListener('touchend', async () => {
+      if (!isSwiping) return;
+      isSwiping = false;
+
+      if (Math.abs(currentX) >= THRESHOLD) {
+        // Animate out
+        item.style.transition = 'transform 250ms ease, opacity 250ms ease, max-height 300ms ease';
+        item.style.transform = 'translateX(-100%)';
+        item.style.opacity = '0';
+        item.style.maxHeight = item.offsetHeight + 'px';
+        setTimeout(() => {
+          item.style.maxHeight = '0';
+          item.style.padding = '0';
+          item.style.overflow = 'hidden';
+        }, 200);
+        setTimeout(() => item.remove(), 500);
+
+        // Remove from data + update badge
+        this.notifications = this.notifications.filter(x => x.id !== n.id);
+        const unread = this.notifications.filter(x => !x.read).length;
+        this.updateBadge(unread);
+
+        // Delete on server
+        await fetch('/api/notifications', {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [n.id] })
+        });
+      } else {
+        // Snap back
+        item.style.transition = 'transform 200ms ease';
+        item.style.transform = 'translateX(0)';
+        deleteLayer.style.opacity = '0';
+        currentX = 0;
       }
     });
   }

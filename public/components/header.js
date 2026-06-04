@@ -421,6 +421,7 @@ function initNotifications(user) {
   const btn = document.getElementById('notif-bell-btn');
   const dropdown = document.getElementById('notif-dropdown');
   const markAllBtn = document.getElementById('notif-mark-all-btn');
+  const clearAllBtn = document.getElementById('notif-clear-all-btn');
 
   if (!wrapper || !btn || !dropdown) return;
   wrapper.style.display = 'block';
@@ -446,6 +447,20 @@ function initNotifications(user) {
     });
     updateNotifBadge(0);
     document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+  });
+
+  // Clear all
+  clearAllBtn?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    await fetch('/api/notifications', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [] })
+    });
+    updateNotifBadge(0);
+    _notifUnreadCount = 0;
+    renderNotifList([]);
   });
 
   // Close on outside click
