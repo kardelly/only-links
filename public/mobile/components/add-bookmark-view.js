@@ -10,6 +10,8 @@ export class AddBookmarkView {
     this.backdrop = null;
     this.sharedData = null;
     this.tagInput = null;
+    this._metadataFetching = false;
+    this._metadataFetched = false;
   }
 
   /**
@@ -149,10 +151,12 @@ export class AddBookmarkView {
     }
 
     // Only fetch if title is still empty (don't overwrite user edits)
-    if (titleInput.value.trim()) return;
+    if (titleInput.value.trim()) { this._metadataFetched = true; return; }
 
     // Show subtle loading state on title field
     titleInput.placeholder = 'Fetching…';
+    this._metadataFetching = true;
+    this._metadataFetched = false;
 
     try {
       const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`, {
@@ -171,6 +175,8 @@ export class AddBookmarkView {
       // silent fail — user can fill manually
     } finally {
       titleInput.placeholder = 'Bookmark title';
+      this._metadataFetching = false;
+      this._metadataFetched = true;
     }
   }
 
@@ -179,6 +185,8 @@ export class AddBookmarkView {
    */
   open() {
     this.sharedData = null;
+    this._metadataFetching = false;
+    this._metadataFetched = false;
     this.clearForm();
     this.backdrop.classList.add('active');
     this.sheet.classList.add('active');
@@ -319,6 +327,26 @@ export class AddBookmarkView {
     if (errors.length > 0) {
       this.showFormErrors(errors);
       return;
+    }
+
+    // If metadata fetch is still in progress, wait for it
+    if (this._metadataFetching) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Loading…';
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (!this._metadataFetching) { clearInterval(check); resolve(); }
+        }, 100);
+      });
+    }
+
+    // Re-read form data after potential metadata fill
+    formData.title = form.title.value.trim();
+    formData.description = form.description.value.trim();
+
+    // Fallback title to URL hostname if still empty
+    if (!formData.title) {
+      try { formData.title = new URL(formData.url).hostname.replace(/^www\./, ''); } catch (_) {}
     }
 
     // Disable submit button
