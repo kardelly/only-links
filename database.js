@@ -59,6 +59,18 @@ export const dbPromise = open({
       FOREIGN KEY(following_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      recipient_id INTEGER NOT NULL,
+      actor_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      ref_id INTEGER,
+      read INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS password_reset_tokens (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -678,6 +690,57 @@ export async function deletePasswordResetToken(token) {
 export async function cleanupExpiredResetTokens() {
   const db = await dbPromise;
   await db.run('DELETE FROM password_reset_tokens WHERE expires_at < datetime("now")');
+}
+
+// Helper: Create a notification (skips self-notifications)
+export async function createNotification(recipientId, actorId, type, refId = null) {
+  if (recipientId === actorId) return; // never notify yourself
+  const db = await dbPromise;
+  await db.run(
+    'INSERT INTO notifications (recipient_id, actor_id, type, ref_id) VALUES (?, ?, ?, ?)',
+    [recipientId, actorId, type, refId]
+  );
+}
+
+// Helper: Get notifications for a user (most recent 20)
+export async function getNotifications(userId) {
+  const db = await dbPromise;
+  return db.all(`
+    SELECT
+      n.id,
+      n.type,
+      n.ref_id,
+      n.read,
+      n.created_at,
+      u.username AS actor_username,
+      u.avatar   AS actor_avatar,
+      b.url      AS bookmark_url,
+      b.title    AS bookmark_title
+    FROM notifications n
+    JOIN users u ON u.id = n.actor_id
+    LEFT JOIN bookmarks b ON b.id = n.ref_id
+    WHERE n.recipient_id = ?
+    ORDER BY n.created_at DESC
+    LIMIT 20
+  `, [userId]);
+}
+
+// Helper: Mark notifications as read (all unread if no IDs given, or specific IDs)
+export async function markNotificationsRead(userId, notificationIds) {
+  const db = await dbPromise;
+  if (!notificationIds || notificationIds.length === 0) {
+    // Mark all unread for this user
+    await db.run(
+      'UPDATE notifications SET read = 1 WHERE recipient_id = ? AND read = 0',
+      [userId]
+    );
+  } else {
+    const placeholders = notificationIds.map(() => '?').join(', ');
+    await db.run(
+      `UPDATE notifications SET read = 1 WHERE recipient_id = ? AND id IN (${placeholders})`,
+      [userId, ...notificationIds]
+    );
+  }
 }
 
 // Search users by username prefix (respects searchable opt-out)
