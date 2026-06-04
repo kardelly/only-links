@@ -554,11 +554,6 @@ app.post('/api/auth/register', strictLimiter, async (req, res) => {
     return res.status(400).json({ error: passwordValidation.error });
   }
 
-  // Validate password confirmation
-  if (password !== confirmPassword) {
-    return res.status(400).json({ error: 'Passwords do not match' });
-  }
-
   try {
     // Check if username already exists
     const existingUsername = await getUserByUsername(usernameValidation.value);
