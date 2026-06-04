@@ -9,16 +9,12 @@ export class NotificationsView extends BaseView {
 
   async load() {
     this.showLoading();
-    try {
-      const data = await fetchWithError('/api/notifications');
-      if (data) {
-        this.notifications = data.notifications || [];
-        this.render();
-      }
-    } catch (err) {
-      this.showError('Failed to load notifications');
-    } finally {
-      this.hideLoading();
+    const data = await fetchWithError('/api/notifications');
+    this.hideLoading();
+    if (data) {
+      this.notifications = data.notifications || [];
+      this.updateBadge(data.unreadCount ?? 0);
+      this.render();
     }
   }
 
@@ -98,15 +94,21 @@ export class NotificationsView extends BaseView {
 
     // Mark all read button
     this.container.querySelector('#notif-mark-all-mobile')?.addEventListener('click', async () => {
-      await fetch('/api/notifications/read', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: [] })
-      });
-      this.container.querySelectorAll('.notif-item-mobile.unread').forEach(el => el.classList.remove('unread'));
-      this.updateBadge(0);
-      showToast('All marked as read', 'success');
+      try {
+        const res = await fetch('/api/notifications/read', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [] })
+        });
+        if (!res.ok) throw new Error('failed');
+        this.container.querySelectorAll('.notif-item-mobile.unread').forEach(el => el.classList.remove('unread'));
+        this.notifications.forEach(n => { n.read = 1; });
+        this.updateBadge(0);
+        showToast('All marked as read', 'success');
+      } catch (_) {
+        showToast('Failed to mark as read', 'error');
+      }
     });
   }
 
@@ -118,8 +120,12 @@ export class NotificationsView extends BaseView {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: [n.id] })
       });
-      itemEl.classList.remove('unread');
-      n.read = 1;
+      if (!n.read) {
+        itemEl.classList.remove('unread');
+        n.read = 1;
+        const unread = this.notifications.filter(x => !x.read).length;
+        this.updateBadge(unread);
+      }
     } catch (_) {
       // silent fail — still navigate
     }
