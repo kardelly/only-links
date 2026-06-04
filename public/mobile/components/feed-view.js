@@ -15,6 +15,7 @@ export class FeedView extends BaseView {
     this.bookmarks = [];
     this.loading = false;
     this.user = user;
+    this.feedType = 'mine'; // 'mine' | 'network' | 'all'
   }
 
   /**
@@ -33,10 +34,17 @@ export class FeedView extends BaseView {
         this.user = window.mobileApp.user;
       }
 
-      // Fetch bookmarks - user's if authenticated, public feed otherwise
-      const url = this.user
-        ? `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=${this.limit}`
-        : `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
+      // Build URL based on feedType (same logic as desktop app.js)
+      let url;
+      if (!this.user) {
+        url = `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
+      } else if (this.feedType === 'mine') {
+        url = `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=${this.limit}`;
+      } else if (this.feedType === 'network') {
+        url = `/api/bookmarks?feedType=network&page=${this.page}&limit=${this.limit}`;
+      } else {
+        url = `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
+      }
 
       console.log('[FeedView] Fetching from URL:', url);
 
@@ -75,20 +83,42 @@ export class FeedView extends BaseView {
 
     this.clear();
 
+    // Feed type tabs (only shown when logged in)
+    if (this.user) {
+      const tabs = document.createElement('div');
+      tabs.className = 'feed-tabs-mobile';
+      tabs.innerHTML = `
+        <button class="feed-tab-mobile ${this.feedType === 'mine' ? 'active' : ''}" data-feed="mine">Mine</button>
+        <button class="feed-tab-mobile ${this.feedType === 'network' ? 'active' : ''}" data-feed="network">Network</button>
+        <button class="feed-tab-mobile ${this.feedType === 'all' ? 'active' : ''}" data-feed="all">All</button>
+      `;
+      tabs.querySelectorAll('.feed-tab-mobile').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.feed === this.feedType) return;
+          this.feedType = btn.dataset.feed;
+          this.refresh();
+        });
+      });
+      this.container.appendChild(tabs);
+    }
+
     // Empty state
     if (this.bookmarks.length === 0) {
       console.log('[FeedView] Showing empty state');
-      this.container.innerHTML = `
-        <div class="empty-state">
-          <h2>No bookmarks yet</h2>
-          <p>Tap the + button to save your first bookmark</p>
-        </div>
-      `;
+      const emptyMsg = this.feedType === 'network'
+        ? 'Follow people to see their bookmarks here.'
+        : this.feedType === 'mine'
+          ? 'Tap the + button to save your first bookmark.'
+          : 'No public bookmarks yet.';
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.innerHTML = `<h2>No bookmarks yet</h2><p>${emptyMsg}</p>`;
+      this.container.appendChild(empty);
       return;
     }
 
     console.log('[FeedView] Rendering', this.bookmarks.length, 'bookmarks');
-    
+
     // Create grid
     const grid = document.createElement('div');
     grid.className = 'bookmark-grid';
@@ -286,9 +316,16 @@ export class FeedView extends BaseView {
       this.page++;
 
       try {
-        const url = this.user
-          ? `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=${this.limit}`
-          : `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
+        let url;
+        if (!this.user) {
+          url = `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
+        } else if (this.feedType === 'mine') {
+          url = `/api/bookmarks?user=${this.user.username}&page=${this.page}&limit=${this.limit}`;
+        } else if (this.feedType === 'network') {
+          url = `/api/bookmarks?feedType=network&page=${this.page}&limit=${this.limit}`;
+        } else {
+          url = `/api/bookmarks?page=${this.page}&limit=${this.limit}`;
+        }
 
         const data = await fetchWithError(url);
 

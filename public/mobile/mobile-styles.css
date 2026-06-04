@@ -1703,3 +1703,32 @@ body {
   padding: 0 3px;
   pointer-events: none;
 }
+
+/* ===== FEED TYPE TABS (mobile) ===== */
+.feed-tabs-mobile {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin: 0 calc(-1 * var(--spacing-md)) 8px;
+  padding: 0 var(--spacing-md);
+}
+
+.feed-tab-mobile {
+  flex: 1;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+  margin-bottom: -1px;
+  font-family: inherit;
+}
+
+.feed-tab-mobile.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
