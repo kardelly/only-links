@@ -1627,6 +1627,11 @@ body {
 }
 
 /* Card action delete (prevent red-on-dark-red) */
+[data-theme="dark"] .card-action-delete {
+  color: oklch(72% 0.2 25);
+  border-color: oklch(42% 0.15 25);
+}
+
 [data-theme="dark"] .card-action-delete:active {
   background: oklch(22% 0.08 25);
 }
