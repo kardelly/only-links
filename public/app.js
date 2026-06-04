@@ -614,42 +614,20 @@ function renderBookmarks() {
   });
 
   container.querySelectorAll('.save-bookmark-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+    btn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (btn.classList.contains('saved') || btn.disabled) return;
 
-      btn.disabled = true;
-      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Saving…`;
+      // Open the bookmark modal pre-filled so user can review/edit before saving
+      openBookmarkModalPrefilled({
+        url: btn.dataset.url,
+        title: btn.dataset.title,
+        description: btn.dataset.description,
+        tags: btn.dataset.tags
+      });
 
-      try {
-        const res = await fetch('/api/bookmarks', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url: btn.dataset.url,
-            title: btn.dataset.title,
-            description: btn.dataset.description,
-            tags: btn.dataset.tags,
-            // TODO: respect user default_public preference once stored in state
-            is_public: true
-          })
-        });
-
-        if (res.ok) {
-          btn.classList.add('saved');
-          btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
-        } else {
-          const err = await res.json().catch(() => ({}));
-          btn.disabled = false;
-          btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
-          showNotification(err.error || 'Failed to save', 'error');
-        }
-      } catch {
-        btn.disabled = false;
-        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
-        showNotification('Connection error', 'error');
-      }
+      btn.classList.add('saved');
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
     });
   });
 }
@@ -1323,10 +1301,15 @@ function handleUrlParameters() {
 }
 
 // Open Add Bookmark modal with pre-filled inputs (used by bookmarklet/extension)
-function openBookmarkModalPrefilled({ url, title, description }) {
+function openBookmarkModalPrefilled({ url, title, description, tags }) {
   openBookmarkModal();
   if (url) document.getElementById('bookmark-url').value = url;
   if (title) document.getElementById('bookmark-title').value = title;
   if (description) document.getElementById('bookmark-description').value = description;
-  if (url) fetchMetadata(url);
+  if (tags) {
+    const tagsInput = document.getElementById('bookmark-tags');
+    if (tagsInput) tagsInput.value = tags;
+  }
+  // Only fetch metadata if title not already provided
+  if (url && !title) fetchMetadata(url);
 }
