@@ -43,7 +43,10 @@ import {
   getUserByResetToken,
   deletePasswordResetToken,
   cleanupExpiredResetTokens,
-  searchUsers
+  searchUsers,
+  createNotification,
+  getNotifications,
+  markNotificationsRead
 } from './database.js';
 
 // ==========================================
@@ -905,6 +908,24 @@ app.post('/api/bookmarks', authenticate, async (req, res) => {
       bookmarkId
     });
 
+    // Notify the bookmark owner's followers of the new public bookmark (fire-and-forget)
+    if (is_public !== false && is_public !== 0) {
+      (async () => {
+        try {
+          const db = await dbPromise;
+          const followers = await db.all(
+            'SELECT follower_id FROM follows WHERE following_id = ?',
+            [req.user.id]
+          );
+          await Promise.all(
+            followers.map(f => createNotification(f.follower_id, req.user.id, 'bookmark_save', bookmarkId))
+          );
+        } catch (err) {
+          // Non-critical — silent fail
+        }
+      })();
+    }
+
     // If no og_image was provided, fetch it in the background
     if (!og_image) {
       (async () => {
@@ -1109,6 +1130,7 @@ app.post('/api/users/:username/follow', authenticate, async (req, res) => {
     }
 
     await followUser(req.user.id, targetUser.id);
+    await createNotification(targetUser.id, req.user.id, 'follow');
 
     res.json({ message: 'Followed successfully' });
   } catch (err) {
@@ -1186,6 +1208,30 @@ app.get('/api/users/:username/following', async (req, res) => {
   } catch (err) {
     console.error('Get Following Error:', err);
     res.status(500).json({ error: 'Failed to load following' });
+  }
+});
+
+// GET /api/notifications — get notifications for the authenticated user
+app.get('/api/notifications', authenticate, async (req, res) => {
+  try {
+    const notifications = await getNotifications(req.user.id);
+    const unreadCount = notifications.filter(n => !n.read).length;
+    res.json({ notifications, unreadCount });
+  } catch (err) {
+    console.error('Get Notifications Error:', err);
+    res.status(500).json({ error: 'Failed to get notifications' });
+  }
+});
+
+// POST /api/notifications/read — mark notifications as read
+app.post('/api/notifications/read', authenticate, async (req, res) => {
+  try {
+    const { ids } = req.body; // optional array of ids; if omitted marks all
+    await markNotificationsRead(req.user.id, ids || []);
+    res.json({ message: 'Marked as read' });
+  } catch (err) {
+    console.error('Mark Notifications Read Error:', err);
+    res.status(500).json({ error: 'Failed to mark notifications as read' });
   }
 });
 
