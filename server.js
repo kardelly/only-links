@@ -903,12 +903,26 @@ app.post('/api/bookmarks', authenticate, async (req, res) => {
       bookmarkId
     });
 
-    // Notify the bookmark owner's followers of the new public bookmark (fire-and-forget)
+    // Fire-and-forget: notify original bookmark owner + followers (both non-critical)
     const bookmarkIsPublic = is_public !== undefined ? !!is_public : true;
-    if (bookmarkIsPublic) {
-      (async () => {
-        try {
-          const db = await dbPromise;
+    (async () => {
+      try {
+        const db = await dbPromise;
+
+        // 1. Notify the original bookmark owner when someone re-saves their link
+        //    Find the earliest public bookmark with this URL by a different user
+        const original = await db.get(
+          `SELECT b.id, b.user_id FROM bookmarks b
+           WHERE b.url = ? AND b.user_id != ? AND b.is_public = 1
+           ORDER BY b.created_at ASC LIMIT 1`,
+          [urlValidation.value, req.user.id]
+        );
+        if (original) {
+          await createNotification(original.user_id, req.user.id, 'bookmark_save', bookmarkId);
+        }
+
+        // 2. Notify followers of the person who saved (new link in their feed)
+        if (bookmarkIsPublic) {
           const followers = await db.all(
             'SELECT follower_id FROM follows WHERE following_id = ?',
             [req.user.id]
@@ -916,11 +930,11 @@ app.post('/api/bookmarks', authenticate, async (req, res) => {
           await Promise.allSettled(
             followers.map(f => createNotification(f.follower_id, req.user.id, 'bookmark_save', bookmarkId))
           );
-        } catch (err) {
-          // Non-critical — silent fail
         }
-      })();
-    }
+      } catch (err) {
+        // Non-critical — silent fail
+      }
+    })();
 
     // If no og_image was provided, fetch it in the background
     if (!og_image) {
