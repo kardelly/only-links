@@ -621,7 +621,6 @@ function renderBookmarks() {
       btn.disabled = true;
       btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Saving…`;
 
-      const tags = btn.dataset.tags;
       try {
         const res = await fetch('/api/bookmarks', {
           method: 'POST',
@@ -631,7 +630,8 @@ function renderBookmarks() {
             url: btn.dataset.url,
             title: btn.dataset.title,
             description: btn.dataset.description,
-            tags,
+            tags: btn.dataset.tags,
+            // TODO: respect user default_public preference once stored in state
             is_public: true
           })
         });
