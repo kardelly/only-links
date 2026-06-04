@@ -1657,3 +1657,44 @@ body {
   color: white;
   border-color: var(--primary);
 }
+
+/* ===== NOTIFICATIONS MOBILE ===== */
+.notif-item-mobile {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.notif-item-mobile:active {
+  background: var(--surface-secondary);
+}
+
+.notif-item-mobile.unread {
+  background: oklch(from var(--primary) l c h / 0.08);
+}
+
+[data-theme="dark"] .notif-item-mobile.unread {
+  background: oklch(20% 0.04 250);
+}
+
+.notif-nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 12px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: oklch(58% 0.2 25);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  pointer-events: none;
+}

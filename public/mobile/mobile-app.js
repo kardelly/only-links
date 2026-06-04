@@ -3,6 +3,7 @@ import { FeedView } from './components/feed-view.js';
 import { SearchView } from './components/search-view.js';
 import { AddBookmarkView } from './components/add-bookmark-view.js';
 import { TagsView } from './components/tags-view.js';
+import { NotificationsView } from './components/notifications-view.js';
 import { ProfileView } from './components/profile-view.js';
 import { SettingsView } from './components/settings-view.js';
 import { PublicProfileView } from './components/public-profile-view.js';
@@ -155,6 +156,7 @@ class MobileApp {
       search: new SearchView(),
       add: new AddBookmarkView(),
       tags: new TagsView(),
+      notifications: new NotificationsView(),
       profile: new ProfileView(),
       settings: new SettingsView(),
       'public-profile': new PublicProfileView()
@@ -177,6 +179,19 @@ class MobileApp {
     });
 
     this.bottomNav.init();
+
+    // Load notification badge count on startup
+    if (this.user) {
+      fetch('/api/notifications', { credentials: 'include' })
+        .then(r => r.json())
+        .then(data => {
+          if (data?.unreadCount > 0) {
+            const view = this.views.notifications;
+            if (view) view.updateBadge(data.unreadCount);
+          }
+        })
+        .catch(() => {});
+    }
 
     // Store app reference globally for views to use
     window.mobileApp = this;
