@@ -298,6 +298,15 @@ function renderBookmarks() {
               <button class="btn btn-ghost btn-sm edit-bookmark-btn" data-id="${item.id}" title="Edit">Edit</button>
               <button class="btn btn-ghost btn-sm delete-bookmark-btn" data-id="${item.id}" title="Delete">Delete</button>
             </div>
+          ` : profileState.currentUser ? `
+            <button class="btn-save save-bookmark-btn"
+              data-url="${escapeHTML(item.url)}"
+              data-title="${escapeHTML(item.title)}"
+              data-description="${escapeHTML(item.description || '')}"
+              data-tags="${escapeHTML(Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''))}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              Save
+            </button>
           ` : '<div></div>'}
           <button class="btn-share share-btn" data-url="${escapeHTML(item.url)}" aria-label="Compartilhar link">
             Share
@@ -331,6 +340,46 @@ function renderBookmarks() {
 
   container.querySelectorAll('.share-btn').forEach(btn => {
     btn.onclick = () => shareBookmark(btn);
+  });
+
+  container.querySelectorAll('.save-bookmark-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (btn.classList.contains('saved') || btn.disabled) return;
+
+      btn.disabled = true;
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Saving…`;
+
+      try {
+        const res = await fetch('/api/bookmarks', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: btn.dataset.url,
+            title: btn.dataset.title,
+            description: btn.dataset.description,
+            tags: btn.dataset.tags,
+            // TODO: respect user default_public preference once stored in state
+            is_public: true
+          })
+        });
+
+        if (res.ok) {
+          btn.classList.add('saved');
+          btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          btn.disabled = false;
+          btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
+          alert(err.error || 'Failed to save bookmark');
+        }
+      } catch {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
+        alert('Connection error');
+      }
+    });
   });
 }
 

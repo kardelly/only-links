@@ -440,6 +440,33 @@
       opacity: 1;
     }
 
+    .btn-save {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 120ms, color 120ms, border-color 120ms;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-save:hover {
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-save.saved {
+      color: oklch(54% 0.15 145);
+      border-color: oklch(54% 0.15 145);
+      cursor: default;
+    }
+
     /* ===== SIDEBAR ===== */
     .sidebar {
       position: sticky;
