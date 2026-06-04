@@ -284,6 +284,7 @@ function setupUserSearch() {
 // ===== NOTIFICATIONS =====
 let _notifOpen = false;
 let _notifInitialized = false;
+let _notifUnreadCount = 0;
 
 async function loadNotifications() {
   try {
@@ -296,6 +297,7 @@ async function loadNotifications() {
 }
 
 function updateNotifBadge(count) {
+  _notifUnreadCount = count;
   const badge = document.getElementById('notif-badge');
   if (!badge) return;
   if (count > 0) {
@@ -339,55 +341,65 @@ function renderNotifList(notifications) {
     item.dataset.id = n.id;
 
     const initials = (n.actor_username || '?')[0].toUpperCase();
-    const avatarHtml = n.actor_avatar
-      ? `<img src="${_escapeHtmlNotif(n.actor_avatar)}" alt="" onerror="this.parentElement.textContent='${initials}'">`
-      : initials;
 
-    let textHtml = '';
-    if (n.type === 'follow') {
-      textHtml = `<strong>${_escapeHtmlNotif(n.actor_username)}</strong> started following you`;
+    // Build avatar safely via DOM
+    const avatarEl = document.createElement('div');
+    avatarEl.className = 'notif-avatar';
+    if (n.actor_avatar) {
+      const img = document.createElement('img');
+      img.src = n.actor_avatar;
+      img.alt = '';
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+      img.addEventListener('error', () => { avatarEl.textContent = initials; });
+      avatarEl.appendChild(img);
     } else {
-      textHtml = `<strong>${_escapeHtmlNotif(n.actor_username)}</strong> saved your link <em>${_escapeHtmlNotif(n.bookmark_title || '')}</em>`;
+      avatarEl.textContent = initials;
     }
 
-    item.innerHTML = `
-      <div class="notif-avatar">${avatarHtml}</div>
-      <div style="flex:1;min-width:0;">
-        <div class="notif-text">${textHtml}</div>
-        <div class="notif-time">${_timeAgoNotif(n.created_at)}</div>
-      </div>
-    `;
+    // Build text container
+    const textContainer = document.createElement('div');
+    textContainer.style.cssText = 'flex:1;min-width:0;';
 
+    const textEl = document.createElement('div');
+    textEl.className = 'notif-text';
+    if (n.type === 'follow') {
+      textEl.innerHTML = `<strong>${_escapeHtmlNotif(n.actor_username)}</strong> started following you`;
+    } else {
+      textEl.innerHTML = `<strong>${_escapeHtmlNotif(n.actor_username)}</strong> saved your link <em>${_escapeHtmlNotif(n.bookmark_title || '')}</em>`;
+    }
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'notif-time';
+    timeEl.textContent = _timeAgoNotif(n.created_at);
+
+    textContainer.appendChild(textEl);
+    textContainer.appendChild(timeEl);
+    item.appendChild(avatarEl);
+    item.appendChild(textContainer);
     item.addEventListener('click', () => _handleNotifClick(n, item));
     list.appendChild(item);
   });
 }
 
 async function _handleNotifClick(n, itemEl) {
-  // Mark as read
-  await fetch('/api/notifications/read', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids: [n.id] })
-  });
-
-  // Optimistically update badge
-  if (!n.read) {
-    const badge = document.getElementById('notif-badge');
-    if (badge && badge.style.display !== 'none') {
-      const current = parseInt(badge.textContent) || 0;
-      const next = current - 1;
-      if (next <= 0) badge.style.display = 'none';
-      else badge.textContent = next > 99 ? '99+' : next;
+  try {
+    await fetch('/api/notifications/read', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [n.id] })
+    });
+    // Only update optimistically on success
+    if (!n.read) {
+      _notifUnreadCount = Math.max(0, _notifUnreadCount - 1);
+      updateNotifBadge(_notifUnreadCount);
+      n.read = 1;
+      itemEl.classList.remove('unread');
     }
-    n.read = 1;
-    itemEl.classList.remove('unread');
+  } catch (_) {
+    // Silent fail — still navigate
   }
-
   _closeNotifDropdown();
-
-  // Navigate
   if (n.type === 'follow') {
     window.location.href = `/user/${encodeURIComponent(n.actor_username)}`;
   } else if (n.bookmark_url) {
