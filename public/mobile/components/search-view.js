@@ -5,7 +5,7 @@ export class SearchView extends BaseView {
   constructor() {
     super('search-view');
     this.query = '';
-    this.activeTab = 'bookmarks'; // 'bookmarks' | 'people'
+    this.activeTab = 'bookmarks'; // 'bookmarks' | 'people' | 'tags'
     this.debouncedSearch = debounce(this.performSearch.bind(this), 300);
   }
 
@@ -35,6 +35,7 @@ export class SearchView extends BaseView {
         <div class="search-tabs">
           <button class="search-tab active" data-tab="bookmarks">Bookmarks</button>
           <button class="search-tab" data-tab="people">People</button>
+          <button class="search-tab" data-tab="tags">Tags</button>
         </div>
         <div id="search-results" class="search-results"></div>
       </div>
@@ -51,7 +52,11 @@ export class SearchView extends BaseView {
         this.container.querySelectorAll('.search-tab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.activeTab = btn.dataset.tab;
-        this.query ? this.performSearch() : this.clearResults();
+        if (this.activeTab === 'tags') {
+          this.showTagsCloud();
+        } else {
+          this.query ? this.performSearch() : this.clearResults();
+        }
       });
     });
 
@@ -67,9 +72,53 @@ export class SearchView extends BaseView {
 
     if (this.activeTab === 'people') {
       await this.searchPeople(resultsEl);
+    } else if (this.activeTab === 'tags') {
+      await this.showTagsCloud();
     } else {
       await this.searchBookmarks(resultsEl);
     }
+  }
+
+  async showTagsCloud() {
+    const resultsEl = this.container.querySelector('#search-results');
+    if (!resultsEl) return;
+    resultsEl.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+    const data = await fetchWithError('/api/tags?limit=100');
+    resultsEl.innerHTML = '';
+
+    if (!data?.tags?.length) {
+      resultsEl.innerHTML = '<div class="search-empty">No tags yet.</div>';
+      return;
+    }
+
+    const cloud = document.createElement('div');
+    cloud.className = 'tags-cloud';
+
+    data.tags.forEach(tag => {
+      const name = tag.name || tag;
+      const count = tag.count || tag.bookmark_count || 0;
+      const item = document.createElement('div');
+      item.className = 'tag-item';
+      item.innerHTML = `<span class="tag-name">${escapeHtml(name)}</span>${count ? `<span class="tag-count">${count}</span>` : ''}`;
+      item.addEventListener('click', () => {
+        // Navigate to search with this tag pre-filled
+        const input = this.container.querySelector('#search-input');
+        if (input) {
+          input.value = name;
+          this.query = name;
+          // Switch to bookmarks tab
+          this.container.querySelectorAll('.search-tab').forEach(b => b.classList.remove('active'));
+          const bookmarksTab = this.container.querySelector('[data-tab="bookmarks"]');
+          if (bookmarksTab) bookmarksTab.classList.add('active');
+          this.activeTab = 'bookmarks';
+          this.performSearch();
+        }
+      });
+      cloud.appendChild(item);
+    });
+
+    resultsEl.appendChild(cloud);
   }
 
   async searchBookmarks(resultsEl) {
