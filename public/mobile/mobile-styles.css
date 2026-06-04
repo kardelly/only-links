@@ -1469,3 +1469,73 @@ body {
   font-size: 13px;
   color: var(--text-secondary);
 }
+
+/* ===== DARK MODE — mobile PWA ===== */
+[data-theme="dark"] {
+  --primary: #6B8AFF;
+  --primary-hover: #5A78FF;
+  --surface: oklch(14% 0.01 250);
+  --surface-secondary: oklch(18% 0.012 250);
+  --text: oklch(92% 0.006 250);
+  --text-secondary: oklch(60% 0.008 250);
+  --border: oklch(26% 0.012 250);
+  --error: #F87171;
+  --success: #4ADE80;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .top-bar {
+  background: rgba(20, 22, 35, 0.85);
+}
+
+[data-theme="dark"] .edit-sheet,
+[data-theme="dark"] .bottom-sheet {
+  background: oklch(18% 0.012 250);
+}
+
+[data-theme="dark"] .tag-input-field {
+  background: oklch(18% 0.012 250);
+  border-color: oklch(26% 0.012 250);
+}
+
+[data-theme="dark"] .tag-input-dropdown {
+  background: oklch(18% 0.012 250);
+  border-color: oklch(26% 0.012 250);
+}
+
+[data-theme="dark"] .tag-input-suggestion:hover,
+[data-theme="dark"] .tag-input-suggestion:active {
+  background: oklch(22% 0.012 250);
+}
+
+[data-theme="dark"] #bottom-nav {
+  background: oklch(16% 0.01 250);
+  border-top-color: oklch(24% 0.012 250);
+}
+
+/* Theme selector — mobile settings */
+.theme-selector-mobile {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 16px;
+}
+
+.theme-btn-mobile {
+  flex: 1;
+  padding: 10px 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 150ms, color 150ms, border-color 150ms;
+  text-align: center;
+}
+
+.theme-btn-mobile.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
