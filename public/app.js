@@ -93,11 +93,8 @@ console.log(
   'font-size: 12px; color: oklch(52% 0.008 60); font-style: italic;'
 );
 
-// Theme System Initialization (light-only design, removed dark mode toggle)
-function initTheme() {
-  // Design is light-only per DESIGN.md: "Knowledge work happens during daytime"
-  document.documentElement.classList.remove('dark');
-}
+// Theme is handled by /theme.js loaded in <head> — no-op here
+function initTheme() {}
 
 // Check active session — delegates to session.js singleton (no extra fetch)
 async function checkSession() {
