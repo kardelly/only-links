@@ -825,6 +825,40 @@
       gap: var(--space-3);
       justify-content: flex-end;
     }
+    .theme-selector {
+      display: flex;
+      gap: 4px;
+      background: var(--surface-secondary, #f5f4f2);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    .theme-btn {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary, #666);
+      cursor: pointer;
+      transition: background 150ms, color 150ms;
+    }
+
+    .theme-btn.active {
+      background: white;
+      color: var(--text, #1a1a1a);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+
+    [data-theme="dark"] .theme-btn.active {
+      background: oklch(28% 0.012 250);
+      color: oklch(92% 0.006 250);
+    }
+
+    [data-theme="dark"] .theme-selector {
+      background: oklch(22% 0.012 250);
+    }
   </style>
 </head>
 <body>
@@ -999,6 +1033,27 @@
           <button type="submit" class="btn btn-primary btn-sm">Update password</button>
         </div>
       </form>
+    </section>
+
+    <!-- APPEARANCE SETTINGS -->
+    <section class="settings-section">
+      <div class="section-header">
+        <h2 class="section-title">Appearance</h2>
+        <p class="section-description">Choose how onlylinks looks to you</p>
+      </div>
+      <div class="settings-item">
+        <div class="toggle-container">
+          <div class="toggle-label">
+            <span class="toggle-title">Theme</span>
+            <span class="toggle-description">Light, dark, or follow your system setting</span>
+          </div>
+          <div class="theme-selector" id="theme-selector">
+            <button class="theme-btn" data-theme="light">Light</button>
+            <button class="theme-btn" data-theme="system">System</button>
+            <button class="theme-btn" data-theme="dark">Dark</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- PRIVACY SETTINGS -->

@@ -7,6 +7,12 @@ const settingsState = {
   currentUser: null
 };
 
+function updateThemeSelector(pref) {
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === pref);
+  });
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
   await checkSession();
@@ -83,6 +89,11 @@ async function loadPreferences() {
       const searchableToggle = document.getElementById('searchable');
       if (searchableToggle) {
         searchableToggle.checked = data.preferences.searchable !== 0;
+      }
+      // Apply saved theme
+      if (data.preferences.theme) {
+        window.onlylinksTheme?.syncFromServer(data.preferences.theme);
+        updateThemeSelector(data.preferences.theme);
       }
     }
   } catch (err) {
@@ -169,6 +180,25 @@ function setupEventListeners() {
   if (searchableToggle) {
     searchableToggle.addEventListener('change', handlePrivacyChange);
   }
+
+  // Theme selector
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const pref = btn.dataset.theme;
+      window.onlylinksTheme?.set(pref);
+      updateThemeSelector(pref);
+      try {
+        await fetch('/api/settings/preferences', {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: pref })
+        });
+      } catch (err) {
+        console.error('Failed to save theme:', err);
+      }
+    });
+  });
 
   // Delete all bookmarks
   const deleteAllBookmarksBtn = document.getElementById('delete-all-bookmarks-btn');
