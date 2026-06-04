@@ -86,6 +86,8 @@ export const dbPromise = open({
     CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
     CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
     CREATE INDEX IF NOT EXISTS idx_password_reset_token ON password_reset_tokens(token);
+    CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(recipient_id, read);
   `);
   
   // Migration: Add is_public and og_image columns if they don't exist
