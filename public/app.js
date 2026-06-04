@@ -647,16 +647,7 @@ function updateFeedTabsVisibility() {
 // ==========================================
 function setupEventListeners() {
   
-  // Theme Switching Event
-  const themeToggle = document.getElementById('dark-mode-toggle');
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      state.darkMode = !state.darkMode;
-      document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : 'light');
-      localStorage.setItem('darkMode', state.darkMode);
-      themeToggle.textContent = state.darkMode ? '🌙' : '☀️';
-    });
-  }
+  // Theme is managed by /theme.js + settings page
   
   // Search input handler — shared logic for desktop + mobile
   function handleSearchInput(query, mirrorId) {
