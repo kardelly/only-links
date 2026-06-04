@@ -199,11 +199,16 @@ export class FeedView extends BaseView {
         if (saveBtn.classList.contains('save-done') || saveBtn.disabled) return;
 
         saveBtn.disabled = true;
-        saveBtn.textContent = '…';
+        // Dim text only, preserve icon
+        const saveBtnText = saveBtn.lastChild;
+        if (saveBtnText?.nodeType === Node.TEXT_NODE) saveBtnText.textContent = ' …';
 
         const tags = Array.isArray(bookmark.tags)
           ? bookmark.tags.join(', ')
           : (bookmark.tags || '');
+
+        // Respect user's default_public preference if available
+        const isPublic = window.mobileApp?.prefs?.default_public !== 0;
 
         try {
           const res = await fetch('/api/bookmarks', {
@@ -215,7 +220,7 @@ export class FeedView extends BaseView {
               title: bookmark.title,
               description: bookmark.description || '',
               tags,
-              is_public: true
+              is_public: isPublic
             })
           });
 
