@@ -288,7 +288,7 @@
     }
 
     .filter-tab:hover {
-      color: oklch(35% 0.01 60);
+      color: var(--fg);
     }
 
     .filter-tab.active {
@@ -433,14 +433,14 @@
 
     .bookmark-domain {
       font-size: 12px;
-      color: oklch(68% 0.006 60);
+      color: var(--muted);
       letter-spacing: 0.01em;
     }
 
     .bookmark-description {
       font-size: var(--text-sm);
       line-height: 1.55;
-      color: oklch(42% 0.008 60);
+      color: var(--muted);
       margin-bottom: var(--space-3);
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -464,7 +464,7 @@
       background: transparent;
       border: 1px solid var(--border);
       border-radius: 980px;
-      color: oklch(52% 0.008 60);
+      color: var(--muted);
       cursor: pointer;
       transition: border-color var(--duration-fast) var(--transition),
                   color var(--duration-fast) var(--transition),
@@ -482,7 +482,7 @@
       align-items: center;
       gap: var(--space-2);
       font-size: 12px;
-      color: oklch(62% 0.006 60);
+      color: var(--muted);
     }
 
     .bookmark-meta-link {
@@ -749,9 +749,9 @@
     .skeleton {
       background: linear-gradient(
         90deg,
-        oklch(95% 0.006 60) 0%,
-        oklch(93% 0.006 60) 50%,
-        oklch(95% 0.006 60) 100%
+        var(--border) 0%,
+        var(--surface) 50%,
+        var(--border) 100%
       );
       background-size: 200% 100%;
       animation: skeleton-pulse 1.5s ease-in-out infinite;
