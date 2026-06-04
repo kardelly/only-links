@@ -260,3 +260,15 @@
   background: oklch(from var(--accent) calc(l * 0.7) c h);
   transform: scale(1.15);
 }
+
+/* ===== DARK MODE — desktop app pages ===== */
+[data-theme="dark"] {
+  --bg:      oklch(14% 0.01 250);
+  --surface: oklch(18% 0.012 250);
+  --fg:      oklch(92% 0.006 250);
+  --muted:   oklch(58% 0.008 250);
+  --border:  oklch(26% 0.012 250);
+  --accent:  oklch(62% 0.18 250);
+  --accent-hover: oklch(67% 0.18 250);
+  color-scheme: dark;
+}
