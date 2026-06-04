@@ -424,7 +424,11 @@ export class ProfileView extends BaseView {
         </div>
       `;
       row.addEventListener('click', () => {
-        if (window.mobileApp) window.mobileApp.showPublicProfile(user.username);
+        backdrop.classList.remove('open');
+        setTimeout(() => {
+          backdrop.remove();
+          if (window.mobileApp) window.mobileApp.showPublicProfile(user.username);
+        }, 250);
       });
       listEl.appendChild(row);
     });
