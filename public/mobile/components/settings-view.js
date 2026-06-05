@@ -74,9 +74,9 @@ export class SettingsView extends BaseView {
           </div>
         </div>
         <div class="theme-selector-mobile" id="theme-selector-mobile">
-          <button class="theme-btn-mobile ${(this.prefs.theme||'system')==='light'?'active':''}" data-theme="light">☀️ Light</button>
-          <button class="theme-btn-mobile ${(this.prefs.theme||'system')==='system'?'active':''}" data-theme="system">⚙️ System</button>
-          <button class="theme-btn-mobile ${(this.prefs.theme||'system')==='dark'?'active':''}" data-theme="dark">🌙 Dark</button>
+          <button class="theme-btn-mobile ${(this.prefs.theme||'system')==='light'?'active':''}" data-theme="light">Light</button>
+          <button class="theme-btn-mobile ${(this.prefs.theme||'system')==='system'?'active':''}" data-theme="system">System</button>
+          <button class="theme-btn-mobile ${(this.prefs.theme||'system')==='dark'?'active':''}" data-theme="dark">Dark</button>
         </div>
       </div>
 

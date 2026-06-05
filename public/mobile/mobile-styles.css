@@ -1639,28 +1639,43 @@ body {
 /* Theme selector — mobile settings */
 .theme-selector-mobile {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   padding: 0 16px 16px;
+  background: var(--surface-secondary);
+  margin: 0 16px 16px;
+  border-radius: 8px;
+  padding: 3px;
 }
 
 .theme-btn-mobile {
   flex: 1;
-  padding: 10px 4px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  padding: 8px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: background 150ms, color 150ms, border-color 150ms;
+  transition: background 150ms, color 150ms, box-shadow 150ms;
   text-align: center;
+  font-family: inherit;
 }
 
 .theme-btn-mobile.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+[data-theme="dark"] .theme-btn-mobile.active {
+  background: oklch(28% 0.012 250);
+  color: oklch(92% 0.006 250);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .theme-selector-mobile {
+  background: oklch(22% 0.012 250);
 }
 
 /* ===== NOTIFICATIONS MOBILE ===== */
