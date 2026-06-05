@@ -508,3 +508,27 @@
   font-size: 13px;
   color: var(--muted, oklch(52% 0.008 60));
 }
+
+.notif-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--muted, oklch(52% 0.008 60));
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 150ms, color 150ms;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.notif-item:hover .notif-delete-btn {
+  opacity: 1;
+}
+
+.notif-delete-btn:hover {
+  color: oklch(54% 0.2 25);
+}

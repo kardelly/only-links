@@ -25,10 +25,7 @@ export class NotificationsView extends BaseView {
     header.style.cssText = 'padding: 16px 16px 8px; display: flex; align-items: center; justify-content: space-between;';
     header.innerHTML = `
       <h2 style="font-size: 20px; font-weight: 700;">Notifications</h2>
-      <div style="display:flex;gap:12px;align-items:center;">
-        <button id="notif-mark-all-mobile" style="font-size:13px;background:none;border:none;color:var(--primary);cursor:pointer;font-weight:500;font-family:inherit;">Mark all read</button>
-        <button id="notif-clear-all-mobile" style="font-size:13px;background:none;border:none;color:oklch(54% 0.2 25);cursor:pointer;font-weight:500;font-family:inherit;">Clear all</button>
-      </div>
+      <button id="notif-mark-all-mobile" style="font-size:13px;background:none;border:none;color:var(--primary);cursor:pointer;font-weight:500;font-family:inherit;">Mark all read</button>
     `;
     this.container.appendChild(header);
 
@@ -115,24 +112,6 @@ export class NotificationsView extends BaseView {
       }
     });
 
-    // Clear all button
-    this.container.querySelector('#notif-clear-all-mobile')?.addEventListener('click', async () => {
-      try {
-        const res = await fetch('/api/notifications', {
-          method: 'DELETE',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: [] })
-        });
-        if (!res.ok) throw new Error('failed');
-        this.notifications = [];
-        this.updateBadge(0);
-        this.render();
-        showToast('Notifications cleared', 'success');
-      } catch (_) {
-        showToast('Failed to clear', 'error');
-      }
-    });
   }
 
   _addSwipeToDelete(item, n) {
