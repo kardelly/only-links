@@ -47,11 +47,19 @@ class MobileApp {
         const { showToast } = await import('./components/utils.js');
         showToast('Google sign-in failed. Please try again.', 'error');
       }
+
+      // Dismiss splash screen even when not authenticated
+      const splash = document.getElementById('app-splash');
+      if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(() => splash.remove(), 420);
+      }
       return;
     }
 
     // 4. Setup PWA features
-    this.setupServiceWorker();
+    // TEMP: Disable SW for debugging
+    // this.setupServiceWorker();
     this.setupShareTarget();
     this.setupInstallPrompt();
 
