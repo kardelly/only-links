@@ -261,6 +261,9 @@
 
 /* Guest nav link (Features) */
 .nav-link {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
   font-size: 14px;
   font-weight: 400;
   color: var(--muted);
