@@ -15,26 +15,18 @@ export class BottomNav {
   init() {
     this.container = document.getElementById('bottom-nav');
     if (!this.container) {
-      console.error('[BottomNav] Container not found');
+      console.error('Bottom nav container not found');
       return;
     }
-    console.log('[BottomNav] Container found:', this.container);
 
     this.render();
-    console.log('[BottomNav] Rendered');
     this.attachEventListeners();
-    console.log('[BottomNav] Event listeners attached');
   }
 
   /**
    * Render bottom navigation HTML
    */
   render() {
-    console.log('[BottomNav] render() called, container:', this.container);
-    if (!this.container) {
-      console.error('[BottomNav] Container is null in render!');
-      return;
-    }
     this.container.innerHTML = `
       <button class="nav-item active" data-tab="feed" aria-label="Feed">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -83,30 +75,15 @@ export class BottomNav {
    */
   attachEventListeners() {
     const buttons = this.container.querySelectorAll('.nav-item');
-    console.log('[BottomNav] Found', buttons.length, 'nav items');
-
-    // Log button details for debugging
-    buttons.forEach((btn, idx) => {
-      console.log(`  [${idx}] tab=${btn.dataset.tab}, text="${btn.textContent.trim()}"`);
-    });
 
     buttons.forEach(button => {
       button.addEventListener('click', (e) => {
-        console.log('[BottomNav] Click event fired on button:', button);
         e.preventDefault();
         const tab = button.dataset.tab;
-        console.log('[BottomNav] Clicked tab:', tab);
         this.setActive(tab);
         this.onNavigate(tab);
       });
     });
-
-    // Also log clicks at document level to debug event capture
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('.nav-item')) {
-        console.log('[Document] Click detected on nav-item');
-      }
-    }, true);
   }
 
   /**
