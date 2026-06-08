@@ -183,6 +183,14 @@ function setupAuthModal() {
     tab.addEventListener('click', () => switchAuthTab(tab.dataset.tab));
   });
 
+  // Google OAuth buttons
+  document.getElementById('login-google-btn')?.addEventListener('click', () => {
+    window.location.href = '/api/auth/google';
+  });
+  document.getElementById('signup-google-btn')?.addEventListener('click', () => {
+    window.location.href = '/api/auth/google';
+  });
+
   // Password toggles
   document.getElementById('login-toggle-pw')?.addEventListener('click', function () {
     togglePassword('login-password', this);
