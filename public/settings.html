@@ -998,8 +998,25 @@
       </form>
     </section>
 
+    <!-- CONNECTED ACCOUNTS -->
+    <section class="settings-section" id="connected-accounts-section" style="display: none;">
+      <div class="section-header">
+        <h2 class="section-title">Connected accounts</h2>
+        <p class="section-description">Manage social login connections</p>
+      </div>
+
+      <div id="google-oauth-status" class="data-action">
+        <div class="data-action-title">Google account</div>
+        <p class="data-action-description" id="google-oauth-description">Your account is connected to your Google account. You can sign in using Google OAuth.</p>
+        <div class="data-action-row">
+          <button class="btn btn-danger btn-sm" id="disconnect-google-btn" style="display: none;">Disconnect Google account</button>
+          <span id="google-oauth-connected" style="font-size: var(--text-sm); color: var(--muted);">✓ Connected</span>
+        </div>
+      </div>
+    </section>
+
     <!-- PASSWORD CHANGE -->
-    <section class="settings-section">
+    <section class="settings-section" id="password-section">
       <div class="section-header">
         <h2 class="section-title">Change password</h2>
         <p class="section-description">Update your password to keep your account secure</p>

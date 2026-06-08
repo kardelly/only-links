@@ -790,6 +790,29 @@ app.get('/api/auth/google/callback', async (req, res) => {
   }
 });
 
+// POST /api/settings/google-disconnect — Unlink Google account
+app.post('/api/settings/google-disconnect', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Check if user has a password set (can't disconnect if only Google auth)
+    const user = db.prepare('SELECT password FROM users WHERE id = ?').get(userId);
+    if (!user || !user.password || user.password.startsWith('$invalid$')) {
+      return res.status(400).json({
+        error: 'Cannot disconnect Google account. Set a password first to maintain access to your account.'
+      });
+    }
+
+    // Unlink Google account
+    db.prepare('UPDATE users SET google_id = NULL, google_avatar = NULL WHERE id = ?').run(userId);
+
+    res.json({ success: true, message: 'Google account disconnected' });
+  } catch (err) {
+    console.error('Google disconnect error:', err);
+    res.status(500).json({ error: 'Failed to disconnect Google account' });
+  }
+});
+
 // GET /api/auth/check-username - Check username availability
 app.get('/api/auth/check-username', searchLimiter, async (req, res) => {
   const { username } = req.query;

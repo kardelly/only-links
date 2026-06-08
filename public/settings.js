@@ -71,6 +71,9 @@ async function checkSession() {
 
     // Load user preferences
     await loadPreferences();
+
+    // Setup connected accounts section
+    setupConnectedAccounts(user);
 }
 
 // Load user preferences
@@ -1230,4 +1233,64 @@ function escapeHTML(str) {
       '"': '&quot;'
     }[tag] || tag)
   );
+}
+
+// Setup connected accounts section
+function setupConnectedAccounts(user) {
+  const connectedAccountsSection = document.getElementById('connected-accounts-section');
+  const passwordSection = document.getElementById('password-section');
+  const disconnectGoogleBtn = document.getElementById('disconnect-google-btn');
+
+  // Show connected accounts section only if user has Google OAuth
+  if (user.google_id) {
+    connectedAccountsSection.style.display = 'block';
+
+    // Show disconnect button
+    disconnectGoogleBtn.style.display = 'inline-flex';
+
+    // Hide password section if user only has Google OAuth (no password set)
+    if (user.password && user.password.startsWith('$invalid$')) {
+      passwordSection.style.display = 'none';
+    }
+
+    // Handle disconnect Google account
+    disconnectGoogleBtn.addEventListener('click', handleDisconnectGoogle);
+  }
+}
+
+// Handle disconnect Google account
+async function handleDisconnectGoogle() {
+  const confirmed = await showConfirmationModal(
+    'Disconnect Google account?',
+    'After disconnecting, you won\'t be able to sign in with Google. Make sure you have a password set, or you won\'t be able to log back in.',
+    { requirePassword: false }
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch('/api/settings/google-disconnect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to disconnect Google account');
+    }
+
+    showAlert('data-alert', 'success', 'Google account disconnected successfully');
+
+    // Hide connected accounts section and show password section
+    setTimeout(() => {
+      document.getElementById('connected-accounts-section').style.display = 'none';
+      document.getElementById('password-section').style.display = 'block';
+      hideAlert('data-alert');
+    }, 2000);
+  } catch (err) {
+    console.error('Disconnect error:', err);
+    showAlert('data-alert', 'error', err.message);
+  }
 }
