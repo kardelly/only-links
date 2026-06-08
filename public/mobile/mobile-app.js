@@ -31,10 +31,14 @@ class MobileApp {
 
     // 1. Check authentication
     const authenticated = await this.checkAuth();
-    if (!authenticated) {
-      // Setup login button even if not authenticated
-      this.setupTopBar();
 
+    // 2. Initialize views + bottom nav (needed even if not authenticated)
+    this.initializeViews();
+
+    // 3. Setup top bar
+    this.setupTopBar();
+
+    if (!authenticated) {
       // Check for OAuth errors
       const urlParams = new URLSearchParams(window.location.search);
       const authError = urlParams.get('auth_error');
@@ -46,16 +50,10 @@ class MobileApp {
       return;
     }
 
-    // 2. Setup PWA features
+    // 4. Setup PWA features
     this.setupServiceWorker();
     this.setupShareTarget();
     this.setupInstallPrompt();
-
-    // 3. Initialize views
-    this.initializeViews();
-
-    // 4. Setup top bar
-    this.setupTopBar();
 
     // 5. Show default view
     this.showView('feed');
