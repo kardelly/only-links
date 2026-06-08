@@ -74,6 +74,20 @@ class MobileApp {
     }
 
     console.log('[MobileApp] Initialized successfully');
+
+    // TEST: Log every click on the page
+    document.addEventListener('click', (e) => {
+      console.log('[DEBUG] Click detected on:', e.target, 'tagName:', e.target.tagName);
+    }, true);
+
+    // TEST: Check if bottom nav has pointer-events
+    const nav = document.getElementById('bottom-nav');
+    if (nav) {
+      const computed = window.getComputedStyle(nav);
+      console.log('[DEBUG] bottom-nav pointer-events:', computed.pointerEvents);
+      console.log('[DEBUG] bottom-nav display:', computed.display);
+      console.log('[DEBUG] bottom-nav z-index:', computed.zIndex);
+    }
   }
 
   /**
