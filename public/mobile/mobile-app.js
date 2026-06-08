@@ -29,18 +29,20 @@ class MobileApp {
   async init() {
     console.log('[MobileApp] Initializing...');
 
-    // Check for OAuth errors
-    const urlParams = new URLSearchParams(window.location.search);
-    const authError = urlParams.get('auth_error');
-    if (authError) {
-      window.history.replaceState({}, '', window.location.pathname);
-      const { showToast } = await import('./components/utils.js');
-      showToast('Google sign-in failed. Please try again.', 'error');
-    }
-
     // 1. Check authentication
     const authenticated = await this.checkAuth();
     if (!authenticated) {
+      // Setup login button even if not authenticated
+      this.setupTopBar();
+
+      // Check for OAuth errors
+      const urlParams = new URLSearchParams(window.location.search);
+      const authError = urlParams.get('auth_error');
+      if (authError) {
+        window.history.replaceState({}, '', window.location.pathname);
+        const { showToast } = await import('./components/utils.js');
+        showToast('Google sign-in failed. Please try again.', 'error');
+      }
       return;
     }
 
