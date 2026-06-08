@@ -791,7 +791,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
 });
 
 // POST /api/settings/google-disconnect — Unlink Google account
-app.post('/api/settings/google-disconnect', requireAuth, async (req, res) => {
+app.post('/api/settings/google-disconnect', authenticate, async (req, res) => {
   try {
     const userId = req.user.id;
 
