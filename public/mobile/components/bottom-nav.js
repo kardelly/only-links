@@ -30,6 +30,11 @@ export class BottomNav {
    * Render bottom navigation HTML
    */
   render() {
+    console.log('[BottomNav] render() called, container:', this.container);
+    if (!this.container) {
+      console.error('[BottomNav] Container is null in render!');
+      return;
+    }
     this.container.innerHTML = `
       <button class="nav-item active" data-tab="feed" aria-label="Feed">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
