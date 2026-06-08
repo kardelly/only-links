@@ -137,6 +137,29 @@ export const dbPromise = open({
     // Column already exists, ignore
   }
 
+  // Migration: Add google_id column for OAuth
+  try {
+    await db.run('ALTER TABLE users ADD COLUMN google_id TEXT');
+    console.log('Added google_id column to users');
+  } catch (e) {
+    // Column already exists, ignore
+  }
+
+  try {
+    await db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)');
+    console.log('Created unique index on google_id');
+  } catch (e) {
+    // Index already exists, ignore
+  }
+
+  // Migration: Add google_avatar column
+  try {
+    await db.run('ALTER TABLE users ADD COLUMN google_avatar TEXT');
+    console.log('Added google_avatar column to users');
+  } catch (e) {
+    // Column already exists, ignore
+  }
+
   console.log('SQLite Database and Schema initialized with foreign keys enabled.');
   return db;
 });
@@ -194,6 +217,68 @@ export async function createUser(username, email, passwordHash) {
 export async function getUserByEmail(email) {
   const db = await dbPromise;
   return db.get('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]);
+}
+
+// Helper: Find or create user from Google OAuth
+export async function upsertGoogleUser({ googleId, email, name, picture }) {
+  const db = await dbPromise;
+
+  // 1. Already linked to this Google account
+  const byGoogle = await db.get(
+    'SELECT * FROM users WHERE google_id = ?',
+    [googleId]
+  );
+  if (byGoogle) {
+    // Refresh avatar if changed
+    if (picture && byGoogle.google_avatar !== picture) {
+      await db.run('UPDATE users SET google_avatar = ? WHERE id = ?', [picture, byGoogle.id]);
+    }
+    return byGoogle;
+  }
+
+  // 2. Email matches existing user — link Google to their account
+  if (email) {
+    const byEmail = await db.get(
+      'SELECT * FROM users WHERE email = ?',
+      [email.toLowerCase().trim()]
+    );
+    if (byEmail) {
+      await db.run(
+        'UPDATE users SET google_id = ?, google_avatar = ? WHERE id = ?',
+        [googleId, picture || null, byEmail.id]
+      );
+      return byEmail;
+    }
+  }
+
+  // 3. New user — generate a username from their name/email
+  let baseUsername = (name || email || 'user')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .slice(0, 15) || 'user';
+
+  // Ensure uniqueness by appending numbers if needed
+  let username = baseUsername;
+  let suffix = 1;
+  while (true) {
+    const existing = await db.get('SELECT id FROM users WHERE username = ?', [username]);
+    if (!existing) break;
+    username = `${baseUsername}${suffix++}`;
+    if (suffix > 999) throw new Error('Could not generate unique username');
+  }
+
+  // Placeholder password hash — random bytes, can never match a real bcrypt hash
+  const { randomBytes } = await import('node:crypto');
+  const placeholderHash = '$invalid$' + randomBytes(32).toString('hex');
+
+  const result = await db.run(
+    `INSERT INTO users (username, email, password_hash, google_id, google_avatar)
+     VALUES (?, ?, ?, ?, ?)`,
+    [username, email ? email.toLowerCase().trim() : null, placeholderHash, googleId, picture || null]
+  );
+
+  const newUser = await db.get('SELECT * FROM users WHERE id = ?', [result.lastID]);
+  return newUser;
 }
 
 // Helper: Link tags to a bookmark
