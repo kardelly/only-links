@@ -444,12 +444,14 @@ body {
   display: flex;
   align-items: flex-end;
   transition: background 250ms;
+  pointer-events: none;
 }
 
 .edit-sheet-backdrop.open {
   background: rgba(0,0,0,0.4);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  pointer-events: auto;
 }
 
 .edit-sheet {
