@@ -44,14 +44,15 @@ export class SettingsView extends BaseView {
       <!-- Profile Picture -->
       <div class="settings-section">
         <h2 class="section-title">Profile</h2>
-        <div class="settings-item" id="avatar-item">
+        <div class="settings-item" id="avatar-item" style="flex-direction: row; gap: 16px; align-items: flex-start;">
           <div class="avatar-preview-mobile" id="avatar-preview-mobile">
             ${this.user.avatar ? `<img src="${this.user.avatar}" alt="Avatar">` : `<span>${this.user.username.charAt(0).toUpperCase()}</span>`}
           </div>
-          <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 280px;">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center;">
             <input type="file" id="avatar-input-mobile" accept="image/jpeg,image/png,image/webp" style="display: none;">
-            <button class="btn btn-primary btn-sm" id="avatar-upload-btn-mobile">Upload photo</button>
-            ${this.user.avatar ? `<button class="btn btn-secondary btn-sm" id="avatar-remove-btn-mobile">Remove photo</button>` : ''}
+            <button type="button" class="btn btn-secondary" id="avatar-upload-btn-mobile">Choose photo</button>
+            ${this.user.avatar ? `<button type="button" class="btn btn-ghost btn-sm" id="avatar-remove-btn-mobile">Remove photo</button>` : ''}
+            <p style="font-size: 12px; color: #666; margin-top: 4px;">JPG, PNG or WebP. Max 2MB.</p>
           </div>
         </div>
       </div>
