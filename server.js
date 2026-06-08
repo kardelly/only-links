@@ -10,6 +10,8 @@ import { rateLimit } from 'express-rate-limit';
 import cors from 'cors';
 import multer from 'multer';
 import fs from 'fs';
+import https from 'node:https';
+import { randomBytes } from 'node:crypto';
 import { sendWelcomeEmail, sendPasswordResetEmail } from './email.js';
 
 import {
@@ -47,7 +49,8 @@ import {
   createNotification,
   getNotifications,
   markNotificationsRead,
-  deleteNotifications
+  deleteNotifications,
+  upsertGoogleUser
 } from './database.js';
 
 // ==========================================
@@ -80,6 +83,9 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_PRODUCTION = NODE_ENV === 'production';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -109,11 +115,15 @@ app.use(helmet({
       ],
       connectSrc: [
         "'self'",
+        "https://accounts.google.com",
+        "https://oauth2.googleapis.com",
+        "https://www.googleapis.com",
         "https://www.google-analytics.com",
         "https://analytics.google.com",
         "https://stats.g.doubleclick.net",
         "https://www.google.com"
-      ]
+      ],
+      frameSrc: ["'self'", "https://accounts.google.com"]
     }
   },
   hsts: {
@@ -511,6 +521,43 @@ function getCookieConfig() {
   };
 }
 
+// Helper: make an HTTPS POST request, returns parsed JSON
+function httpsPost(url, params) {
+  return new Promise((resolve, reject) => {
+    const body = new URLSearchParams(params).toString();
+    const u = new URL(url);
+    const options = {
+      hostname: u.hostname, path: u.pathname, method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) }
+    };
+    const req = https.request(options, res => {
+      let data = '';
+      res.on('data', d => data += d);
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { reject(new Error('Invalid JSON')); } });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+function httpsGet(url, accessToken) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const options = {
+      hostname: u.hostname, path: u.pathname + u.search, method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` }
+    };
+    const req = https.request(options, res => {
+      let data = '';
+      res.on('data', d => data += d);
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { reject(new Error('Invalid JSON')); } });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 // ==========================================
 // 1. AUTHENTICATION API ENDPOINTS
 // ==========================================
@@ -653,6 +700,94 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('token');
   res.json({ message: 'Logged out successfully' });
+});
+
+// GET /api/auth/google — initiate Google OAuth flow
+app.get('/api/auth/google', (req, res) => {
+  if (!GOOGLE_CLIENT_ID) {
+    return res.status(503).json({ error: 'Google login is not configured' });
+  }
+  const state = randomBytes(16).toString('hex');
+  const isMobile = req.query.from === 'mobile';
+  res.cookie('oauth_state', state, { httpOnly: true, secure: IS_PRODUCTION, sameSite: 'lax', maxAge: 10 * 60 * 1000 });
+  res.cookie('oauth_from', isMobile ? 'mobile' : 'desktop', { httpOnly: true, secure: IS_PRODUCTION, sameSite: 'lax', maxAge: 10 * 60 * 1000 });
+
+  const redirectUri = `${BASE_URL}/api/auth/google/callback`;
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state,
+    access_type: 'online',
+    prompt: 'select_account'
+  });
+  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+});
+
+// GET /api/auth/google/callback — Google redirects here with ?code=&state=
+app.get('/api/auth/google/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  const storedState = req.cookies.oauth_state;
+
+  const isMobile = req.cookies.oauth_from === 'mobile';
+  const appRedirect = isMobile ? '/mobile/app' : '/app';
+
+  res.clearCookie('oauth_state');
+  res.clearCookie('oauth_from');
+
+  if (error || !code) {
+    return res.redirect(`${appRedirect}?auth_error=cancelled`);
+  }
+
+  if (!storedState || state !== storedState) {
+    return res.redirect(`${appRedirect}?auth_error=state_mismatch`);
+  }
+
+  try {
+    const redirectUri = `${BASE_URL}/api/auth/google/callback`;
+
+    const tokenData = await httpsPost('https://oauth2.googleapis.com/token', {
+      code,
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code'
+    });
+
+    if (tokenData.error || !tokenData.access_token) {
+      console.error('Google token exchange error:', tokenData);
+      return res.redirect(`${appRedirect}?auth_error=token_failed`);
+    }
+
+    const googleUser = await httpsGet(
+      'https://www.googleapis.com/oauth2/v2/userinfo',
+      tokenData.access_token
+    );
+
+    if (!googleUser.id) {
+      return res.redirect(`${appRedirect}?auth_error=no_user`);
+    }
+
+    const user = await upsertGoogleUser({
+      googleId: googleUser.id,
+      email: googleUser.email,
+      name: googleUser.name,
+      picture: googleUser.picture
+    });
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username, passwordVersion: user.password_version || 1 },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    res.cookie('token', token, getCookieConfig());
+    res.redirect(appRedirect);
+
+  } catch (err) {
+    console.error('Google OAuth callback error:', err);
+    res.redirect(`${appRedirect}?auth_error=server_error`);
+  }
 });
 
 // GET /api/auth/check-username - Check username availability
