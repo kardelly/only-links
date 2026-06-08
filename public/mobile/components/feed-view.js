@@ -255,10 +255,22 @@ export class FeedView extends BaseView {
       });
     }
 
-    // Click card to open bookmark (not on share btn)
-    card.addEventListener('click', () => {
+    // Click card to open bookmark (not on share btn or user link)
+    card.addEventListener('click', (e) => {
+      // Don't open URL if clicking on user link
+      if (e.target.closest('.card-user-link')) return;
       window.open(bookmark.url, '_blank');
     });
+
+    // Click user link to view profile
+    const userLink = card.querySelector('.card-user-link');
+    if (userLink && bookmark.username) {
+      userLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.mobileApp?.showPublicProfile(bookmark.username);
+      });
+    }
 
     return card;
   }
