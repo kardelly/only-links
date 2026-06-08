@@ -15,12 +15,15 @@ export class BottomNav {
   init() {
     this.container = document.getElementById('bottom-nav');
     if (!this.container) {
-      console.error('Bottom nav container not found');
+      console.error('[BottomNav] Container not found');
       return;
     }
+    console.log('[BottomNav] Container found:', this.container);
 
     this.render();
+    console.log('[BottomNav] Rendered');
     this.attachEventListeners();
+    console.log('[BottomNav] Event listeners attached');
   }
 
   /**
