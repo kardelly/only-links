@@ -80,6 +80,20 @@ export class SettingsView extends BaseView {
         </div>
       </div>
 
+      <!-- Connected Accounts -->
+      ${this.user.google_id ? `
+      <div class="settings-section">
+        <h2 class="section-title">Connected accounts</h2>
+        <div class="settings-item">
+          <div class="item-info">
+            <div class="item-label">Google account</div>
+            <div class="item-description">✓ Connected</div>
+          </div>
+        </div>
+        <button class="btn btn-danger" id="disconnect-google-btn">Disconnect Google</button>
+      </div>
+      ` : ''}
+
       <!-- Privacy -->
       <div class="settings-section">
         <h2 class="section-title">Privacy</h2>
@@ -166,6 +180,11 @@ export class SettingsView extends BaseView {
       this.handleChangePassword();
     });
 
+    // Disconnect Google
+    document.getElementById('disconnect-google-btn')?.addEventListener('click', () => {
+      this.handleDisconnectGoogle();
+    });
+
     // Delete account
     document.getElementById('delete-account-btn')?.addEventListener('click', () => {
       this.handleDeleteAccount();
@@ -187,6 +206,11 @@ export class SettingsView extends BaseView {
     this.changePassword(current, next);
   }
 
+  handleDisconnectGoogle() {
+    if (!confirm('Disconnect Google account? After disconnecting, you won\'t be able to sign in with Google.')) return;
+    this.disconnectGoogle();
+  }
+
   async changePassword(currentPassword, newPassword) {
     const result = await fetchWithError('/api/settings/password', {
       method: 'PUT',
@@ -194,6 +218,17 @@ export class SettingsView extends BaseView {
       body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
     });
     if (result) showToast('Password changed', 'success');
+  }
+
+  async disconnectGoogle() {
+    const result = await fetchWithError('/api/settings/google-disconnect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (result) {
+      showToast('Google account disconnected', 'success');
+      setTimeout(() => this.load(), 1500);
+    }
   }
 
   handleDeleteAccount() {
