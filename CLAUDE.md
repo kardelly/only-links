@@ -37,10 +37,9 @@
 - Tags: `GET /api/tags?limit=&offset=` → returns `{ tags, total, hasMore }`
 
 ## Deploy
-- VPS: `root@2.25.147.170`, process name `only-links` (pm2)
-- **Normal deploy (preferred):** push to main, then on server: `cd /var/www/onlylinks && git pull origin main && pm2 restart only-links`
+- **Normal deploy (preferred):** push to main, then on server: `git pull origin main && pm2 restart only-links`
 - `deploy-prepare.sh` and `vps-setup.sh` are gitignored (server-specific, not tracked)
-- If git ownership error: `git config --global --add safe.directory /var/www/onlylinks`
+- If git ownership error: `git config --global --add safe.directory <app-path>`
 - If `node_modules` changed: add `npm install --production` before `pm2 restart`
 
 ## Dates & formats
