@@ -41,6 +41,19 @@ export class SettingsView extends BaseView {
         <h1>Settings</h1>
       </div>
 
+      <!-- Profile Picture -->
+      <div class="settings-section">
+        <h2 class="section-title">Profile</h2>
+        <div class="settings-item" id="avatar-item" style="flex-direction: column; align-items: flex-start; gap: 16px;">
+          <div class="avatar-preview-mobile" id="avatar-preview-mobile">
+            ${this.user.avatar ? `<img src="${this.user.avatar}" alt="Avatar">` : `<span>${this.user.username.charAt(0).toUpperCase()}</span>`}
+          </div>
+          <input type="file" id="avatar-input-mobile" accept="image/jpeg,image/png,image/webp" style="display: none;">
+          <button class="btn btn-secondary btn-sm" id="avatar-upload-btn-mobile">Choose photo</button>
+          ${this.user.avatar ? `<button class="btn btn-ghost btn-sm" id="avatar-remove-btn-mobile">Remove photo</button>` : ''}
+        </div>
+      </div>
+
       <!-- Account -->
       <div class="settings-section">
         <h2 class="section-title">Account</h2>
@@ -183,6 +196,20 @@ export class SettingsView extends BaseView {
       this.handleChangePassword();
     });
 
+    // Avatar upload
+    const avatarUploadBtn = document.getElementById('avatar-upload-btn-mobile');
+    const avatarInput = document.getElementById('avatar-input-mobile');
+    const avatarRemoveBtn = document.getElementById('avatar-remove-btn-mobile');
+
+    if (avatarUploadBtn && avatarInput) {
+      avatarUploadBtn.addEventListener('click', () => avatarInput.click());
+      avatarInput.addEventListener('change', (e) => this.handleAvatarUpload(e));
+    }
+
+    if (avatarRemoveBtn) {
+      avatarRemoveBtn.addEventListener('click', () => this.handleAvatarRemove());
+    }
+
     // Disconnect Google
     document.getElementById('disconnect-google-btn')?.addEventListener('click', () => {
       this.handleDisconnectGoogle();
@@ -246,6 +273,73 @@ export class SettingsView extends BaseView {
     if (result) {
       showToast('Google account disconnected', 'success');
       setTimeout(() => this.load(), 1500);
+    }
+  }
+
+  async handleAvatarUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('File size must be less than 2MB', 'error');
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      showToast('Only JPG, PNG, and WebP files are allowed', 'error');
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const preview = document.getElementById('avatar-preview-mobile');
+      if (preview) {
+        preview.innerHTML = `<img src="${event.target.result}" alt="Avatar">`;
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      const response = await fetch('/api/settings/avatar', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to upload avatar');
+
+      showToast('Avatar updated successfully', 'success');
+      setTimeout(() => this.load(), 1500);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async handleAvatarRemove() {
+    if (!confirm('Remove your profile photo? This cannot be undone.')) return;
+
+    try {
+      const response = await fetch('/api/settings/avatar', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to remove avatar');
+
+      showToast('Avatar removed successfully', 'success');
+      setTimeout(() => this.load(), 1500);
+    } catch (err) {
+      showToast(err.message, 'error');
     }
   }
 
