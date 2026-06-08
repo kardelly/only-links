@@ -219,17 +219,17 @@ class MobileApp {
    * Setup top bar interactions
    */
   setupTopBar() {
-    // Logo button - go to feed
+    // Logo button - go to feed (only if authenticated)
     const logoBtn = document.getElementById('logo-btn');
-    if (logoBtn) {
+    if (logoBtn && this.user) {
       logoBtn.addEventListener('click', () => {
         this.showView('feed');
       });
     }
 
-    // Search button - go to search
+    // Search button - go to search (only if authenticated)
     const searchBtn = document.getElementById('search-btn');
-    if (searchBtn) {
+    if (searchBtn && this.user) {
       searchBtn.addEventListener('click', () => {
         this.showView('search');
       });
