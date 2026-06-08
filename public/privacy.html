@@ -160,8 +160,9 @@
     <ul>
       <li><strong>Username:</strong> Your chosen username for your profile</li>
       <li><strong>Email address:</strong> Optional, for account recovery and notifications</li>
-      <li><strong>Password:</strong> Stored as a bcrypt hash (10 rounds) — we never store plain-text passwords</li>
-      <li><strong>Avatar:</strong> Optional profile image (JPEG, PNG, or WebP, max 2MB)</li>
+      <li><strong>Password:</strong> Stored as a bcrypt hash (10 rounds) — we never store plain-text passwords (not required if using Google OAuth)</li>
+      <li><strong>Avatar:</strong> Optional profile image (JPEG, PNG, or WebP, max 2MB, or from Google account)</li>
+      <li><strong>Google OAuth ID:</strong> Only if you sign in with Google (used for account linking)</li>
     </ul>
 
     <h3>1.2 Bookmark Data</h3>
@@ -253,6 +254,7 @@
 
     <h3>4.2 Third-Party Services</h3>
     <ul>
+      <li><strong>Google OAuth:</strong> Used for account authentication (email, name, avatar shared with us)</li>
       <li><strong>Google Analytics:</strong> Anonymous usage statistics (IP anonymized)</li>
       <li><strong>OpenGraph fetching:</strong> We fetch thumbnails from bookmarked URLs</li>
     </ul>
@@ -374,6 +376,11 @@
         <tr style="border-bottom: 1px solid var(--border);">
           <td style="padding: 12px 8px;">Email (optional)</td>
           <td style="padding: 12px 8px;">Recovery, notifications</td>
+          <td style="padding: 12px 8px;">Until account deletion</td>
+        </tr>
+        <tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 12px 8px;">Google OAuth ID, Avatar (if OAuth)</td>
+          <td style="padding: 12px 8px;">Social login, profile</td>
           <td style="padding: 12px 8px;">Until account deletion</td>
         </tr>
         <tr style="border-bottom: 1px solid var(--border);">
