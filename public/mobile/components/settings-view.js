@@ -44,13 +44,15 @@ export class SettingsView extends BaseView {
       <!-- Profile Picture -->
       <div class="settings-section">
         <h2 class="section-title">Profile</h2>
-        <div class="settings-item" id="avatar-item" style="flex-direction: column; align-items: flex-start; gap: 16px;">
+        <div class="settings-item" id="avatar-item">
           <div class="avatar-preview-mobile" id="avatar-preview-mobile">
             ${this.user.avatar ? `<img src="${this.user.avatar}" alt="Avatar">` : `<span>${this.user.username.charAt(0).toUpperCase()}</span>`}
           </div>
-          <input type="file" id="avatar-input-mobile" accept="image/jpeg,image/png,image/webp" style="display: none;">
-          <button class="btn btn-secondary btn-sm" id="avatar-upload-btn-mobile">Choose photo</button>
-          ${this.user.avatar ? `<button class="btn btn-ghost btn-sm" id="avatar-remove-btn-mobile">Remove photo</button>` : ''}
+          <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 280px;">
+            <input type="file" id="avatar-input-mobile" accept="image/jpeg,image/png,image/webp" style="display: none;">
+            <button class="btn btn-primary btn-sm" id="avatar-upload-btn-mobile">Upload photo</button>
+            ${this.user.avatar ? `<button class="btn btn-secondary btn-sm" id="avatar-remove-btn-mobile">Remove photo</button>` : ''}
+          </div>
         </div>
       </div>
 

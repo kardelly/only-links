@@ -1858,19 +1858,22 @@ body {
 
 /* Avatar preview for mobile settings */
 .avatar-preview-mobile {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  border-radius: 20px;
   background: linear-gradient(135deg, var(--primary) 0%, #3D5AD6 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 48px;
   font-weight: 700;
   color: white;
-  border: 3px solid var(--border);
+  border: none;
   overflow: hidden;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(79, 111, 232, 0.2);
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+  position: relative;
 }
 
 .avatar-preview-mobile img {
@@ -1879,12 +1882,38 @@ body {
   object-fit: cover;
 }
 
+.avatar-preview-mobile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  border-radius: 20px;
+  pointer-events: none;
+}
+
 #avatar-item {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: var(--surface-secondary);
+  border-radius: 16px;
+  margin-bottom: var(--spacing-md);
+}
+
+#avatar-item .item-info {
+  display: none;
+}
+
+#avatar-item .btn {
+  width: 100%;
+  max-width: 280px;
 }
 
 .btn-sm {
-  height: 32px;
+  height: 40px;
   padding: 0 16px;
   font-size: 14px;
+  font-weight: 600;
 }
