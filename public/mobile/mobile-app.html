@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#4F6FE8">
+  <meta name="theme-color" content="#2440B9">
   <meta name="description" content="Social bookmarking, reimagined">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="only.link">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="OnlyLinks">
 
   <title>only.link - Mobile</title>
 
@@ -66,6 +66,19 @@
   <link rel="stylesheet" href="/mobile/mobile-styles.css">
 </head>
 <body>
+
+  <!-- App loading screen — shown immediately, hidden after JS init -->
+  <div id="app-splash" style="
+    position: fixed; inset: 0; z-index: 9999;
+    background: #2440B9;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    transition: opacity 400ms ease;
+  ">
+    <img src="/favicon-maskable.png" alt="OnlyLinks" style="width: 96px; height: 96px; border-radius: 22px;">
+    <span style="color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500; letter-spacing: 0.04em; font-family: -apple-system, sans-serif;">OnlyLinks</span>
+  </div>
+
   <div class="mobile-app">
     <!-- Top Bar -->
     <div class="top-bar">

@@ -49,6 +49,13 @@ class MobileApp {
     // 5. Show default view
     this.showView('feed');
 
+    // 6. Dismiss splash screen
+    const splash = document.getElementById('app-splash');
+    if (splash) {
+      splash.style.opacity = '0';
+      setTimeout(() => splash.remove(), 420);
+    }
+
     console.log('[MobileApp] Initialized successfully');
   }
 

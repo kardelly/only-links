@@ -4,8 +4,8 @@
   "description": "Social bookmarking, reimagined",
   "start_url": "/mobile/app?source=pwa",
   "display": "standalone",
-  "background_color": "#FAF9F7",
-  "theme_color": "#4F6FE8",
+  "background_color": "#2440B9",
+  "theme_color": "#2440B9",
   "orientation": "portrait-primary",
   "icons": [
     {
