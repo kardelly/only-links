@@ -166,6 +166,8 @@ class MobileApp {
    * Initialize all views
    */
   initializeViews() {
+    console.log('[MobileApp] initializeViews() starting...');
+
     // Create view instances - pass user to views that need it
     this.views = {
       feed: new FeedView(this.user),
@@ -177,14 +179,18 @@ class MobileApp {
       settings: new SettingsView(),
       'public-profile': new PublicProfileView()
     };
+    console.log('[MobileApp] Views created');
 
     // Initialize each view
     Object.values(this.views).forEach(view => {
       if (view.init) view.init();
     });
+    console.log('[MobileApp] Views initialized');
 
     // Create bottom navigation
+    console.log('[MobileApp] Creating BottomNav...');
     this.bottomNav = new BottomNav((tab) => {
+      console.log('[MobileApp] onNavigate callback:', tab);
       if (tab === 'add') {
         // Add button opens modal, doesn't change view
         this.views.add.open();
@@ -193,8 +199,10 @@ class MobileApp {
         this.showView(tab);
       }
     });
+    console.log('[MobileApp] BottomNav created, calling init()...');
 
     this.bottomNav.init();
+    console.log('[MobileApp] BottomNav init() completed');
 
     // Load notification badge count on startup
     if (this.user) {
