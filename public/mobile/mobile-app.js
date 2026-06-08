@@ -29,6 +29,15 @@ class MobileApp {
   async init() {
     console.log('[MobileApp] Initializing...');
 
+    // Check for OAuth errors
+    const urlParams = new URLSearchParams(window.location.search);
+    const authError = urlParams.get('auth_error');
+    if (authError) {
+      window.history.replaceState({}, '', window.location.pathname);
+      const { showToast } = await import('./components/utils.js');
+      showToast('Google sign-in failed. Please try again.', 'error');
+    }
+
     // 1. Check authentication
     const authenticated = await this.checkAuth();
     if (!authenticated) {
@@ -230,8 +239,15 @@ class MobileApp {
       if (!this.user) {
         loginBtn.style.display = 'block';
         loginBtn.addEventListener('click', () => {
-          sessionStorage.setItem('mobile_redirect_attempted', 'skip');
-          window.location.href = '/';
+          const backdrop = document.getElementById('login-sheet-backdrop');
+          if (backdrop) {
+            requestAnimationFrame(() => backdrop.classList.add('open'));
+            backdrop.addEventListener('click', (e) => {
+              if (e.target === backdrop) {
+                backdrop.classList.remove('open');
+              }
+            }, { once: true });
+          }
         });
       }
     }

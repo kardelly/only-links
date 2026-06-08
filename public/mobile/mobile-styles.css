@@ -1747,3 +1747,28 @@ body {
   color: var(--primary);
   border-bottom-color: var(--primary);
 }
+
+/* ===== GOOGLE LOGIN BUTTON (mobile) ===== */
+.google-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 150ms, border-color 150ms;
+  box-sizing: border-box;
+  font-family: var(--font-family);
+}
+
+.google-login-btn:active {
+  background: var(--surface-secondary);
+}
