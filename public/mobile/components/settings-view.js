@@ -134,6 +134,9 @@ export class SettingsView extends BaseView {
 
     this.container.appendChild(container);
 
+    // Add password change modal
+    this.addPasswordChangeModal();
+
     // Theme selector
     this.container.querySelectorAll('.theme-btn-mobile').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -197,13 +200,11 @@ export class SettingsView extends BaseView {
   }
 
   handleChangePassword() {
-    const current = prompt('Current password:');
-    if (!current) return;
-    const next = prompt('New password (min 8 characters):');
-    if (!next || next.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
-    const confirm = prompt('Confirm new password:');
-    if (next !== confirm) { showToast('Passwords do not match', 'error'); return; }
-    this.changePassword(current, next);
+    const modal = document.getElementById('password-change-modal');
+    if (modal) {
+      modal.classList.add('open');
+      document.getElementById('current-password-input')?.focus();
+    }
   }
 
   handleDisconnectGoogle() {
@@ -212,12 +213,29 @@ export class SettingsView extends BaseView {
   }
 
   async changePassword(currentPassword, newPassword) {
-    const result = await fetchWithError('/api/settings/password', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
-    });
-    if (result) showToast('Password changed', 'success');
+    try {
+      const response = await fetch('/api/settings/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to update password');
+
+      showToast('Password changed successfully', 'success');
+
+      // Clear form and close modal
+      const modal = document.getElementById('password-change-modal');
+      if (modal) {
+        const form = modal.querySelector('form');
+        if (form) form.reset();
+        modal.classList.remove('open');
+      }
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
   }
 
   async disconnectGoogle() {
@@ -257,5 +275,93 @@ export class SettingsView extends BaseView {
     } catch {
       showToast('Logout failed', 'error');
     }
+  }
+
+  addPasswordChangeModal() {
+    const existingModal = document.getElementById('password-change-modal');
+    if (existingModal) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'password-change-modal';
+    modal.className = 'edit-sheet-backdrop';
+    modal.innerHTML = `
+      <div class="edit-sheet">
+        <div class="edit-sheet-header">
+          <button class="edit-sheet-close" aria-label="Close">×</button>
+          <h2 class="edit-sheet-title">Change password</h2>
+        </div>
+        <div class="edit-sheet-body">
+          <form id="password-change-form">
+            <div class="form-group-mobile">
+              <label class="form-label-mobile">Current password</label>
+              <input
+                type="password"
+                id="current-password-input"
+                class="form-input-mobile"
+                placeholder="••••••••"
+                required
+              >
+            </div>
+            <div class="form-group-mobile">
+              <label class="form-label-mobile">New password</label>
+              <input
+                type="password"
+                id="new-password-input"
+                class="form-input-mobile"
+                placeholder="••••••••"
+                minlength="8"
+                required
+              >
+              <p class="form-helper-mobile">Min. 8 characters</p>
+            </div>
+            <div class="form-group-mobile">
+              <label class="form-label-mobile">Confirm new password</label>
+              <input
+                type="password"
+                id="confirm-password-input"
+                class="form-input-mobile"
+                placeholder="••••••••"
+                required
+              >
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Update password</button>
+          </form>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('open');
+    });
+
+    // Close on close button
+    modal.querySelector('.edit-sheet-close').addEventListener('click', () => {
+      modal.classList.remove('open');
+    });
+
+    // Handle form submit
+    modal.querySelector('#password-change-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const currentPassword = document.getElementById('current-password-input').value;
+      const newPassword = document.getElementById('new-password-input').value;
+      const confirmPassword = document.getElementById('confirm-password-input').value;
+
+      // Validate
+      if (newPassword !== confirmPassword) {
+        showToast('Passwords do not match', 'error');
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        showToast('Password must be at least 8 characters', 'error');
+        return;
+      }
+
+      this.changePassword(currentPassword, newPassword);
+    });
   }
 }

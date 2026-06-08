@@ -1814,3 +1814,44 @@ body {
 .google-login-btn:active {
   background: var(--surface-secondary);
 }
+
+/* Form inputs for mobile dialogs */
+.form-group-mobile {
+  margin-bottom: 20px;
+}
+
+.form-label-mobile {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.form-input-mobile {
+  width: 100%;
+  height: 44px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  font-family: var(--font-family);
+  color: var(--text);
+  transition: border-color 150ms;
+}
+
+.form-input-mobile:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.form-input-mobile::placeholder {
+  color: var(--text-secondary);
+}
+
+.form-helper-mobile {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
