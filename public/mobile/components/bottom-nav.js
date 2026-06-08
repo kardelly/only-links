@@ -85,8 +85,14 @@ export class BottomNav {
     const buttons = this.container.querySelectorAll('.nav-item');
     console.log('[BottomNav] Found', buttons.length, 'nav items');
 
+    // Log button details for debugging
+    buttons.forEach((btn, idx) => {
+      console.log(`  [${idx}] tab=${btn.dataset.tab}, text="${btn.textContent.trim()}"`);
+    });
+
     buttons.forEach(button => {
       button.addEventListener('click', (e) => {
+        console.log('[BottomNav] Click event fired on button:', button);
         e.preventDefault();
         const tab = button.dataset.tab;
         console.log('[BottomNav] Clicked tab:', tab);
@@ -94,6 +100,13 @@ export class BottomNav {
         this.onNavigate(tab);
       });
     });
+
+    // Also log clicks at document level to debug event capture
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.nav-item')) {
+        console.log('[Document] Click detected on nav-item');
+      }
+    }, true);
   }
 
   /**
