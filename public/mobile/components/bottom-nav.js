@@ -75,11 +75,13 @@ export class BottomNav {
    */
   attachEventListeners() {
     const buttons = this.container.querySelectorAll('.nav-item');
+    console.log('[BottomNav] Found', buttons.length, 'nav items');
 
     buttons.forEach(button => {
       button.addEventListener('click', (e) => {
         e.preventDefault();
         const tab = button.dataset.tab;
+        console.log('[BottomNav] Clicked tab:', tab);
         this.setActive(tab);
         this.onNavigate(tab);
       });
