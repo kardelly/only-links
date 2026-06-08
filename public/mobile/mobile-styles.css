@@ -1860,7 +1860,7 @@ body {
 .avatar-preview-mobile {
   width: 100px;
   height: 100px;
-  border-radius: 12px;
+  border-radius: 50%;
   background: linear-gradient(135deg, var(--primary) 0%, #3D5AD6 100%);
   display: flex;
   align-items: center;
