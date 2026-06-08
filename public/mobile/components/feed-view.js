@@ -185,18 +185,23 @@ export class FeedView extends BaseView {
         </div>
       </div>
       <div class="card-footer">
-        <span class="card-domain">${escapeHtml(domain)}</span>
-        <span class="card-date">${timeAgo(bookmark.created_at)}</span>
-        ${this._canSave(bookmark) ? `
-          <button class="card-save-btn" aria-label="Save to my collection">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-            Save
+        <div class="card-meta">
+          ${bookmark.username ? `<a href="/mobile/app#public-profile/${encodeURIComponent(bookmark.username)}" class="card-user-link">@${escapeHtml(bookmark.username)}</a>` : ''}
+          <span class="card-domain">${escapeHtml(domain)}</span>
+          <span class="card-date">${timeAgo(bookmark.created_at)}</span>
+        </div>
+        <div class="card-actions">
+          ${this._canSave(bookmark) ? `
+            <button class="card-save-btn" aria-label="Save to my collection">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              Save
+            </button>
+          ` : ''}
+          <button class="card-share-btn" aria-label="Compartilhar link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
           </button>
-        ` : ''}
-        <button class="card-share-btn" aria-label="Compartilhar link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Share
-        </button>
+        </div>
       </div>
     `;
 
