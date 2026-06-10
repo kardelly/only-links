@@ -566,6 +566,38 @@ export async function getUserTags(userId, limit = 100) {
   `, [userId, limit]);
 }
 
+export async function getPublicTagsByQuery(query = '', limit = 30) {
+  const db = await dbPromise;
+  const q = query.toLowerCase();
+  return db.all(`
+    SELECT t.name, COUNT(DISTINCT bt.bookmark_id) as count
+    FROM tags t
+    JOIN bookmark_tags bt ON t.id = bt.tag_id
+    JOIN bookmarks b ON bt.bookmark_id = b.id
+    WHERE b.is_public = 1
+      AND LOWER(t.name) LIKE ?
+    GROUP BY t.id
+    ORDER BY count DESC, t.name ASC
+    LIMIT ?
+  `, [`${q}%`, limit]);
+}
+
+export async function getMyTagsByQuery(userId, query = '', limit = 30) {
+  const db = await dbPromise;
+  const q = query.toLowerCase();
+  return db.all(`
+    SELECT t.name, COUNT(DISTINCT bt.bookmark_id) as count
+    FROM tags t
+    JOIN bookmark_tags bt ON t.id = bt.tag_id
+    JOIN bookmarks b ON bt.bookmark_id = b.id
+    WHERE b.user_id = ?
+      AND LOWER(t.name) LIKE ?
+    GROUP BY t.id
+    ORDER BY count DESC, t.name ASC
+    LIMIT ?
+  `, [userId, `${q}%`, limit]);
+}
+
 // Helper: Get user preferences
 export async function getUserPreferences(userId) {
   const db = await dbPromise;
