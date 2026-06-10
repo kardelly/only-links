@@ -1070,8 +1070,8 @@ app.post('/api/bookmarks', authenticate, async (req, res) => {
       try {
         const db = await dbPromise;
 
-        // 1. Notify the original bookmark owner when someone re-saves their link
-        //    Find the earliest public bookmark with this URL by a different user
+        // Notify the original bookmark owner when someone re-saves their link
+        // Find the earliest public bookmark with this URL by a different user
         const original = await db.get(
           `SELECT b.id, b.user_id FROM bookmarks b
            WHERE b.url = ? AND b.user_id != ? AND b.is_public = 1
@@ -1080,17 +1080,6 @@ app.post('/api/bookmarks', authenticate, async (req, res) => {
         );
         if (original) {
           await createNotification(original.user_id, req.user.id, 'bookmark_save', bookmarkId);
-        }
-
-        // 2. Notify followers of the person who saved (new link in their feed)
-        if (bookmarkIsPublic) {
-          const followers = await db.all(
-            'SELECT follower_id FROM follows WHERE following_id = ?',
-            [req.user.id]
-          );
-          await Promise.allSettled(
-            followers.map(f => createNotification(f.follower_id, req.user.id, 'bookmark_save', bookmarkId))
-          );
         }
       } catch (err) {
         // Non-critical — silent fail
