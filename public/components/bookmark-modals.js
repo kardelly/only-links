@@ -3,6 +3,19 @@
  * Handles bookmark creation/editing and deletion
  */
 
+// Debounce helper for tag input autocomplete
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 // Fetch user's tags by query using the new scoped endpoint
 async function fetchUserTagsByQuery(query) {
   try {
@@ -152,12 +165,17 @@ function setupTagsAutocomplete() {
     activeIndex = index;
   }
 
-  textInput.addEventListener('input', async () => {
-    const query = textInput.value.trim().toLowerCase();
-    if (!query) { closeDropdown(); return; }
+  // Debounced tag autocomplete to reduce API calls during rapid typing
+  const debouncedFetch = debounce(async (query) => {
     const matchingTags = await fetchUserTagsByQuery(query);
     const filtered = matchingTags.filter(t => !_tagPillState.tags.includes(t.name.toLowerCase())).slice(0, 8);
     renderDropdown(filtered);
+  }, 200);
+
+  textInput.addEventListener('input', async () => {
+    const query = textInput.value.trim().toLowerCase();
+    if (!query) { closeDropdown(); return; }
+    debouncedFetch(query);
   });
 
   textInput.addEventListener('keydown', (e) => {
