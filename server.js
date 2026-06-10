@@ -1247,7 +1247,7 @@ app.get('/api/tags/popular', optionalAuthenticate, async (req, res) => {
 app.get('/api/tags/mine', authenticate, async (req, res) => {
   try {
     const tags = await getUserTags(req.user.id);
-    res.json({ tags });
+    res.json({ tags, total: tags.length, hasMore: false });
   } catch (err) {
     console.error('Fetch User Tags Error:', err);
     res.status(500).json({ error: 'Failed to load tags' });

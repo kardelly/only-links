@@ -217,14 +217,23 @@ async function loadMoreModalTags() {
   if (loadMoreBtn) { loadMoreBtn.disabled = true; loadMoreBtn.textContent = 'Carregando…'; }
 
   try {
-    const res = await fetch(`/api/tags?limit=${MODAL_PAGE_SIZE}&offset=${tagsState.modalOffset}`, { credentials: 'include' });
+    let url;
+
+    // If userId is set, fetch that user's tags; otherwise fetch all tags
+    if (tagsState.userId) {
+      url = `/api/tags/mine?limit=${MODAL_PAGE_SIZE}`;
+    } else {
+      url = `/api/tags/popular?limit=${MODAL_PAGE_SIZE}`;
+    }
+
+    const res = await fetch(url, { credentials: 'include' });
     if (!res.ok) throw new Error();
     const data = await res.json();
 
     const newTags = data.tags || [];
     tagsState.modalTags.push(...newTags);
-    tagsState.modalOffset += newTags.length;
-    tagsState.modalHasMore = data.hasMore;
+    // These endpoints return all tags at once, no pagination
+    tagsState.modalHasMore = false;
 
     const list = document.getElementById('tags-modal-list');
     if (list) {
