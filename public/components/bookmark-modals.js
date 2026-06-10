@@ -3,17 +3,17 @@
  * Handles bookmark creation/editing and deletion
  */
 
-// Cache of user's tags loaded once per session
-let _userTagsCache = null;
-
-async function loadUserTags() {
-  if (_userTagsCache) return _userTagsCache;
+// Fetch user's tags by query using the new scoped endpoint
+async function fetchUserTagsByQuery(query) {
   try {
-    const res = await fetch('/api/tags/mine', { credentials: 'include' });
+    const params = new URLSearchParams({
+      q: query,
+      type: 'my'
+    });
+    const res = await fetch(`/api/tags?${params.toString()}`, { credentials: 'include' });
     if (!res.ok) return [];
     const data = await res.json();
-    _userTagsCache = data.tags || [];
-    return _userTagsCache;
+    return data.tags || [];
   } catch {
     return [];
   }
@@ -112,7 +112,6 @@ function setupTagsAutocomplete() {
     syncHidden();
     textInput.value = '';
     closeDropdown();
-    _userTagsCache = null;
   }
 
   function removeTag(tag) {
@@ -154,13 +153,11 @@ function setupTagsAutocomplete() {
   }
 
   textInput.addEventListener('input', async () => {
-    const token = textInput.value.trim().toLowerCase();
-    if (!token) { closeDropdown(); return; }
-    const allTags = await loadUserTags();
-    const matches = allTags
-      .filter(t => t.name.toLowerCase().startsWith(token) && !_tagPillState.tags.includes(t.name.toLowerCase()))
-      .slice(0, 8);
-    renderDropdown(matches);
+    const query = textInput.value.trim().toLowerCase();
+    if (!query) { closeDropdown(); return; }
+    const matchingTags = await fetchUserTagsByQuery(query);
+    const filtered = matchingTags.filter(t => !_tagPillState.tags.includes(t.name.toLowerCase())).slice(0, 8);
+    renderDropdown(filtered);
   });
 
   textInput.addEventListener('keydown', (e) => {
