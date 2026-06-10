@@ -46,7 +46,8 @@ async function initSidebarTags(options = {}) {
 
 async function fetchSidebarTags() {
   try {
-    const res = await fetch(`/api/tags?limit=${SIDEBAR_LIMIT}`, { credentials: 'include' });
+    // Use /api/tags/popular endpoint to get top tags (no search query needed)
+    const res = await fetch(`/api/tags/popular?limit=${SIDEBAR_LIMIT}`, { credentials: 'include' });
     if (!res.ok) throw new Error();
     const data = await res.json();
     tagsState.popularTags = data.tags || [];

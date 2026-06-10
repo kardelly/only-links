@@ -1216,6 +1216,31 @@ app.get('/api/tags', optionalAuthenticate, async (req, res) => {
   }
 });
 
+// GET /api/tags/popular - Get popular tags (top N most used tags across all public bookmarks)
+app.get('/api/tags/popular', optionalAuthenticate, async (req, res) => {
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 12));
+
+  try {
+    const db = await dbPromise;
+    // Get top tags by count of public bookmarks
+    const tags = await db.all(`
+      SELECT t.name, COUNT(DISTINCT bt.bookmark_id) as count
+      FROM tags t
+      JOIN bookmark_tags bt ON t.id = bt.tag_id
+      JOIN bookmarks b ON bt.bookmark_id = b.id
+      WHERE b.is_public = 1
+      GROUP BY t.id
+      ORDER BY count DESC, t.name ASC
+      LIMIT ?
+    `, [limit]);
+
+    res.json({ tags, total: tags.length, hasMore: false });
+  } catch (err) {
+    console.error('Fetch Popular Tags Error:', err);
+    res.status(500).json({ error: 'Failed to load popular tags' });
+  }
+});
+
 // GET /api/tags/mine - Get current user's tags (DEPRECATED)
 // Deprecated in favor of: GET /api/tags?q=QUERY&type=my
 // Kept for backward compatibility with existing clients
