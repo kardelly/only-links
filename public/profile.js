@@ -146,7 +146,7 @@ function updateProfileHeader() {
 }
 
 // Load bookmarks
-async function loadBookmarks() {
+async function loadBookmarks(isLoadingMore = false) {
   try {
     const params = new URLSearchParams({
       page: profileState.currentPage,
@@ -169,10 +169,17 @@ async function loadBookmarks() {
     }
 
     const data = await response.json();
-    profileState.bookmarks = data.items;
+
+    // If loading more, append to existing bookmarks; otherwise replace
+    if (isLoadingMore) {
+      profileState.bookmarks = profileState.bookmarks.concat(data.items);
+    } else {
+      profileState.bookmarks = data.items;
+    }
+
     profileState.pagination = data.pagination;
 
-    renderBookmarks();
+    renderBookmarks(isLoadingMore); // Pass isLoadingMore flag to renderBookmarks
     renderPagination();
   } catch (err) {
     console.error('Load Bookmarks Error:', err);
@@ -201,13 +208,16 @@ async function shareBookmark(btn) {
 }
 
 // Render bookmarks (reuse function from app.js)
-function renderBookmarks() {
+function renderBookmarks(isAppending = false) {
   const container = document.getElementById('bookmark-list');
   if (!container) return;
 
-  container.innerHTML = '';
+  // Only clear if not appending (first load or after filtering)
+  if (!isAppending) {
+    container.innerHTML = '';
+  }
 
-  if (profileState.bookmarks.length === 0) {
+  if (profileState.bookmarks.length === 0 && !isAppending) {
     const isOwnProfile = profileState.currentUser && profileState.currentUser.username === profileState.username;
     const hasFilters = profileState.searchQuery || profileState.activeTag;
 
@@ -530,7 +540,7 @@ async function initProfile() {
       loadMoreBtn.disabled = true;
       loadMoreBtn.textContent = 'Loading...';
       profileState.currentPage++;
-      await loadBookmarks();
+      await loadBookmarks(true); // Pass true to indicate we're loading more (appending)
       loadMoreBtn.textContent = 'Load more';
       loadMoreBtn.disabled = false;
     });
