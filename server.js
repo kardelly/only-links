@@ -1284,7 +1284,7 @@ app.get('/api/users', searchLimiter, async (req, res) => {
   }
 });
 
-// GET /api/users/:username/tags - Get public tags for a specific user
+// GET /api/users/:username/tags - Get public tags for a specific user (public bookmarks only)
 app.get('/api/users/:username/tags', async (req, res) => {
   try {
     const db = await dbPromise;
@@ -1293,15 +1293,24 @@ app.get('/api/users/:username/tags', async (req, res) => {
     const user = await db.get('SELECT id FROM users WHERE username = ?', [req.params.username]);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const tags = await getUserTags(user.id, limit);
+    // Only count/return tags from PUBLIC bookmarks
+    const tags = await db.all(`
+      SELECT t.name, COUNT(DISTINCT bt.bookmark_id) as count
+      FROM tags t
+      JOIN bookmark_tags bt ON t.id = bt.tag_id
+      JOIN bookmarks b ON bt.bookmark_id = b.id
+      WHERE b.user_id = ? AND b.is_public = 1
+      GROUP BY t.id
+      ORDER BY count DESC, t.name ASC
+      LIMIT ?
+    `, [user.id, limit]);
 
-    // Get total count
     const countResult = await db.get(`
       SELECT COUNT(DISTINCT t.id) as total
       FROM tags t
       JOIN bookmark_tags bt ON t.id = bt.tag_id
       JOIN bookmarks b ON bt.bookmark_id = b.id
-      WHERE b.user_id = ?
+      WHERE b.user_id = ? AND b.is_public = 1
     `, [user.id]);
     const total = countResult?.total || 0;
 
