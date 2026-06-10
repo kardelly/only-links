@@ -103,6 +103,8 @@ async function checkSession() {
 
   if (state.currentUser) {
     state.feedType = 'mine';
+    // Set sidebar context to current user's tags (so "Ver todas" shows correctly)
+    window.sidebarTags.setUserId(state.currentUser.id, state.currentUser.username);
     // Sync theme from server on login (new device may have wrong localStorage)
     fetch('/api/settings/preferences', { credentials: 'include' })
       .then(r => r.json())
