@@ -1246,8 +1246,21 @@ app.get('/api/tags/popular', optionalAuthenticate, async (req, res) => {
 // Kept for backward compatibility with existing clients
 app.get('/api/tags/mine', authenticate, async (req, res) => {
   try {
-    const tags = await getUserTags(req.user.id);
-    res.json({ tags, total: tags.length, hasMore: false });
+    const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit) || 100));
+    const tags = await getUserTags(req.user.id, limit);
+
+    // Get total count to know if there are more tags
+    const db = await dbPromise;
+    const countResult = await db.get(`
+      SELECT COUNT(DISTINCT t.id) as total
+      FROM tags t
+      JOIN bookmark_tags bt ON t.id = bt.tag_id
+      JOIN bookmarks b ON bt.bookmark_id = b.id
+      WHERE b.user_id = ?
+    `, [req.user.id]);
+    const total = countResult?.total || 0;
+
+    res.json({ tags, total, hasMore: tags.length < total });
   } catch (err) {
     console.error('Fetch User Tags Error:', err);
     res.status(500).json({ error: 'Failed to load tags' });

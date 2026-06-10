@@ -221,9 +221,11 @@ async function loadMoreModalTags() {
 
     // If userId is set, fetch that user's tags; otherwise fetch all tags
     if (tagsState.userId) {
-      url = `/api/tags/mine?limit=${MODAL_PAGE_SIZE}`;
+      // Load all user's tags for modal (use high limit)
+      url = `/api/tags/mine?limit=1000`;
     } else {
-      url = `/api/tags/popular?limit=${MODAL_PAGE_SIZE}`;
+      // Load all popular tags for modal
+      url = `/api/tags/popular?limit=1000`;
     }
 
     const res = await fetch(url, { credentials: 'include' });
