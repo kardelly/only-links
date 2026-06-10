@@ -1227,7 +1227,9 @@ app.get('/api/tags', optionalAuthenticate, async (req, res) => {
   }
 });
 
-// GET /api/tags/mine - Get current user's tags
+// GET /api/tags/mine - Get current user's tags (DEPRECATED)
+// Deprecated in favor of: GET /api/tags?q=QUERY&type=my
+// Kept for backward compatibility with existing clients
 app.get('/api/tags/mine', authenticate, async (req, res) => {
   try {
     const tags = await getUserTags(req.user.id);
