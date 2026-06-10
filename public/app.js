@@ -174,7 +174,7 @@ async function fetchBookmarks(append = false) {
     state.pagination = data.pagination;
     state.hasMore = state.currentPage < data.pagination.totalPages;
 
-    renderBookmarks();
+    renderBookmarks(append); // Pass append flag to avoid clearing when loading more
     updateLoadMoreButton();
 
   } catch (err) {
@@ -428,13 +428,16 @@ async function shareBookmark(btn) {
 }
 
 // Render bookmarks feed
-function renderBookmarks() {
+function renderBookmarks(isAppending = false) {
   const container = document.getElementById('bookmark-list');
   if (!container) return;
 
-  container.innerHTML = '';
-  
-  if (state.bookmarks.length === 0) {
+  // Only clear if not appending (first load or after filtering)
+  if (!isAppending) {
+    container.innerHTML = '';
+  }
+
+  if (state.bookmarks.length === 0 && !isAppending) {
     // Determine empty state context
     const hasFilters = state.searchQuery || state.activeTags.length > 0;
     const isMyBookmarks = state.feedType === 'mine';
@@ -484,9 +487,16 @@ function renderBookmarks() {
 
     return;
   }
-  
+
+  // When appending, only render the new bookmarks (those added on this page load)
+  const startIndex = isAppending ? (state.currentPage - 1) * state.limit : 0;
+  const itemsToRender = isAppending ? state.bookmarks.slice(startIndex) : state.bookmarks;
+
   // Render bookmarks with design system classes
-  state.bookmarks.forEach((item, index) => {
+  itemsToRender.forEach((item, offset) => {
+    // For global index, account for pagination offset
+    const index = isAppending ? startIndex + offset : offset;
+
     // Normalize og_image URLs
     if (item.og_image) {
 
@@ -514,8 +524,8 @@ function renderBookmarks() {
     article.className = 'bookmark-item';
     article.style.setProperty('--i', index);
 
-    // Add celebration class for first bookmark on "mine" feed
-    if (state.feedType === 'mine' && state.bookmarks.length === 1 && index === 0) {
+    // Add celebration class for first bookmark on "mine" feed (only on first load, not when appending)
+    if (!isAppending && state.feedType === 'mine' && state.bookmarks.length === 1 && index === 0) {
       article.classList.add('first-bookmark');
     }
 
