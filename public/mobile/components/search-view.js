@@ -7,12 +7,11 @@ export class SearchView extends BaseView {
     this.query = '';
     this.activeTab = 'bookmarks'; // 'bookmarks' | 'people' | 'tags'
     this.debouncedSearch = debounce(this.performSearch.bind(this), 300);
-    this.searchType = 'my'; // 'my' | 'public' - determines tag search scope
   }
 
   /**
    * Get the current search context (my vs public) based on active view
-   * Defaults to 'my' if FeedView is not available
+   * Defaults to 'public' if FeedView is not available (safe fallback for unauthenticated users)
    */
   getSearchType() {
     // If we have a reference to the mobile app, check the feed type
@@ -22,8 +21,8 @@ export class SearchView extends BaseView {
       // Only 'mine' shows personal tags, others show public
       return feedType === 'mine' ? 'my' : 'public';
     }
-    // Default to 'my' if context unknown
-    return 'my';
+    // Default to 'public' if context unknown (always safe, no auth required)
+    return 'public';
   }
 
   async load() {
