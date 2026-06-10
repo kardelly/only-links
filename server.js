@@ -1284,6 +1284,34 @@ app.get('/api/users', searchLimiter, async (req, res) => {
   }
 });
 
+// GET /api/users/:username/tags - Get public tags for a specific user
+app.get('/api/users/:username/tags', async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit) || 12));
+
+    const user = await db.get('SELECT id FROM users WHERE username = ?', [req.params.username]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const tags = await getUserTags(user.id, limit);
+
+    // Get total count
+    const countResult = await db.get(`
+      SELECT COUNT(DISTINCT t.id) as total
+      FROM tags t
+      JOIN bookmark_tags bt ON t.id = bt.tag_id
+      JOIN bookmarks b ON bt.bookmark_id = b.id
+      WHERE b.user_id = ?
+    `, [user.id]);
+    const total = countResult?.total || 0;
+
+    res.json({ tags, total, hasMore: tags.length < total });
+  } catch (err) {
+    console.error('Fetch User Tags Error:', err);
+    res.status(500).json({ error: 'Failed to load tags' });
+  }
+});
+
 // GET /api/users/:username - Get public user profile
 app.get('/api/users/:username', optionalAuthenticate, async (req, res) => {
   const username = req.params.username;

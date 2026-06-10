@@ -77,8 +77,8 @@ async function loadProfile() {
       }
     });
 
-    // Load tags for the profile user being viewed
-    window.sidebarTags.setUserId(profileState.user.id, profileState.user.username);
+    // Load tags for the profile user being viewed (use username for public endpoint)
+    window.sidebarTags.setUserId(null, profileState.user.username);
   } catch (err) {
     console.error('Load Profile Error:', err);
     document.getElementById('profile-username').textContent = 'Error loading profile';

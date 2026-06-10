@@ -50,8 +50,11 @@ async function fetchSidebarTags() {
   try {
     let url;
 
-    // If userId is set, fetch that user's tags (for profile pages or "my bookmarks")
-    if (tagsState.userId) {
+    // If username is set, fetch that user's public tags (for public profile pages)
+    if (tagsState.username) {
+      url = `/api/users/${encodeURIComponent(tagsState.username)}/tags?limit=${SIDEBAR_LIMIT}`;
+    } else if (tagsState.userId) {
+      // Authenticated user viewing their own tags
       url = `/api/tags/mine?limit=${SIDEBAR_LIMIT}`;
     } else {
       // Otherwise fetch popular tags (for discover/all feeds)
@@ -219,9 +222,11 @@ async function loadMoreModalTags() {
   try {
     let url;
 
-    // If userId is set, fetch that user's tags; otherwise fetch all tags
-    if (tagsState.userId) {
-      // Load all user's tags for modal (use high limit)
+    // If username is set, fetch that user's public tags (for public profile pages)
+    if (tagsState.username) {
+      url = `/api/users/${encodeURIComponent(tagsState.username)}/tags?limit=1000`;
+    } else if (tagsState.userId) {
+      // Authenticated user viewing their own tags
       url = `/api/tags/mine?limit=1000`;
     } else {
       // Load all popular tags for modal
