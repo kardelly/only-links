@@ -1002,13 +1002,17 @@ function showImportPreviewModal(bookmarks) {
     // Show preview of first 10 bookmarks
     const previewItems = bookmarks.slice(0, 10);
     previewListEl.innerHTML = previewItems.map(bm => `
-      <div style="padding: var(--space-3); border-bottom: 1px solid var(--border); last:border-bottom: none;">
+      <div style="padding: var(--space-3); border-bottom: 1px solid var(--border);">
         <div style="font-size: var(--text-sm); font-weight: 600; color: var(--fg); margin-bottom: var(--space-1);">
           ${escapeHTML(bm.title || 'Untitled')}
         </div>
-        <div style="font-size: var(--text-xs); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <div style="font-size: var(--text-xs); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: ${bm.tags && bm.tags.length ? 'var(--space-1)' : '0'};">
           ${escapeHTML(bm.url)}
         </div>
+        ${bm.tags && bm.tags.length ? `
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+          ${bm.tags.map(t => `<span style="font-size:11px;padding:1px 6px;border-radius:4px;background:var(--surface-2,var(--border));color:var(--muted);">#${escapeHTML(t)}</span>`).join('')}
+        </div>` : ''}
       </div>
     `).join('');
 
@@ -1180,43 +1184,82 @@ function parseNetscapeBookmarks(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
-  // Find all <A> tags (bookmark links)
-  const links = doc.querySelectorAll('a');
+  // Walk the DL/DT tree recursively, tracking folder names as tag context
+  function walkDL(dl, folderStack) {
+    const children = dl.children;
+    for (let i = 0; i < children.length; i++) {
+      const dt = children[i];
+      if (dt.tagName !== 'DT' && dt.tagName !== 'LI') continue;
 
-  links.forEach(link => {
-    const url = link.getAttribute('href');
-    const title = link.textContent.trim();
+      // Check if this DT contains a folder (H3) or a link (A)
+      const h3 = dt.querySelector(':scope > h3');
+      const link = dt.querySelector(':scope > a');
 
-    if (url && title) {
-      // Extract tags from various attributes
+      if (h3) {
+        // It's a folder — get its name and recurse into its nested DL
+        const folderName = h3.textContent.trim();
+        const nestedDL = dt.querySelector(':scope > dl') || dt.nextElementSibling;
+        if (nestedDL && (nestedDL.tagName === 'DL' || nestedDL.tagName === 'UL')) {
+          walkDL(nestedDL, [...folderStack, folderName]);
+        }
+      } else if (link) {
+        const url = link.getAttribute('href');
+        const title = link.textContent.trim();
+        if (!url || !title) continue;
+
+        // Tags from explicit attributes
+        let tags = [];
+        const tagsAttr = link.getAttribute('tags') || link.getAttribute('data-tags');
+        if (tagsAttr) {
+          tags = tagsAttr.split(',').map(t => t.trim()).filter(t => t);
+        }
+
+        // Add folder names as tags for links without tags (or always merge)
+        if (folderStack.length > 0) {
+          const folderTags = folderStack
+            .map(f => f.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, ''))
+            .filter(t => t.length > 0 && t !== 'bookmarks-bar' && t !== 'bookmarks' && t !== 'other-bookmarks');
+          // Merge: add folder tags not already present
+          folderTags.forEach(ft => {
+            if (!tags.includes(ft)) tags.push(ft);
+          });
+        }
+
+        // Description from attribute or next DD sibling
+        let description = link.getAttribute('shortcutdescription') || '';
+        if (!description) {
+          const nextEl = dt.nextElementSibling;
+          if (nextEl && nextEl.tagName === 'DD') {
+            description = nextEl.textContent.trim();
+          }
+        }
+
+        bookmarks.push({ url, title, description, tags, is_public: 1 });
+      }
+    }
+  }
+
+  // Start from the root DL
+  const rootDL = doc.querySelector('dl');
+  if (rootDL) {
+    walkDL(rootDL, []);
+  } else {
+    // Fallback: flat parse (no folder structure)
+    doc.querySelectorAll('a').forEach(link => {
+      const url = link.getAttribute('href');
+      const title = link.textContent.trim();
+      if (!url || !title) return;
       let tags = [];
       const tagsAttr = link.getAttribute('tags') || link.getAttribute('data-tags');
-      if (tagsAttr) {
-        tags = tagsAttr.split(',').map(t => t.trim()).filter(t => t);
+      if (tagsAttr) tags = tagsAttr.split(',').map(t => t.trim()).filter(t => t);
+      let description = link.getAttribute('shortcutdescription') || '';
+      if (!description) {
+        const nextEl = link.parentElement?.nextElementSibling;
+        if (nextEl && nextEl.tagName === 'DD') description = nextEl.textContent.trim();
       }
-
-      // Look for description in next DD element or shortcutdescription attribute
-      let description = '';
-      const descAttr = link.getAttribute('shortcutdescription');
-      if (descAttr) {
-        description = descAttr;
-      } else {
-        // Check for next DD sibling
-        let nextElement = link.parentElement?.nextElementSibling;
-        if (nextElement && nextElement.tagName === 'DD') {
-          description = nextElement.textContent.trim();
-        }
-      }
-
-      bookmarks.push({
-        url: url,
-        title: title,
-        description: description,
-        tags: tags,
-        is_public: 1
-      });
-    }
-  });
+      bookmarks.push({ url, title, description, tags, is_public: 1 });
+    });
+  }
 
   return bookmarks;
 }
