@@ -376,26 +376,20 @@ function openBookmarkModalPrefilled({ url, title, description, tags }) {
 }
 
 
-// Render pagination
+// Render load more button
 function renderPagination() {
-  const container = document.getElementById('pagination');
-  const infoSpan = document.getElementById('pagination-info');
-  const prevBtn = document.getElementById('prev-btn');
-  const nextBtn = document.getElementById('next-btn');
-
-  if (!container || !infoSpan || !prevBtn || !nextBtn) return;
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  if (!loadMoreBtn) return;
 
   const { totalPages, page } = profileState.pagination;
 
-  if (totalPages <= 1) {
-    container.style.display = 'none';
-    return;
+  // Show Load More button if there are more pages
+  if (totalPages && page < totalPages) {
+    loadMoreBtn.style.display = 'block';
+    loadMoreBtn.disabled = false;
+  } else {
+    loadMoreBtn.style.display = 'none';
   }
-
-  container.style.display = 'flex';
-  infoSpan.textContent = `Page ${page} of ${totalPages}`;
-  prevBtn.disabled = (page === 1);
-  nextBtn.disabled = (page === totalPages);
 }
 
 // Edit bookmark modal (profile version — uses profileState)
@@ -529,26 +523,16 @@ async function initProfile() {
   // Check session for header
   await checkSession();
 
-  const prevBtn = document.getElementById('prev-btn');
-  const nextBtn = document.getElementById('next-btn');
-
-  if (prevBtn) {
-    prevBtn.addEventListener('click', async () => {
-      if (profileState.currentPage > 1) {
-        profileState.currentPage--;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        await loadBookmarks();
-      }
-    });
-  }
-
-  if (nextBtn) {
-    nextBtn.addEventListener('click', async () => {
-      if (profileState.currentPage < profileState.pagination.totalPages) {
-        profileState.currentPage++;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        await loadBookmarks();
-      }
+  // Load More button
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', async () => {
+      loadMoreBtn.disabled = true;
+      loadMoreBtn.textContent = 'Loading...';
+      profileState.currentPage++;
+      await loadBookmarks();
+      loadMoreBtn.textContent = 'Load more';
+      loadMoreBtn.disabled = false;
     });
   }
 

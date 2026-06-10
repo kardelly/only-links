@@ -485,53 +485,6 @@
     }
 
     /* ===== PAGINATION ===== */
-    .pagination {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-6);
-      margin-top: var(--space-12);
-      padding: var(--space-8) 0;
-      border-top: 1px solid var(--border);
-    }
-
-    .pagination-info {
-      font-size: var(--text-sm);
-      font-weight: 600;
-      color: var(--muted);
-      font-variant-numeric: tabular-nums;
-      min-width: 120px;
-      text-align: center;
-    }
-
-    .pagination-btn {
-      padding: 8px 16px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: var(--text-sm);
-      font-weight: 500;
-      color: var(--fg);
-      cursor: pointer;
-      transition: all 150ms ease-out;
-      white-space: nowrap;
-    }
-
-    .pagination-btn:hover:not(:disabled) {
-      background: var(--surface-secondary);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .pagination-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
 
     /* ===== MODALS ===== */
     .modal {
@@ -1073,11 +1026,11 @@
           </div>
         </div>
 
-        <!-- PAGINATION -->
-        <div class="pagination" id="pagination" style="display: none;">
-          <button id="prev-btn" class="pagination-btn">← Previous</button>
-          <span class="pagination-info" id="pagination-info">Page 1 of 1</span>
-          <button id="next-btn" class="pagination-btn">Next →</button>
+        <!-- LOAD MORE BUTTON -->
+        <div style="display: flex; justify-content: center; padding: var(--space-8) 0;">
+          <button id="load-more-btn" class="btn btn-secondary" style="display: none;">
+            Load more
+          </button>
         </div>
       </div>
       </div>
