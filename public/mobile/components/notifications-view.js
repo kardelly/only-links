@@ -63,9 +63,12 @@ export class NotificationsView extends BaseView {
         const textContainer = document.createElement('div');
         textContainer.style.cssText = 'flex:1;min-width:0;';
 
-        const diff = Date.now() - new Date(n.created_at).getTime();
+        // SQLite stores CURRENT_TIMESTAMP as "YYYY-MM-DD HH:MM:SS" (UTC, no T/Z)
+        // Replace space with T and add Z so Date.parse works across all browsers
+        const createdAt = n.created_at ? new Date(n.created_at.replace(' ', 'T') + 'Z') : null;
+        const diff = createdAt && !isNaN(createdAt) ? Date.now() - createdAt.getTime() : -1;
         const m = Math.floor(diff / 60000);
-        const timeStr = m < 1 ? 'just now' : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.floor(m/60)}h ago` : `${Math.floor(m/1440)}d ago`;
+        const timeStr = diff < 0 ? '' : m < 1 ? 'just now' : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.floor(m/60)}h ago` : `${Math.floor(m/1440)}d ago`;
 
         const textEl = document.createElement('div');
         textEl.style.cssText = 'font-size:14px;color:var(--text);line-height:1.4;';
