@@ -12,6 +12,8 @@ let tagsState = {
   activeTags: [],
   isInitialized: false,
   onTagClick: null,
+  userId: null,          // if set, load user's tags instead of popular tags
+  username: null,        // for public profile context
   // modal state
   modalOpen: false,
   modalTags: [],         // accumulates as user loads more
@@ -46,8 +48,17 @@ async function initSidebarTags(options = {}) {
 
 async function fetchSidebarTags() {
   try {
-    // Use /api/tags/popular endpoint to get top tags (no search query needed)
-    const res = await fetch(`/api/tags/popular?limit=${SIDEBAR_LIMIT}`, { credentials: 'include' });
+    let url;
+
+    // If userId is set, fetch that user's tags (for profile pages or "my bookmarks")
+    if (tagsState.userId) {
+      url = `/api/tags/mine?limit=${SIDEBAR_LIMIT}`;
+    } else {
+      // Otherwise fetch popular tags (for discover/all feeds)
+      url = `/api/tags/popular?limit=${SIDEBAR_LIMIT}`;
+    }
+
+    const res = await fetch(url, { credentials: 'include' });
     if (!res.ok) throw new Error();
     const data = await res.json();
     tagsState.popularTags = data.tags || [];
@@ -263,6 +274,20 @@ async function refreshSidebarTags() {
   await fetchSidebarTags();
 }
 
+function setUserId(userId, username = null) {
+  tagsState.userId = userId;
+  tagsState.username = username;
+  // Refresh sidebar when userId changes
+  fetchSidebarTags();
+}
+
+function clearUserId() {
+  tagsState.userId = null;
+  tagsState.username = null;
+  // Refresh sidebar to go back to popular tags
+  fetchSidebarTags();
+}
+
 function escapeTagHTML(str) {
   if (!str) return '';
   return str.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -274,4 +299,6 @@ window.sidebarTags = {
   getActiveTags,
   refresh: refreshSidebarTags,
   render: renderPopularTags,
+  setUserId,
+  clearUserId,
 };

@@ -737,6 +737,7 @@ function setupEventListeners() {
       if (state.feedType === 'all') return;
       state.feedType = 'all';
       toggleFeedButtons('all');
+      window.sidebarTags.clearUserId();
       await refreshFeed();
     });
   }
@@ -746,6 +747,7 @@ function setupEventListeners() {
       if (state.feedType === 'network') return;
       state.feedType = 'network';
       toggleFeedButtons('network');
+      window.sidebarTags.clearUserId();
       await refreshFeed();
     });
   }
@@ -755,6 +757,10 @@ function setupEventListeners() {
       if (state.feedType === 'mine') return;
       state.feedType = 'mine';
       toggleFeedButtons('mine');
+      // Show user's own tags in sidebar when viewing "my bookmarks"
+      if (state.currentUser) {
+        window.sidebarTags.setUserId(state.currentUser.id, state.currentUser.username);
+      }
       await refreshFeed();
     });
   }

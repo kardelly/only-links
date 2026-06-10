@@ -69,13 +69,16 @@ async function loadProfile() {
     // Load bookmarks
     await loadBookmarks();
 
-    // Initialize sidebar tags
+    // Initialize sidebar tags with profile user's tags
     await window.sidebarTags.init({
       onTagClick: async (tagName, activeTags) => {
         profileState.activeTag = activeTags.length > 0 ? activeTags[0] : null;
         await loadBookmarks();
       }
     });
+
+    // Load tags for the profile user being viewed
+    window.sidebarTags.setUserId(profileState.user.id, profileState.user.username);
   } catch (err) {
     console.error('Load Profile Error:', err);
     document.getElementById('profile-username').textContent = 'Error loading profile';
