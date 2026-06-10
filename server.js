@@ -50,7 +50,9 @@ import {
   getNotifications,
   markNotificationsRead,
   deleteNotifications,
-  upsertGoogleUser
+  upsertGoogleUser,
+  getPublicTagsByQuery,
+  getMyTagsByQuery
 } from './database.js';
 
 // ==========================================
@@ -1191,32 +1193,37 @@ app.delete('/api/bookmarks/:id', authenticate, async (req, res) => {
 // 3. TAGS API ENDPOINTS
 // ==========================================
 
-// GET /api/tags - Get popular tags with pagination
-app.get('/api/tags', async (req, res) => {
+// GET /api/tags - Search tags by scope (public or my)
+app.get('/api/tags', optionalAuthenticate, async (req, res) => {
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 30));
-  const offset = Math.max(0, parseInt(req.query.offset) || 0);
-  const q = (req.query.q || '').trim().toLowerCase();
+  const q = (req.query.q || '').trim();
+  const type = req.query.type || 'public'; // 'public' or 'my'
+
   try {
-    if (q) {
-      // Autocomplete: search tags by prefix
-      const db = await dbPromise;
-      const tags = await db.all(
-        `SELECT t.name, COUNT(bt.bookmark_id) as count
-         FROM tags t
-         JOIN bookmark_tags bt ON t.id = bt.tag_id
-         WHERE LOWER(t.name) LIKE ?
-         GROUP BY t.id
-         ORDER BY count DESC, t.name ASC
-         LIMIT ?`,
-        [`${q}%`, limit]
-      );
+    // If no query, require explicit type parameter and don't list all
+    if (!q) {
+      return res.json({ tags: [], total: 0, hasMore: false });
+    }
+
+    // Type: my - requires authentication and returns user's tags only
+    if (type === 'my') {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required for personal tags' });
+      }
+      const tags = await getMyTagsByQuery(req.user.id, q, limit);
       return res.json({ tags, total: tags.length, hasMore: false });
     }
-    const [tags, total] = await Promise.all([getPopularTags(limit, offset), countAllTags()]);
-    res.json({ tags, total, hasMore: offset + tags.length < total });
+
+    // Type: public - returns tags with public bookmarks (no auth required)
+    if (type === 'public') {
+      const tags = await getPublicTagsByQuery(q, limit);
+      return res.json({ tags, total: tags.length, hasMore: false });
+    }
+
+    res.status(400).json({ error: 'Invalid type parameter. Use "public" or "my".' });
   } catch (err) {
     console.error('Fetch Tags Error:', err);
-    res.status(500).json({ error: 'Failed to load popular tags' });
+    res.status(500).json({ error: 'Failed to load tags' });
   }
 });
 
