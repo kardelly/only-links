@@ -7,6 +7,23 @@ export class SearchView extends BaseView {
     this.query = '';
     this.activeTab = 'bookmarks'; // 'bookmarks' | 'people' | 'tags'
     this.debouncedSearch = debounce(this.performSearch.bind(this), 300);
+    this.searchType = 'my'; // 'my' | 'public' - determines tag search scope
+  }
+
+  /**
+   * Get the current search context (my vs public) based on active view
+   * Defaults to 'my' if FeedView is not available
+   */
+  getSearchType() {
+    // If we have a reference to the mobile app, check the feed type
+    if (window.mobileApp?.views?.feed?.feedType) {
+      const feedType = window.mobileApp.views.feed.feedType;
+      // 'mine' and 'network' both show public tags, 'all' (discover) shows public tags
+      // Only 'mine' shows personal tags, others show public
+      return feedType === 'mine' ? 'my' : 'public';
+    }
+    // Default to 'my' if context unknown
+    return 'my';
   }
 
   async load() {
@@ -84,7 +101,12 @@ export class SearchView extends BaseView {
     if (!resultsEl) return;
     resultsEl.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
 
-    const data = await fetchWithError('/api/tags?limit=100');
+    const type = this.getSearchType();
+    // Use the search query if available, otherwise use empty string to get all tags
+    // The endpoint requires a query parameter and uses it as a prefix match (LIKE '${q}%')
+    const query = this.query || ''; // Empty string will match all tags
+    const url = `/api/tags?q=${encodeURIComponent(query)}&limit=100&type=${encodeURIComponent(type)}`;
+    const data = await fetchWithError(url);
     resultsEl.innerHTML = '';
 
     if (!data?.tags?.length) {
