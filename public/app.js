@@ -971,6 +971,9 @@ function openBookmarkModal() {
   const saveBtn = document.getElementById('bookmark-submit');
   if (saveBtn) { saveBtn.classList.remove('saving', 'done'); saveBtn.disabled = false; }
 
+  // Clear any leftover tag suggestions
+  document.getElementById('bm-tag-suggestions')?.remove();
+
   // Update modal title
   const titleEl = document.getElementById('bookmark-modal-title');
   if (titleEl) titleEl.textContent = 'Add bookmark';
@@ -1285,6 +1288,11 @@ async function fetchMetadata(url) {
     if (data.title && !titleInput.value.trim()) titleInput.value = data.title;
     if (data.description && !descInput.value.trim()) descInput.value = data.description;
 
+    // Show tag suggestions from meta keywords/og:type
+    if (data.suggested_tags && data.suggested_tags.length > 0) {
+      renderTagSuggestions(data.suggested_tags);
+    }
+
     const modal = document.getElementById('bookmark-modal');
     if (data.og_image) {
       if (modal) modal.dataset.ogImage = data.og_image;
@@ -1304,6 +1312,54 @@ async function fetchMetadata(url) {
     if (spinner) spinner.classList.remove('active');
     console.warn('Could not load site metadata. Safe to ignore.', err);
   }
+}
+
+// Render tag suggestion chips below the tag field
+function renderTagSuggestions(tags) {
+  // Remove any existing suggestions
+  document.getElementById('bm-tag-suggestions')?.remove();
+
+  // Filter out tags already added
+  const existing = (document.getElementById('bookmark-tags')?.value || '')
+    .split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  const toSuggest = tags.filter(t => !existing.includes(t));
+  if (!toSuggest.length) return;
+
+  const field = document.getElementById('bm-tag-field');
+  if (!field) return;
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'bm-tag-suggestions';
+  wrapper.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;';
+
+  const label = document.createElement('span');
+  label.style.cssText = 'font-size:11px;color:var(--muted);align-self:center;margin-right:2px;';
+  label.textContent = 'Suggested:';
+  wrapper.appendChild(label);
+
+  toSuggest.forEach(tag => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.style.cssText = `
+      font-size:11px;padding:2px 8px;border-radius:20px;cursor:pointer;
+      border:1px dashed var(--border);background:transparent;
+      color:var(--muted);font-family:var(--font-sans);
+      transition:background 120ms,color 120ms,border-color 120ms;
+    `;
+    chip.textContent = `#${tag}`;
+    chip.title = 'Click to add this tag';
+    chip.onmouseenter = () => { chip.style.background = 'var(--primary)'; chip.style.color = 'white'; chip.style.borderColor = 'var(--primary)'; };
+    chip.onmouseleave = () => { chip.style.background = 'transparent'; chip.style.color = 'var(--muted)'; chip.style.borderColor = 'var(--border)'; };
+    chip.onclick = () => {
+      if (typeof addTagFromSuggestion === 'function') addTagFromSuggestion(tag);
+      chip.remove();
+      // Remove label if no chips left
+      if (!wrapper.querySelectorAll('button').length) wrapper.remove();
+    };
+    wrapper.appendChild(chip);
+  });
+
+  field.after(wrapper);
 }
 
 // Parse URL params on startup (to support Bookmarklets)

@@ -1550,11 +1550,34 @@ async function fetchUrlMetadata(targetUrl) {
                     html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:name|property)=["'](?:description|og:description)["']/i);
   if (descMatch?.[1]) description = descMatch[1].trim();
 
-  // Keywords/tags
-  let tags = '';
+  // Keywords/tags — collect from multiple meta sources
+  const tagSet = new Set();
+
+  // meta keywords
   const kwMatch = html.match(/<meta[^>]+(?:name|property)=["'](?:keywords|og:tags)["'][^>]+content=["']([^"']*)["']/i) ||
                   html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:name|property)=["'](?:keywords|og:tags)["']/i);
-  if (kwMatch?.[1]) tags = kwMatch[1].trim();
+  if (kwMatch?.[1]) {
+    kwMatch[1].split(/[,;]+/).map(t => t.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, '')).filter(t => t.length >= 2 && t.length <= 30).forEach(t => tagSet.add(t));
+  }
+
+  // article:tag (common on blogs/Medium)
+  const articleTagMatches = [...html.matchAll(/<meta[^>]+property=["']article:tag["'][^>]+content=["']([^"']*)["']/gi),
+                              ...html.matchAll(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']article:tag["']/gi)];
+  articleTagMatches.forEach(m => {
+    if (m[1]) { const t = m[1].trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, ''); if (t.length >= 2 && t.length <= 30) tagSet.add(t); }
+  });
+
+  // og:type as a tag hint (e.g. "article", "video", "music")
+  const ogTypeMatch = html.match(/<meta[^>]+property=["']og:type["'][^>]+content=["']([^"']*)["']/i) ||
+                      html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']og:type["']/i);
+  if (ogTypeMatch?.[1]) {
+    const ogType = ogTypeMatch[1].split('.')[0].trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (ogType && ogType !== 'website' && ogType.length >= 2) tagSet.add(ogType);
+  }
+
+  // Keep max 10 suggestions
+  const suggestedTags = [...tagSet].slice(0, 10);
+  const tags = suggestedTags.join(', ');
 
   // og:image
   let og_image = '';
@@ -1575,6 +1598,7 @@ async function fetchUrlMetadata(targetUrl) {
     title: decodeHtmlEntitiesInternal(title),
     description: decodeHtmlEntitiesInternal(description),
     tags: decodeHtmlEntitiesInternal(tags),
+    suggested_tags: suggestedTags,
     og_image
   };
 }

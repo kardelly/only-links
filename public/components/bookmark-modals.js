@@ -73,6 +73,7 @@ function setupBookmarkModalsListeners() {
       const tagTextInput = document.getElementById('bookmark-tag-input');
       if (urlInput) urlInput.value = '';
       if (tagTextInput) tagTextInput.value = '';
+      document.getElementById('bm-tag-suggestions')?.remove();
     });
   });
 
@@ -218,6 +219,32 @@ function setupTagsAutocomplete() {
       closeDropdown();
     }, 150);
   });
+}
+
+// Called by tag suggestion chips in app.js
+function addTagFromSuggestion(tag) {
+  tag = tag.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
+  if (!tag || _tagPillState.tags.includes(tag)) return;
+  _tagPillState.tags.push(tag);
+  const pillsEl = document.getElementById('bm-tag-pills');
+  const hidden  = document.getElementById('bookmark-tags');
+  const textInput = document.getElementById('bookmark-tag-input');
+  if (pillsEl) {
+    pillsEl.innerHTML = _tagPillState.tags.map(t => `
+      <span class="bm-tag-pill">
+        ${t}
+        <button type="button" class="bm-tag-pill-remove" data-tag="${t}" aria-label="Remove ${t}">×</button>
+      </span>
+    `).join('');
+    pillsEl.querySelectorAll('.bm-tag-pill-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _tagPillState.tags = _tagPillState.tags.filter(x => x !== btn.dataset.tag);
+        setModalTags(_tagPillState.tags);
+      });
+    });
+    if (textInput) textInput.placeholder = _tagPillState.tags.length ? '' : 'add a tag...';
+  }
+  if (hidden) hidden.value = _tagPillState.tags.join(', ');
 }
 
 // Expose for external code that needs to seed/read tags (edit mode)
