@@ -77,6 +77,7 @@ export class AddBookmarkView {
           <div class="form-group">
             <label>Tags</label>
             <div id="bookmark-tags-container"></div>
+            <div id="bm-tag-suggestions-mobile" style="display:none;flex-wrap:wrap;gap:5px;margin-top:6px;"></div>
           </div>
 
           <div class="form-group form-checkbox">
@@ -171,6 +172,9 @@ export class AddBookmarkView {
       if (data.description && !descInput.value.trim()) {
         descInput.value = data.description;
       }
+      if (data.suggested_tags && data.suggested_tags.length > 0) {
+        this.renderTagSuggestions(data.suggested_tags);
+      }
     } catch (_) {
       // silent fail — user can fill manually
     } finally {
@@ -178,6 +182,37 @@ export class AddBookmarkView {
       this._metadataFetching = false;
       this._metadataFetched = true;
     }
+  }
+
+  renderTagSuggestions(tags) {
+    const wrapper = document.getElementById('bm-tag-suggestions-mobile');
+    if (!wrapper) return;
+
+    // Filter out tags already added
+    const existing = this.tagInput ? this.tagInput.getValue().split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
+    const toSuggest = tags.filter(t => !existing.includes(t));
+    if (!toSuggest.length) return;
+
+    wrapper.innerHTML = '';
+    const label = document.createElement('span');
+    label.style.cssText = 'font-size:11px;color:var(--text-secondary);align-self:center;margin-right:2px;';
+    label.textContent = 'Suggested:';
+    wrapper.appendChild(label);
+
+    toSuggest.forEach(tag => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.style.cssText = 'font-size:11px;padding:3px 9px;border-radius:20px;cursor:pointer;border:1px dashed var(--border-color,#ccc);background:transparent;color:var(--text-secondary);font-family:inherit;';
+      chip.textContent = `#${tag}`;
+      chip.addEventListener('click', () => {
+        if (this.tagInput) this.tagInput._addTag(tag);
+        chip.remove();
+        if (!wrapper.querySelectorAll('button').length) wrapper.style.display = 'none';
+      });
+      wrapper.appendChild(chip);
+    });
+
+    wrapper.style.display = 'flex';
   }
 
   /**
@@ -248,8 +283,10 @@ export class AddBookmarkView {
     const form = document.getElementById('add-bookmark-form');
     form.reset();
 
-    // Reset tag input
+    // Reset tag input and suggestions
     if (this.tagInput) this.tagInput.setTags([]);
+    const suggestionsEl = document.getElementById('bm-tag-suggestions-mobile');
+    if (suggestionsEl) { suggestionsEl.innerHTML = ''; suggestionsEl.style.display = 'none'; }
 
     // Clear errors
     const errors = form.querySelectorAll('.form-error');
