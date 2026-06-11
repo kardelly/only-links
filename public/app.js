@@ -946,6 +946,16 @@ function openBookmarkModal() {
   if (form) form.reset();
   if (typeof resetModalTags === 'function') resetModalTags();
 
+  // Explicitly clear all fields (form.reset() may not clear if browser autofill interferes)
+  const urlInput = document.getElementById('bookmark-url');
+  const titleInput = document.getElementById('bookmark-title');
+  const descInput = document.getElementById('bookmark-description');
+  const tagTextInput = document.getElementById('bookmark-tag-input');
+  if (urlInput) urlInput.value = '';
+  if (titleInput) titleInput.value = '';
+  if (descInput) descInput.value = '';
+  if (tagTextInput) tagTextInput.value = '';
+
   delete modal.dataset.editingId;
   delete modal.dataset.ogImage;
 

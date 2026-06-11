@@ -65,6 +65,14 @@ function setupBookmarkModalsListeners() {
   closeBookmarkBtns.forEach(btn => {
     btn?.addEventListener('click', () => {
       bookmarkModal?.classList.remove('active');
+      // Reset fields on close so they don't bleed into the next open
+      const form = document.getElementById('bookmark-form');
+      if (form) form.reset();
+      if (typeof resetModalTags === 'function') resetModalTags();
+      const urlInput = document.getElementById('bookmark-url');
+      const tagTextInput = document.getElementById('bookmark-tag-input');
+      if (urlInput) urlInput.value = '';
+      if (tagTextInput) tagTextInput.value = '';
     });
   });
 
@@ -199,9 +207,12 @@ function setupTagsAutocomplete() {
     }
   });
 
+  let blurTimeout = null;
   textInput.addEventListener('blur', () => {
-    setTimeout(() => {
-      // Confirm any remaining typed text as tag
+    blurTimeout = setTimeout(() => {
+      // Only confirm tag if modal is still open
+      const modal = document.getElementById('bookmark-modal');
+      if (!modal?.classList.contains('active')) { closeDropdown(); return; }
       const val = textInput.value.trim();
       if (val) addTag(val);
       closeDropdown();
