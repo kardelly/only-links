@@ -278,6 +278,61 @@ function resetModalTags() {
   setModalTags([]);
 }
 
+// Open the bookmark modal fresh (no pre-fill) — shared by app.js and profile.js
+// Note: app.js defines its own richer version that checks state.currentUser;
+// this one is the fallback used by profile.js and any page that loads bookmark-modals.js
+function openBookmarkModalShared() {
+  const modal = document.getElementById('bookmark-modal');
+  if (!modal) return;
+
+  const form = document.getElementById('bookmark-form');
+  if (form) form.reset();
+  resetModalTags();
+
+  // Explicitly clear fields
+  const urlInput     = document.getElementById('bookmark-url');
+  const titleInput   = document.getElementById('bookmark-title');
+  const descInput    = document.getElementById('bookmark-description');
+  const tagTextInput = document.getElementById('bookmark-tag-input');
+  if (urlInput)     urlInput.value = '';
+  if (titleInput)   titleInput.value = '';
+  if (descInput)    descInput.value = '';
+  if (tagTextInput) tagTextInput.value = '';
+
+  delete modal.dataset.editingId;
+  delete modal.dataset.ogImage;
+
+  // Reset delight elements
+  const thumb   = document.getElementById('bm-og-thumb');
+  const img     = document.getElementById('bm-og-img');
+  const spinner = document.getElementById('bm-url-spinner');
+  const checkEl = document.getElementById('bm-url-check');
+  const saveBtn = document.getElementById('bookmark-submit');
+  if (thumb)   thumb.classList.remove('visible');
+  if (img)     img.src = '';
+  if (spinner) spinner.classList.remove('active');
+  if (checkEl) checkEl.classList.remove('active');
+  if (saveBtn) { saveBtn.classList.remove('saving', 'done'); saveBtn.disabled = false; }
+
+  document.getElementById('bm-tag-suggestions')?.remove();
+
+  const titleEl = document.getElementById('bookmark-modal-title');
+  if (titleEl) titleEl.textContent = 'Add bookmark';
+
+  modal.classList.add('active');
+}
+
+// Pre-filled variant — used by profile.js save buttons
+function openBookmarkModalPrefilledShared({ url, title, description, tags }) {
+  openBookmarkModalShared();
+  setTimeout(() => {
+    if (url)         { const el = document.getElementById('bookmark-url');         if (el) el.value = url; }
+    if (title)       { const el = document.getElementById('bookmark-title');       if (el) el.value = title; }
+    if (description) { const el = document.getElementById('bookmark-description'); if (el) el.value = description; }
+    if (tags)        setModalTags(typeof tags === 'string' ? tags.split(',').map(t => t.trim()).filter(Boolean) : tags);
+  }, 30);
+}
+
 // Initialize on DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initBookmarkModals);

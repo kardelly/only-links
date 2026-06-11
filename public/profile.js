@@ -375,16 +375,9 @@ function renderBookmarks(isAppending = false) {
 }
 
 function openBookmarkModalPrefilled({ url, title, description, tags }) {
-  // profile.html uses the shared bookmark-modals.js component
-  // Try the global openBookmarkModal if available (loaded by bookmark-modals.js)
-  if (typeof openBookmarkModal === 'function') {
-    openBookmarkModal();
-    setTimeout(() => {
-      if (url) { const el = document.getElementById('bookmark-url'); if (el) el.value = url; }
-      if (title) { const el = document.getElementById('bookmark-title'); if (el) el.value = title; }
-      if (description) { const el = document.getElementById('bookmark-description'); if (el) el.value = description; }
-      if (tags) { const el = document.getElementById('bookmark-tags'); if (el) el.value = tags; }
-    }, 50);
+  // Use the shared helper defined in bookmark-modals.js (loaded on this page)
+  if (typeof openBookmarkModalPrefilledShared === 'function') {
+    openBookmarkModalPrefilledShared({ url, title, description, tags });
   }
 }
 
