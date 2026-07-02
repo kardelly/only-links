@@ -137,6 +137,16 @@ export class SettingsView extends BaseView {
         </div>
       </div>
 
+      <!-- Data -->
+      <div class="settings-section">
+        <h2 class="section-title">Data</h2>
+        <p style="font-size: 14px; color: #666; margin-bottom: 12px;">Download all your bookmarks for backup or migration.</p>
+        <div style="display: flex; gap: 8px; flex-direction: column;">
+          <button class="btn btn-secondary" id="mobile-export-json-btn">Export as JSON</button>
+          <button class="btn btn-secondary" id="mobile-export-html-btn">Export as HTML</button>
+        </div>
+      </div>
+
       <!-- Danger -->
       <div class="settings-section">
         <h2 class="section-title">Danger zone</h2>
@@ -226,6 +236,14 @@ export class SettingsView extends BaseView {
     // Logout
     document.getElementById('logout-btn')?.addEventListener('click', () => {
       this.handleLogout();
+    });
+
+    // Export buttons
+    document.getElementById('mobile-export-json-btn')?.addEventListener('click', () => {
+      this.handleMobileExportJSON();
+    });
+    document.getElementById('mobile-export-html-btn')?.addEventListener('click', () => {
+      this.handleMobileExportHTML();
     });
   }
 
@@ -372,6 +390,141 @@ export class SettingsView extends BaseView {
     } catch {
       showToast('Logout failed', 'error');
     }
+  }
+
+  async handleMobileExportJSON() {
+    try {
+      const response = await fetch('/api/bookmarks?feedType=mine&limit=999999', { credentials: 'include' });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || 'Failed to export bookmarks');
+
+      const exportData = {
+        version: '1.0',
+        exported_at: new Date().toISOString(),
+        user: this.user.username,
+        bookmarks: data.items.map(bookmark => ({
+          url: bookmark.url,
+          title: bookmark.title,
+          description: bookmark.description,
+          tags: bookmark.tags,
+          is_public: bookmark.is_public,
+          created_at: bookmark.created_at
+        }))
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `only-link-bookmarks-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast(`Exported ${exportData.bookmarks.length} bookmarks as JSON`);
+    } catch (err) {
+      showToast(`Export failed: ${err.message}`, 'error');
+    }
+  }
+
+  async handleMobileExportHTML() {
+    try {
+      const response = await fetch('/api/bookmarks?feedType=mine&limit=999999', { credentials: 'include' });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || 'Failed to export bookmarks');
+
+      // Generate Netscape bookmark HTML
+      const html = this.generateNetscapeBookmarks(data.items, this.user.username);
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `only-link-bookmarks-${new Date().toISOString().split('T')[0]}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast(`Exported ${data.items.length} bookmarks as HTML`);
+    } catch (err) {
+      showToast(`Export failed: ${err.message}`, 'error');
+    }
+  }
+
+  generateNetscapeBookmarks(bookmarks, username) {
+    const now = new Date().toISOString().split('T')[0];
+
+    const tagGroups = {};
+
+    bookmarks.forEach(bookmark => {
+      const tags = Array.isArray(bookmark.tags) && bookmark.tags.length > 0
+        ? bookmark.tags
+        : ['Untagged'];
+
+      tags.forEach(tag => {
+        if (!tagGroups[tag]) {
+          tagGroups[tag] = [];
+        }
+        tagGroups[tag].push(bookmark);
+      });
+    });
+
+    let html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>only-links Bookmarks</title>
+</head>
+<body>
+<h1>only-links Bookmarks</h1>
+<p>Exported from only-links.id by ${this.escapeHTML(username)}</p>
+<p>Export date: ${now}</p>
+
+<dl>
+`;
+
+    Object.keys(tagGroups).sort().forEach(tag => {
+      const sanitizedTag = this.escapeHTML(tag);
+      html += `    <dt><h3>${sanitizedTag}</h3></dt>\n`;
+      html += `    <dl>\n`;
+
+      tagGroups[tag].forEach(bookmark => {
+        const url = this.escapeHTML(bookmark.url);
+        const title = this.escapeHTML(bookmark.title || 'Untitled');
+        const description = this.escapeHTML(bookmark.description || '');
+        const timestamp = bookmark.created_at ? Math.floor(new Date(bookmark.created_at).getTime() / 1000) : Math.floor(Date.now() / 1000);
+
+        html += `        <dt><a href="${url}" add_date="${timestamp}">${title}</a></dt>\n`;
+        if (description) {
+          html += `        <dd>${description}</dd>\n`;
+        }
+      });
+
+      html += `    </dl>\n`;
+    });
+
+    html += `</dl>
+</body>
+</html>`;
+
+    return html;
+  }
+
+  escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g,
+      tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag)
+    );
   }
 
   addPasswordChangeModal() {
