@@ -265,12 +265,17 @@ function setupEventListeners() {
 
   // Import/Export
   const exportBtn = document.getElementById('export-bookmarks-btn');
+  const exportHtmlBtn = document.getElementById('export-bookmarks-html-btn');
   const importBtn = document.getElementById('import-bookmarks-btn');
   const importFileInput = document.getElementById('import-file-input');
   const fetchImagesBtn = document.getElementById('fetch-images-btn');
 
   if (exportBtn) {
     exportBtn.addEventListener('click', handleExportBookmarks);
+  }
+
+  if (exportHtmlBtn) {
+    exportHtmlBtn.addEventListener('click', handleExportHTML);
   }
 
   if (importBtn && importFileInput) {
@@ -925,6 +930,100 @@ async function handleExportBookmarks() {
   } finally {
     if (exportBtn) { exportBtn.disabled = false; exportBtn.textContent = 'Export as JSON'; }
   }
+}
+
+// Export bookmarks as HTML (Netscape format)
+async function handleExportHTML() {
+  const exportBtn = document.getElementById('export-bookmarks-html-btn');
+  if (exportBtn) { exportBtn.disabled = true; exportBtn.textContent = 'Exporting…'; }
+  try {
+    const response = await fetch('/api/bookmarks?feedType=mine&limit=999999', { credentials: 'include' });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to export bookmarks');
+    }
+
+    const html = generateNetscapeBookmarks(data.items, settingsState.currentUser.username);
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `only-link-bookmarks-${new Date().toISOString().split('T')[0]}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showAlert('data-alert', 'success', `Successfully exported ${data.items.length} bookmarks as HTML`);
+    setTimeout(() => hideAlert('data-alert'), 3000);
+  } catch (err) {
+    console.error('Export error:', err);
+    showAlert('data-alert', 'error', err.message);
+  } finally {
+    if (exportBtn) { exportBtn.disabled = false; exportBtn.textContent = 'Export as HTML'; }
+  }
+}
+
+// Generate Netscape bookmark format HTML
+function generateNetscapeBookmarks(bookmarks, username) {
+  const now = new Date().toISOString().split('T')[0];
+
+  const tagGroups = {};
+
+  bookmarks.forEach(bookmark => {
+    const tags = Array.isArray(bookmark.tags) && bookmark.tags.length > 0
+      ? bookmark.tags
+      : ['Untagged'];
+
+    tags.forEach(tag => {
+      if (!tagGroups[tag]) {
+        tagGroups[tag] = [];
+      }
+      tagGroups[tag].push(bookmark);
+    });
+  });
+
+  let html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>only-links Bookmarks</title>
+</head>
+<body>
+<h1>only-links Bookmarks</h1>
+<p>Exported from only-links.id by ${escapeHTML(username)}</p>
+<p>Export date: ${now}</p>
+
+<dl>
+`;
+
+  Object.keys(tagGroups).sort().forEach(tag => {
+    const sanitizedTag = escapeHTML(tag);
+    html += `    <dt><h3>${sanitizedTag}</h3></dt>\n`;
+    html += `    <dl>\n`;
+
+    tagGroups[tag].forEach(bookmark => {
+      const url = escapeHTML(bookmark.url);
+      const title = escapeHTML(bookmark.title || 'Untitled');
+      const description = escapeHTML(bookmark.description || '');
+      const timestamp = bookmark.created_at ? Math.floor(new Date(bookmark.created_at).getTime() / 1000) : Math.floor(Date.now() / 1000);
+
+      html += `        <dt><a href="${url}" add_date="${timestamp}">${title}</a></dt>\n`;
+      if (description) {
+        html += `        <dd>${description}</dd>\n`;
+      }
+    });
+
+    html += `    </dl>\n`;
+  });
+
+  html += `</dl>
+</body>
+</html>`;
+
+  return html;
 }
 
 // Import bookmarks
