@@ -1004,7 +1004,11 @@ function generateNetscapeBookmarks(bookmarks, username) {
     html += `    <dt><h3>${sanitizedTag}</h3></dt>\n`;
     html += `    <dl>\n`;
 
-    tagGroups[tag].forEach(bookmark => {
+    tagGroups[tag].sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
+    }).forEach(bookmark => {
       const url = escapeHTML(bookmark.url);
       const title = escapeHTML(bookmark.title || 'Untitled');
       const description = escapeHTML(bookmark.description || '');
