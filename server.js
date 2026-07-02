@@ -946,7 +946,7 @@ app.post('/api/auth/reset-password', strictLimiter, async (req, res) => {
 // GET /api/bookmarks - Get bookmarks with advanced search/filtering and pagination
 app.get('/api/bookmarks', optionalAuthenticate, async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10)); // Cap at 100
+  const limit = Math.max(1, parseInt(req.query.limit) || 10);
   const search = req.query.q || null;
   const tag = req.query.tag || null;
   const tags = req.query.tags || null; // Multiple tags support
